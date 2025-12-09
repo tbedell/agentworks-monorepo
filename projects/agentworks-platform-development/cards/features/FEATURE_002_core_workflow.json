@@ -1,0 +1,31 @@
+{
+  "id": "FEATURE_002", 
+  "type": "Feature",
+  "priority": "MUST_HAVE",
+  "title": "Core User Workflow",
+  "description": "Primary value-delivering workflow that represents the main user journey and core business logic.",
+  "lane": 2,
+  "status": "ready",
+  "created": "2025-12-02T19:31:50.000Z",
+  "updated": "2025-12-02T19:31:50.001Z",
+  "owner": "EngageSuite Bot",
+  "assignee": "",
+  "tags": ["mvp", "core", "workflow"],
+  "acceptance_criteria": [
+    "Users can complete the primary workflow end-to-end",
+    "All critical business logic implemented correctly",
+    "Proper error handling and validation in place",
+    "Success feedback and next steps provided",
+    "Mobile-responsive interface"
+  ],
+  "user_stories": [
+    "As a user, I want to [complete core action] so that I [receive primary value]",
+    "As a user, I want clear guidance through the process",
+    "As a user, I want to see my progress and results",
+    "As a user, I want to save/export my work"
+  ],
+  "estimated_effort": "8 days",
+  "dependencies": ["FEATURE_001"],
+  "agents_required": ["architect", "dev_backend", "dev_frontend", "qa"],
+  "technical_notes": "Core business logic implementation, primary database entities"
+}

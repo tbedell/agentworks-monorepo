@@ -1,0 +1,213 @@
+
+---
+
+## /docs/INFRA_DESIGN.md
+
+```markdown
+# AgentWorks – Infrastructure Design (GCP)
+
+**Version:** 1.0  
+**Date:** YYYY-MM-DD  
+**Owner:** Architecture  
+
+---
+
+## 1. Overview
+
+AgentWorks is deployed as a multi-tenant SaaS on Google Cloud Platform (GCP).
+
+Key design principles:
+
+- **Microservices on Cloud Run** for stateless workloads.
+- **Postgres** (Cloud SQL/AlloyDB) for relational data (tenants, projects, usage).
+- **Firestore** for flexible metadata and docs.
+- **Pub/Sub** for events and async workflows.
+- **Secret Manager** for all provider keys.
+- **Cloud Logging & Monitoring** for observability and cost control.
+
+---
+
+## 2. High-Level Architecture
+
+### 2.1 Core Services (Cloud Run)
+
+1. **API Gateway / Backend Service**
+   - Handles:
+     - Authentication, authorization.
+     - REST/GraphQL endpoints for UI.
+     - CRUD for workspaces, projects, boards, cards.
+   - Talks to:
+     - Postgres for data.
+     - Firestore for doc metadata.
+     - Agent Orchestrator for agent triggers.
+
+2. **Agent Orchestrator Service**
+   - Listens to:
+     - Card events (lane changes, actions from UI).
+   - Responsibilities:
+     - Determine which agent to run.
+     - Construct agent prompt + toolset.
+     - Invoke LLM via Provider Router.
+     - Update card status and logs.
+
+3. **Provider Router Service**
+   - Unified API for all LLM/agent-related calls.
+   - Responsibilities:
+     - Route requests to configured provider/model.
+     - Estimate and log cost.
+     - Compute price (5× cost, $0.25 increments).
+     - Emit usage events to Billing Service.
+
+4. **Billing & Usage Service**
+   - Consumes usage events.
+   - Persists `usage_events` to Postgres.
+   - Aggregates usage per workspace/project.
+   - Integrates with Stripe (or similar) for billing.
+
+5. **Docs Service (optional, or part of Backend)**
+   - Manages `/docs/*.md`:
+     - Blueprint, PRD, MVP, Playbook, Infra, etc.
+   - Stores docs in Firestore or GCS (with versioning).
+
+6. **Log Streamer / Terminal Service**
+   - Persists agent logs (file or DB).
+   - Streams logs to frontend via WebSockets/SSE.
+   - Provides replay of past runs.
+
+---
+
+## 3. Data Stores
+
+### 3.1 Postgres (Cloud SQL/AlloyDB)
+
+Primary relational store for:
+
+- **Tenants & Auth**
+  - `users`, `workspaces`, `workspace_memberships`.
+- **Projects & Boards**
+  - `projects`, `boards`, `lanes`, `cards`.
+- **Agent Runs & Logs Metadata**
+  - `agent_runs` (run_id, card_id, agent_name, status, timestamps).
+- **Usage & Billing**
+  - `usage_events` (workspace, project, provider, tokens, cost, price).
+  - `billing_accounts`, `invoices` (later).
+
+### 3.2 Firestore
+
+Used for flexible, document-style data:
+
+- `docs/{project_id}/`:
+  - `BLUEPRINT`, `PRD`, `MVP`, `AGENT_PLAYBOOK`, `INFRA_DESIGN`, `Plan`, etc.
+- Agent configurations and prompt templates.
+- Board configuration overrides.
+
+### 3.3 Cloud Storage (GCS)
+
+- Long-term log archives (if needed).
+- Attachments, exported docs, thumbnails.
+
+---
+
+## 4. Messaging & Jobs
+
+### 4.1 Pub/Sub
+
+- Topics:
+  - `card_events` – card moved, created, status changed.
+  - `agent_runs` – agent run started/finished.
+  - `usage_events` – API calls usage.
+
+Consumers:
+
+- Agent Orchestrator, Billing Service, Analytics/Reporting.
+
+### 4.2 Cloud Tasks / Cloud Scheduler
+
+- Tasks:
+  - Retry failed agent runs.
+  - Scheduled jobs (daily project summaries).
+- Scheduler:
+  - Nightly CEO CoPilot summary jobs per workspace.
+  - Periodic usage aggregation / billing cycles.
+
+---
+
+## 5. Security & Secrets
+
+### 5.1 Secret Manager
+
+- Store:
+  - LLM provider API keys (OpenAI, Anthropic, Google, Nano Banana).
+  - Stripe/PayPal API keys.
+- Services access secrets via IAM roles, not env files.
+
+### 5.2 Network & Access
+
+- All external traffic through HTTPS.
+- Optionally:
+  - Use Cloud Armor to protect against basic attacks.
+  - Use Identity-Aware Proxy for admin/internal tools.
+
+---
+
+## 6. Logging & Observability
+
+### 6.1 Cloud Logging
+
+- Collect logs from:
+  - API Backend.
+  - Agent Orchestrator.
+  - Provider Router.
+  - Billing Service.
+
+- Logs include:
+  - Request IDs, workspace/project IDs.
+  - Agent run IDs.
+  - Provider calls (excluding sensitive data).
+
+### 6.2 Cloud Monitoring
+
+- Metrics:
+  - Request latency & error rates per service.
+  - Agent run success/failure counts.
+  - Provider usage and cost per time period.
+- Alerts:
+  - High error rate (>X%).
+  - Cost anomalies (usage spikes).
+  - Failed agent runs exceeding threshold.
+
+---
+
+## 7. Multi-tenant Considerations
+
+- Workspaces scoped by a `workspace_id` in:
+  - Postgres tables.
+  - Firestore doc paths.
+  - Logs and metrics.
+
+- Authorization:
+  - Enforced at API layer using user→workspace membership.
+  - No cross-workspace queries exposed.
+
+---
+
+## 8. Deployment & Environments
+
+- Environments:
+  - `dev`, `staging`, `prod`.
+- CI/CD:
+  - On commit to `main` or `release/*`:
+    - Build and deploy to Cloud Run via Cloud Build.
+  - Infrastructure managed via Terraform (long-term).
+
+---
+
+## 9. Scaling & Future Work
+
+- Horizontal scaling of Cloud Run services based on request volume.
+- Potential move to:
+  - Separate read/write DB instances as load increases.
+  - Dedicated analytics warehouse (BigQuery) for usage reporting at scale.
+
+---
+

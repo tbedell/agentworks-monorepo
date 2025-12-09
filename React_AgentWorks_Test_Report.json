@@ -1,0 +1,1169 @@
+{
+  "testSuite": "React AgentWorks Platform Comprehensive Testing",
+  "timestamp": "2025-12-03T02:02:06.704Z",
+  "duration": 69268,
+  "summary": {
+    "platformAccessible": true,
+    "totalModules": 7,
+    "workingModules": 6,
+    "totalErrors": 176,
+    "screenshotsTaken": 13,
+    "navigationTabsCount": 7,
+    "workingNavTabs": 6
+  },
+  "results": {
+    "platformAccess": {
+      "success": true,
+      "statusCode": 200,
+      "loadTime": 1131,
+      "title": "AgentWorks"
+    },
+    "navigationTabs": {
+      "Planning": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/planning",
+        "loadTime": 2390
+      },
+      "Kanban": {
+        "accessible": false,
+        "error": "Navigation timeout of 10000 ms exceeded"
+      },
+      "UI Builder": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/ui-builder",
+        "loadTime": 13648
+      },
+      "DB Builder": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/db-builder",
+        "loadTime": 14951
+      },
+      "Workflows": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/workflows",
+        "loadTime": 16203
+      },
+      "Agents": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/agents",
+        "loadTime": 17463
+      },
+      "Usage & Billing": {
+        "accessible": true,
+        "correctRoute": true,
+        "activeTab": true,
+        "hasContent": true,
+        "url": "http://localhost:5173/usage",
+        "loadTime": 18720
+      }
+    },
+    "enhancedModules": {
+      "planning": {
+        "accessible": true,
+        "pageAnalysis": {
+          "hasHeader": true,
+          "hasButtons": true,
+          "hasInputs": true,
+          "hasForms": false,
+          "hasCards": false,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nPlanning Workspace\n\nDefine your project vision and requirements\n\nProgress\n20%\n1\nProject Vision\n\nDefine the problem and solution overview\n\n2\nRequirements Gathering\n\nCollect and document functional requirements\n\n3\nGoals & Success Metrics\n\nDefine measurable objectives and KPIs\n\n4\nStakeholder Analysis\n\nIdentify users, roles, an",
+          "buttonCount": 22,
+          "inputCount": 1
+        },
+        "copilotIntegration": {
+          "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button:has-text(\"CoPilot\")' is not a valid selector."
+        },
+        "timestamp": "2025-12-03T02:01:19.394Z"
+      },
+      "uiBuilder": {
+        "accessible": true,
+        "features": {
+          "hasCanvas": false,
+          "hasPalette": false,
+          "hasPreview": false,
+          "hasFileInput": false,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nComponent Library\nLAYOUT\nContainer\nBasic container component\nGrid\nGrid layout system\nFlexbox\nFlexible box layout\nCOMPONENTS\nButton\nInteractive button element\nInput\nText input field\nCard\nContent card component\nTable\nData table component\nModal\nModal dialog overlay\nNavigation\nNavigation menu\nDATA\nList\nDynamic list component\nCh"
+        },
+        "timestamp": "2025-12-03T02:01:32.684Z"
+      },
+      "dbBuilder": {
+        "accessible": true,
+        "features": {
+          "hasSchemaEditor": true,
+          "hasEntityList": false,
+          "hasRelationships": true,
+          "hasSQL": false,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nDatabase Schema\nAdd Table\nusers\n6 fields\n1 PK • 0 FK\nworkspaces\n5 fields\n1 PK • 1 FK\nprojects\n6 fields\n1 PK • 1 FK\ncards\n9 fields\n1 PK • 1 FK\nExport Schema\nDatabase Settings\nDatabase Designer\n4 tables\nDiagram\nSchema\nData\nGenerate Migration\nusers\nid\nUUID*\nemail\nVARCHAR(255)*\nname\nVARCHAR(100)*\npassword_hash\nVARCHAR(255)*\ncre"
+        },
+        "timestamp": "2025-12-03T02:01:35.916Z"
+      },
+      "workflows": {
+        "accessible": true,
+        "features": {
+          "hasWorkflowCanvas": true,
+          "hasNodePalette": false,
+          "hasJsonEditor": false,
+          "hasExecuteButton": false,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nAutomation Rules\nNew Rule\nLane 0 to Lane 1 Transition\nactive\n\nAutomatically move cards from planning to PRD phase when blueprint is approved\n\n24 runs\n95.8% success\nAgent Failure Escalation\nactive\n\nEscalate to human when agent fails more than 3 times\n\n7 runs\n100% success\nCost Threshold Alert\nactive\n\nAlert when project LLM us"
+        },
+        "timestamp": "2025-12-03T02:01:39.149Z"
+      },
+      "kanban": {
+        "accessible": false,
+        "error": "Navigation timeout of 10000 ms exceeded"
+      },
+      "agents": {
+        "accessible": true,
+        "features": {
+          "hasAgentList": true,
+          "hasConfiguration": true,
+          "hasStatus": true,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nAgent Management\n\nConfigure and monitor your AI agents across all project lanes\n\nGlobal Settings\nDeploy All Agents\nPlanning Agent\n\nplanning-agent\n\ninactive\n\nHelps with project planning and task breakdown\n\nLane 0\nLane 1\nLane 2\nAI Provider\nOpenai\nAnthropic\nGoogle\nNanobanana\nModel\nTest Agent\nLogs\nMetrics\nUI Design Agent\n\nui-ag"
+        },
+        "timestamp": "2025-12-03T02:01:42.425Z"
+      },
+      "usage": {
+        "accessible": true,
+        "features": {
+          "hasMetrics": true,
+          "hasBilling": true,
+          "hasCharts": true,
+          "textContent": "AW\nAgentWorks\nPlanning\nKanban\nUI Builder\nDB Builder\nWorkflows\nAgents\nUsage & Billing\nEngageSuite\nAgentWorks\nCoPilot\nTB\nEngageSuite\n›\nAgentWorks\nBlueprint\nPRD\nMVP\nAgents\nUsage\nUsage & Analytics\n\nProject-level usage with 5x markup pricing\n\nLast 7 days\nLast 30 days\nLast 90 days\nThis month\nThis year\nExport\n\nTotal Billed Cost\n\n$0.00\n\n$0.0000 actual cost\n\nTotal Requests\n\n0\n\n0.0% success rate\n\nTotal Tokens\n\n0.0K\n\n0 tokens\n\nAvg Response\n\n0.0s\n\nAverage response time\nOverview\nProviders\nAgents\nTrends\nProvi"
+        },
+        "timestamp": "2025-12-03T02:01:45.664Z"
+      }
+    },
+    "crossModuleIntegration": {},
+    "agentCoordination": null,
+    "apiIntegration": {
+      "/api/health": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "url": "http://localhost:5173/api/health"
+      },
+      "/api/projects": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "url": "http://localhost:5173/api/projects"
+      },
+      "/api/agents": {
+        "ok": false,
+        "status": 401,
+        "statusText": "Unauthorized",
+        "url": "http://localhost:5173/api/agents"
+      },
+      "/api/workflows": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "url": "http://localhost:5173/api/workflows"
+      }
+    },
+    "performance": {
+      "browserMetrics": {
+        "Timestamp": 31918.471296,
+        "Documents": 2,
+        "Frames": 2,
+        "JSEventListeners": 166,
+        "Nodes": 448,
+        "LayoutCount": 7,
+        "RecalcStyleCount": 9,
+        "LayoutDuration": 0.003914,
+        "RecalcStyleDuration": 0.010653,
+        "ScriptDuration": 0.034229,
+        "TaskDuration": 0.147331,
+        "JSHeapUsedSize": 8261416,
+        "JSHeapTotalSize": 11972608
+      },
+      "moduleLoadTimes": {
+        "/planning": 2084,
+        "/kanban": 9097,
+        "/ui-builder": 1835,
+        "/db-builder": 1777,
+        "/workflows": 2124,
+        "/agents": 1878,
+        "/usage": 2120
+      },
+      "totalTestTime": 69268
+    },
+    "screenshots": [
+      {
+        "name": "00-homepage",
+        "filename": "00-homepage-1764727258568.png",
+        "filepath": "/AgentWorks/react-test-screenshots/00-homepage-1764727258568.png",
+        "timestamp": "2025-12-03T02:00:58.732Z"
+      },
+      {
+        "name": "01-nav-planning",
+        "filename": "01-nav-planning-1764727259826.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-planning-1764727259826.png",
+        "timestamp": "2025-12-03T02:00:59.974Z"
+      },
+      {
+        "name": "01-nav-ui-builder",
+        "filename": "01-nav-ui-builder-1764727271084.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-ui-builder-1764727271084.png",
+        "timestamp": "2025-12-03T02:01:11.238Z"
+      },
+      {
+        "name": "01-nav-db-builder",
+        "filename": "01-nav-db-builder-1764727272387.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-db-builder-1764727272387.png",
+        "timestamp": "2025-12-03T02:01:12.514Z"
+      },
+      {
+        "name": "01-nav-workflows",
+        "filename": "01-nav-workflows-1764727273639.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-workflows-1764727273639.png",
+        "timestamp": "2025-12-03T02:01:13.778Z"
+      },
+      {
+        "name": "01-nav-agents",
+        "filename": "01-nav-agents-1764727274899.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-agents-1764727274899.png",
+        "timestamp": "2025-12-03T02:01:15.030Z"
+      },
+      {
+        "name": "01-nav-usage-&-billing",
+        "filename": "01-nav-usage-&-billing-1764727276156.png",
+        "filepath": "/AgentWorks/react-test-screenshots/01-nav-usage-&-billing-1764727276156.png",
+        "timestamp": "2025-12-03T02:01:16.272Z"
+      },
+      {
+        "name": "02-planning-module",
+        "filename": "02-planning-module-1764727279394.png",
+        "filepath": "/AgentWorks/react-test-screenshots/02-planning-module-1764727279394.png",
+        "timestamp": "2025-12-03T02:01:19.563Z"
+      },
+      {
+        "name": "03-ui-builder-module",
+        "filename": "03-ui-builder-module-1764727292684.png",
+        "filepath": "/AgentWorks/react-test-screenshots/03-ui-builder-module-1764727292684.png",
+        "timestamp": "2025-12-03T02:01:32.828Z"
+      },
+      {
+        "name": "04-db-builder-module",
+        "filename": "04-db-builder-module-1764727295916.png",
+        "filepath": "/AgentWorks/react-test-screenshots/04-db-builder-module-1764727295916.png",
+        "timestamp": "2025-12-03T02:01:36.041Z"
+      },
+      {
+        "name": "05-workflows-module",
+        "filename": "05-workflows-module-1764727299149.png",
+        "filepath": "/AgentWorks/react-test-screenshots/05-workflows-module-1764727299149.png",
+        "timestamp": "2025-12-03T02:01:39.303Z"
+      },
+      {
+        "name": "07-agents-module",
+        "filename": "07-agents-module-1764727302425.png",
+        "filepath": "/AgentWorks/react-test-screenshots/07-agents-module-1764727302425.png",
+        "timestamp": "2025-12-03T02:01:42.569Z"
+      },
+      {
+        "name": "08-usage-module",
+        "filename": "08-usage-module-1764727305664.png",
+        "filepath": "/AgentWorks/react-test-screenshots/08-usage-module-1764727305664.png",
+        "timestamp": "2025-12-03T02:01:45.773Z"
+      }
+    ],
+    "errors": [
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:00:57.761Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:57.814Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:57.817Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:57.822Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:57.825Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:57.836Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:00:58.796Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:58.842Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:58.844Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:58.849Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:58.853Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:00:59.843Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:00.056Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:00.071Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:00.072Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:00.076Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:00.098Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:01.073Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:02.074Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:02.074Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:04.077Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:04.077Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:08.100Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:08.100Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:10.052Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:10.077Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:10.077Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:10.080Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:10.084Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:11.079Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:11.326Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:11.363Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:11.363Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:11.367Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:11.371Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:12.365Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:12.584Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:12.619Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:12.619Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:12.624Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:12.629Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:13.622Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:13.854Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:13.878Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:13.879Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:13.891Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:13.895Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:14.882Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:15.108Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:15.139Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:15.139Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:15.144Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:15.145Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:15.146Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:15.150Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:16.143Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:16.352Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:16.380Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:16.380Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:16.384Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:16.388Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:17.382Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:18.382Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:18.382Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:19.651Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:19.675Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:19.676Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:19.681Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:19.700Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:20.677Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:21.680Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:21.680Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:23.683Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:23.683Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:27.703Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:27.703Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:29.644Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:29.676Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:29.677Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:29.681Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:29.684Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:30.679Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:31.679Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:31.679Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:32.895Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:32.911Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:32.911Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:32.914Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:32.927Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:33.913Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:34.913Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:34.913Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:36.110Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:36.145Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:36.145Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:36.150Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:36.154Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:37.146Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:38.148Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:38.148Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:39.395Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:39.416Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:39.417Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:39.425Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:39.429Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:40.419Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:41.419Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:41.419Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:42.637Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:42.658Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:42.658Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:42.661Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:42.662Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:42.664Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:42.666Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:43.659Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:44.660Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:44.660Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T02:01:45.777Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T02:01:45.781Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:45.784Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T02:01:45.788Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:45.858Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:45.876Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:45.876Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:45.886Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:45.890Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:46.876Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:47.881Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:47.882Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:47.965Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:47.977Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:47.977Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:47.985Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:47.992Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:48.979Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:49.979Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:49.979Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:51.987Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:51.987Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:55.993Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:01:55.993Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:57.052Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:57.074Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:57.075Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:57.077Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:57.081Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:58.075Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:01:58.875Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:58.892Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:58.893Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:58.902Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:58.905Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:01:59.893Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:02:00.681Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:00.704Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:00.704Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:00.707Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:00.711Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:01.706Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:02.707Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Max reconnection attempts reached",
+        "timestamp": "2025-12-03T02:02:02.707Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:02:02.799Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:02.811Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:02.812Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:02.830Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:02.839Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:03.814Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:02:04.685Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:04.702Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:04.703Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:04.707Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:02:04.708Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T02:02:04.708Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:04.711Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T02:02:05.704Z"
+      }
+    ]
+  }
+}

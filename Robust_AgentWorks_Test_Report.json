@@ -1,0 +1,1563 @@
+{
+  "testSuite": "Robust AgentWorks Platform Testing",
+  "timestamp": "2025-12-03T01:38:16.221Z",
+  "duration": 42455,
+  "summary": {
+    "platformAccessible": true,
+    "reactErrors": 30,
+    "totalErrors": 143,
+    "modulesTestable": 7,
+    "totalModulesTested": 7,
+    "apiEndpointsWorking": 1,
+    "totalApiEndpoints": 5,
+    "screenshotsCaptured": 9,
+    "enhancedFeaturesDetected": 0,
+    "platformUsableWithErrors": false
+  },
+  "results": {
+    "platformAccess": {
+      "success": true,
+      "statusCode": 200,
+      "title": "AgentWorks",
+      "url": "http://localhost:5173/planning",
+      "loadTime": 5333,
+      "reactLoaded": true
+    },
+    "domAnalysis": {
+      "hasHTML": true,
+      "hasBody": true,
+      "bodyClasses": "",
+      "hasReactRoot": true,
+      "hasErrorBoundary": true,
+      "hasNavigation": false,
+      "hasButtons": 2,
+      "hasLinks": 0,
+      "totalElements": 33,
+      "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+      "visibleText": true,
+      "headElements": [
+        {
+          "tag": "SCRIPT",
+          "content": "import { injectIntoGlobalHook } from \"/@react-refresh\";\ninjectIntoGlobalHook(window);\nwindow.$Refres"
+        },
+        {
+          "tag": "SCRIPT",
+          "content": "<script type=\"module\" src=\"/@vite/client\"></script>"
+        },
+        {
+          "tag": "META",
+          "content": "<meta charset=\"UTF-8\">"
+        },
+        {
+          "tag": "LINK",
+          "content": "<link rel=\"icon\" type=\"image/svg+xml\" href=\"/vite.svg\">"
+        },
+        {
+          "tag": "META",
+          "content": "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+        },
+        {
+          "tag": "TITLE",
+          "content": "AgentWorks"
+        },
+        {
+          "tag": "STYLE",
+          "content": "*, ::before, ::after {\n  --tw-border-spacing-x: 0;\n  --tw-border-spacing-y: 0;\n  --tw-translate-x: 0"
+        }
+      ],
+      "mainContentElements": [],
+      "reactElements": {
+        "hasReactDevtools": true,
+        "reactVersion": null,
+        "hasReactRoot": true,
+        "reactComponents": 0
+      },
+      "agentWorksElements": {
+        "hasAgentWorksTitle": true,
+        "hasAgentWorksText": false,
+        "hasAgentWorksClasses": false,
+        "navigationLinks": []
+      }
+    },
+    "navigationTests": {
+      "Planning": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/planning",
+          "pathname": "/planning",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:42.361Z"
+      },
+      "Kanban": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/kanban",
+          "pathname": "/kanban",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:45.543Z"
+      },
+      "UI Builder": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/ui-builder",
+          "pathname": "/ui-builder",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:48.710Z"
+      },
+      "DB Builder": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/db-builder",
+          "pathname": "/db-builder",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:51.905Z"
+      },
+      "Workflows": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/workflows",
+          "pathname": "/workflows",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:55.071Z"
+      },
+      "Agents": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/agents",
+          "pathname": "/agents",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:37:58.230Z"
+      },
+      "Usage & Billing": {
+        "accessible": true,
+        "statusCode": 200,
+        "correctRoute": true,
+        "hasContent": true,
+        "hasErrorBoundary": true,
+        "pageAnalysis": {
+          "url": "http://localhost:5173/usage",
+          "pathname": "/usage",
+          "title": "AgentWorks",
+          "hasContent": true,
+          "bodyText": "Something went wrong\n\nWe encountered an unexpected error. This has been logged and our team has been notified.\n\nTry Again\nRefresh Page\nError Details (Development)",
+          "hasErrorBoundary": true,
+          "visibleElements": 33,
+          "specificElements": {
+            "buttons": 2,
+            "inputs": 0,
+            "forms": 0,
+            "cards": 0
+          }
+        },
+        "timestamp": "2025-12-03T01:38:01.400Z"
+      }
+    },
+    "moduleAccessibility": {
+      "planning": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "wizard": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "step": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "copilot": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "project": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "plan": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "requirement": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:03.560Z"
+      },
+      "uiBuilder": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "canvas": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "builder": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "designer": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "mockup": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "component": {
+              "inText": false,
+              "inHTML": true,
+              "elements": 0
+            },
+            "palette": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:05.665Z"
+      },
+      "dbBuilder": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "schema": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "table": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "entity": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "relationship": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "sql": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "database": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:07.770Z"
+      },
+      "workflows": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "workflow": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "flow": {
+              "inText": false,
+              "inHTML": true,
+              "elements": 1
+            },
+            "node": {
+              "inText": false,
+              "inHTML": true,
+              "elements": 0
+            },
+            "canvas": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "json": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "execute": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:09.884Z"
+      },
+      "kanban": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "kanban": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "column": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "card": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "task": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "drag": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "board": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:11.991Z"
+      },
+      "agents": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "agent": {
+              "inText": false,
+              "inHTML": true,
+              "elements": 0
+            },
+            "bot": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "service": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "coordination": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "status": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "config": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:14.089Z"
+      },
+      "usage": {
+        "accessible": true,
+        "featureAnalysis": {
+          "foundFeatures": {
+            "usage": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "billing": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "metric": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "cost": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "chart": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            },
+            "stats": {
+              "inText": false,
+              "inHTML": false,
+              "elements": 0
+            }
+          },
+          "totalFeatureWords": 0,
+          "hasInteractiveElements": true,
+          "hasModuleContent": false,
+          "pageStructure": {
+            "headers": 1,
+            "sections": 0,
+            "forms": 0,
+            "lists": 0
+          }
+        },
+        "enhancedFeaturesDetected": false,
+        "timestamp": "2025-12-03T01:38:16.191Z"
+      }
+    },
+    "errorBoundaryHandling": {
+      "error": "SyntaxError: Failed to execute 'querySelector' on 'Document': 'button[class*=\"retry\"], button[class*=\"reload\"], button:contains(\"Try Again\")' is not a valid selector."
+    },
+    "apiTests": {
+      "/api/health": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "responseSize": 82,
+        "hasJsonResponse": true,
+        "responsePreview": "{\"message\":\"Route GET:/api/health not found\",\"error\":\"Not Found\",\"statusCode\":404}"
+      },
+      "/api/projects": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "responseSize": 84,
+        "hasJsonResponse": true,
+        "responsePreview": "{\"message\":\"Route GET:/api/projects not found\",\"error\":\"Not Found\",\"statusCode\":404}"
+      },
+      "/api/agents": {
+        "ok": false,
+        "status": 401,
+        "statusText": "Unauthorized",
+        "responseSize": 29,
+        "hasJsonResponse": true,
+        "responsePreview": "{\"error\":\"Not authenticated\"}"
+      },
+      "/api/workflows": {
+        "ok": false,
+        "status": 404,
+        "statusText": "Not Found",
+        "responseSize": 85,
+        "hasJsonResponse": true,
+        "responsePreview": "{\"message\":\"Route GET:/api/workflows not found\",\"error\":\"Not Found\",\"statusCode\":404}"
+      },
+      "/auth/me": {
+        "ok": true,
+        "status": 200,
+        "statusText": "OK",
+        "responseSize": 614,
+        "hasJsonResponse": false,
+        "responsePreview": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <script type=\"module\">import { injectIntoGlobalHook } from \"/@react-refresh\";\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () => {};\nwindow.$Refres"
+      }
+    },
+    "visualTests": {},
+    "enhancedFeatures": {
+      "agentCoordination": {
+        "hasAgentCoordinator": false,
+        "hasAgentAPI": false,
+        "hasAgentWebSocket": false,
+        "agentButtons": 0,
+        "agentPanels": 0
+      },
+      "enhancedModules": {
+        "hasEnhancedPlanning": false,
+        "hasEnhancedUI": false,
+        "hasEnhancedDB": false,
+        "hasEnhancedWorkflows": false
+      },
+      "crossModuleIntegration": {
+        "hasDataPersistence": true,
+        "hasStateManagement": false,
+        "hasRouting": false
+      },
+      "timestamp": "2025-12-03T01:38:16.219Z"
+    },
+    "screenshots": [
+      {
+        "name": "00-platform-access",
+        "filename": "00-platform-access-1764725859100.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/00-platform-access-1764725859100.png",
+        "timestamp": "2025-12-03T01:37:39.201Z"
+      },
+      {
+        "name": "01-dom-analysis",
+        "filename": "01-dom-analysis-1764725859203.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/01-dom-analysis-1764725859203.png",
+        "timestamp": "2025-12-03T01:37:39.293Z"
+      },
+      {
+        "name": "02-nav-planning",
+        "filename": "02-nav-planning-1764725862362.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-planning-1764725862362.png",
+        "timestamp": "2025-12-03T01:37:42.459Z"
+      },
+      {
+        "name": "02-nav-kanban",
+        "filename": "02-nav-kanban-1764725865543.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-kanban-1764725865543.png",
+        "timestamp": "2025-12-03T01:37:45.645Z"
+      },
+      {
+        "name": "02-nav-ui-builder",
+        "filename": "02-nav-ui-builder-1764725868710.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-ui-builder-1764725868710.png",
+        "timestamp": "2025-12-03T01:37:48.809Z"
+      },
+      {
+        "name": "02-nav-db-builder",
+        "filename": "02-nav-db-builder-1764725871905.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-db-builder-1764725871905.png",
+        "timestamp": "2025-12-03T01:37:52.001Z"
+      },
+      {
+        "name": "02-nav-workflows",
+        "filename": "02-nav-workflows-1764725875071.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-workflows-1764725875071.png",
+        "timestamp": "2025-12-03T01:37:55.164Z"
+      },
+      {
+        "name": "02-nav-agents",
+        "filename": "02-nav-agents-1764725878230.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-agents-1764725878230.png",
+        "timestamp": "2025-12-03T01:37:58.330Z"
+      },
+      {
+        "name": "02-nav-usage-&-billing",
+        "filename": "02-nav-usage-&-billing-1764725881400.png",
+        "filepath": "/AgentWorks/robust-test-screenshots/02-nav-usage-&-billing-1764725881400.png",
+        "timestamp": "2025-12-03T01:38:01.484Z"
+      }
+    ],
+    "errors": [
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:34.091Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:34.123Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:34.125Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:34.130Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:34.141Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:34.143Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:34.144Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:35.126Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:36.127Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:39.126Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:39.357Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:39.426Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:39.426Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:39.430Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:39.436Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:39.437Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:39.438Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:40.428Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:41.427Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:42.539Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:42.548Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:42.548Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:42.550Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:42.559Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:42.559Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:42.560Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:43.551Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:44.550Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:45.706Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:45.721Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:45.722Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:45.739Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:45.743Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:45.744Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:45.744Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:46.724Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:47.723Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:48.901Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:48.946Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:48.947Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:48.949Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:48.951Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:48.952Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:48.952Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:49.948Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:50.949Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:52.068Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:52.081Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:52.081Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:52.083Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:52.086Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:52.087Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:52.087Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:53.082Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:54.083Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:55.226Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:55.242Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:55.242Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:55.244Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:55.248Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:55.250Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:55.251Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:55.252Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:55.252Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:56.244Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:57.244Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:58.395Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:58.412Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:58.413Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:58.415Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:37:58.420Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:58.422Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:58.422Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:58.427Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:37:58.427Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:37:59.414Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:00.414Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:01.555Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:01.577Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:01.578Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:01.580Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:01.584Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:01.585Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:01.585Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:02.579Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:03.662Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:03.683Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:03.684Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:03.688Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:03.692Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:03.693Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:03.694Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:04.686Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:05.764Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:05.806Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:05.806Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:05.808Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:05.811Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:05.812Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:05.812Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:06.808Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:07.879Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:07.901Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:07.901Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:07.905Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:07.910Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:07.911Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:07.911Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:08.902Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:09.985Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:09.995Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:09.996Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:09.999Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:10.003Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:10.004Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:10.004Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:10.997Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:11.998Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:12.085Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:12.101Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:12.102Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:12.112Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:12.116Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:12.119Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:12.121Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:12.123Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:12.123Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:13.102Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:14.187Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:14.200Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:14.201Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:14.212Z"
+      },
+      {
+        "type": "page_error",
+        "message": "agents?.map is not a function",
+        "timestamp": "2025-12-03T01:38:14.215Z"
+      },
+      {
+        "type": "console_error",
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:14.216Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:14.216Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:14.219Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:14.220Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:15.202Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T01:38:16.200Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to create WebSocket connection: JSHandle@error",
+        "timestamp": "2025-12-03T01:38:16.202Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T01:38:16.206Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "timestamp": "2025-12-03T01:38:16.210Z"
+      },
+      {
+        "type": "console_error",
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "timestamp": "2025-12-03T01:38:16.214Z"
+      }
+    ],
+    "reactErrors": [
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:34.143Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:34.144Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:39.437Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:39.438Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:42.559Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:42.560Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:45.744Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:45.744Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:48.952Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:48.952Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:52.087Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:52.087Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:55.252Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:55.252Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:37:58.422Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:37:58.422Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:01.585Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:01.585Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:03.693Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:03.694Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:05.812Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:05.812Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:07.911Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:07.911Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:10.004Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:10.004Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:12.123Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:12.123Z"
+      },
+      {
+        "message": "The above error occurred in the <RightPanel> component:\n\n    at RightPanel (http://localhost:5173/src/components/layout/RightPanel.tsx:24:38)\n    at div\n    at div\n    at Layout (http://localhost:5173/src/components/layout/Layout.tsx:48:34)\n    at ProtectedRoute (http://localhost:5173/src/App.tsx:32:27)\n    at RenderedRoute (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6123:26)\n    at Routes (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6969:3)\n    at ErrorBoundary (http://localhost:5173/src/components/common/ErrorBoundary.tsx:8:5)\n    at App\n    at Router (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:6910:13)\n    at BrowserRouter (http://localhost:5173/node_modules/.vite/deps/react-router-dom.js?v=adece62e:10027:3)\n    at QueryClientProvider (http://localhost:5173/node_modules/.vite/deps/@tanstack_react-query.js?v=4fa27b1e:3096:3)\n\nReact will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.",
+        "timestamp": "2025-12-03T01:38:14.216Z"
+      },
+      {
+        "message": "Error caught by boundary: JSHandle@error JSHandle@object",
+        "timestamp": "2025-12-03T01:38:14.217Z"
+      }
+    ]
+  },
+  "conclusions": {
+    "overallStatus": "FUNCTIONAL_WITH_ERRORS",
+    "recommendedActions": [
+      "Address React component errors - particularly RightPanel component failures",
+      "Address API connectivity issues - backend integration problems detected",
+      "Implement enhanced module features - limited agent coordination detected"
+    ],
+    "testCoverage": {
+      "platformAccess": true,
+      "domAnalysis": true,
+      "navigationTesting": true,
+      "moduleFeatureTesting": true,
+      "apiTesting": true,
+      "enhancedFeatureTesting": true,
+      "errorHandlingTesting": true
+    }
+  }
+}

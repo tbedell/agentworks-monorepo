@@ -1,0 +1,673 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.14.2'
+
+jobs:
+  test-setup:
+    name: Setup Test Environment
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      postgres-e2e:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    outputs:
+      cache-key: ${{ steps.cache-key.outputs.key }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Generate cache key
+        id: cache-key
+        run: echo "key=pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: |
+            pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: test-setup
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    strategy:
+      matrix:
+        service: 
+          - core-service
+          - agent-orchestrator
+          - provider-router
+          - log-streaming
+          - billing-service
+          - web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+      - name: Run database migrations
+        if: matrix.service == 'core-service'
+        run: |
+          pnpm --filter @agentworks/db generate
+          pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+
+      - name: Run unit tests
+        run: pnpm test:unit --filter @agentworks/${{ matrix.service }}
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          TEST_DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          REDIS_URL: redis://localhost:6379/1
+          TEST_REDIS_URL: redis://localhost:6379/1
+          JWT_SECRET: test-jwt-secret-for-ci
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TEST }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TEST }}
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results-${{ matrix.service }}
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test-setup
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+      - name: Setup test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+
+      - name: Start services for integration testing
+        run: |
+          # Start all backend services in background
+          pnpm --filter @agentworks/core-service start &
+          pnpm --filter @agentworks/agent-orchestrator start &
+          pnpm --filter @agentworks/provider-router start &
+          pnpm --filter @agentworks/log-streaming start &
+          pnpm --filter @agentworks/billing-service start &
+          
+          # Wait for services to be ready
+          sleep 30
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          REDIS_URL: redis://localhost:6379/2
+          JWT_SECRET: test-integration-secret
+          PORT_CORE: 9000
+          PORT_ORCHESTRATOR: 9001
+          PORT_PROVIDER_ROUTER: 9002
+          PORT_LOG_STREAMING: 9003
+          PORT_BILLING: 9004
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TEST }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TEST }}
+
+      - name: Run integration tests
+        run: pnpm test:integration
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          REDIS_URL: redis://localhost:6379/2
+          JWT_SECRET: test-integration-secret
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
+  e2e-tests:
+    name: End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: test-setup
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_e2e
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+      - name: Setup E2E test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          POSTGRES_DB=agentworks_e2e pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_e2e
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3-dev \
+            libatk-bridge2.0-dev \
+            libdrm2 \
+            libgtk-3-dev \
+            libgbm-dev \
+            libasound2-dev
+
+      - name: Start full application stack
+        run: |
+          # Start backend services
+          pnpm --filter @agentworks/core-service start &
+          pnpm --filter @agentworks/agent-orchestrator start &
+          pnpm --filter @agentworks/provider-router start &
+          pnpm --filter @agentworks/log-streaming start &
+          pnpm --filter @agentworks/billing-service start &
+          
+          # Start frontend
+          pnpm --filter @agentworks/web dev &
+          
+          # Wait for all services
+          sleep 60
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_e2e
+          REDIS_URL: redis://localhost:6379/3
+          JWT_SECRET: test-e2e-secret
+          PORT: 3000
+          VITE_API_URL: http://localhost:9100
+          VITE_WS_URL: ws://localhost:9103
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TEST }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TEST }}
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          NODE_ENV: test
+          CI: true
+
+      - name: Upload E2E test screenshots
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-screenshots
+          path: tests/e2e/screenshots/
+          retention-days: 7
+
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            coverage/
+            test-results/
+          retention-days: 7
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    needs: test-setup
+    if: github.ref == 'refs/heads/main'
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_perf
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+      - name: Setup performance test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          POSTGRES_DB=agentworks_perf pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_perf
+
+      - name: Start services for performance testing
+        run: |
+          pnpm --filter @agentworks/core-service start &
+          pnpm --filter @agentworks/agent-orchestrator start &
+          pnpm --filter @agentworks/provider-router start &
+          pnpm --filter @agentworks/log-streaming start &
+          pnpm --filter @agentworks/billing-service start &
+          sleep 45
+        env:
+          NODE_ENV: production
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_perf
+          REDIS_URL: redis://localhost:6379/4
+          JWT_SECRET: test-performance-secret
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TEST }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TEST }}
+
+      - name: Run performance tests
+        run: pnpm test:performance
+        env:
+          NODE_ENV: test
+          PERFORMANCE_BASELINE_FILE: performance-baseline.json
+
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-test-results
+          path: |
+            performance-results.json
+            performance-report.html
+          retention-days: 30
+
+  security-tests:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    needs: test-setup
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_security
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Restore dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            packages/*/dist
+            apps/*/dist
+            node_modules
+          key: build-${{ github.sha }}
+
+      - name: Setup security test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          POSTGRES_DB=agentworks_security pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_security
+
+      - name: Start services for security testing
+        run: |
+          pnpm --filter @agentworks/core-service start &
+          pnpm --filter @agentworks/agent-orchestrator start &
+          pnpm --filter @agentworks/provider-router start &
+          pnpm --filter @agentworks/log-streaming start &
+          pnpm --filter @agentworks/billing-service start &
+          sleep 30
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_security
+          REDIS_URL: redis://localhost:6379/5
+          JWT_SECRET: test-security-secret
+
+      - name: Run security tests
+        run: pnpm test:security
+        env:
+          NODE_ENV: test
+
+      - name: Run dependency vulnerability scan
+        run: pnpm audit --audit-level high
+
+      - name: Upload security test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-test-results
+          path: |
+            security-report.json
+            vulnerability-report.json
+          retention-days: 30
+
+  coverage-report:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests]
+    if: always()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: test-artifacts
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          find test-artifacts -name "*.lcov" -exec cat {} \; > coverage/lcov.info
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+
+      - name: Generate coverage badge
+        run: |
+          npx coverage-badges-cli --source coverage/lcov.info --output coverage/badge.svg
+
+      - name: Upload merged coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: merged-coverage-report
+          path: coverage/
+          retention-days: 30
+
+  deployment-ready:
+    name: Deployment Ready Check
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, e2e-tests, security-tests]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Check all tests passed
+        run: |
+          echo "All test suites completed successfully"
+          echo "System is ready for deployment"
+
+      - name: Create deployment artifact
+        run: |
+          echo '{
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'",
+            "tests_passed": true,
+            "ready_for_deployment": true
+          }' > deployment-manifest.json
+
+      - name: Upload deployment manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-manifest
+          path: deployment-manifest.json
+          retention-days: 7

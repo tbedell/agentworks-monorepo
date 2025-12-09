@@ -1,0 +1,397 @@
+# AgentWorks Development Docker Compose
+# Local development environment with all services
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: agentworks-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agentworks
+      POSTGRES_USER: agentworks
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./packages/db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentworks -d agentworks"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agentworks
+
+  # Redis (for caching and session storage)
+  redis:
+    image: redis:7-alpine
+    container_name: agentworks-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agentworks
+
+  # Frontend (Next.js)
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: development
+    container_name: agentworks-frontend
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_ENVIRONMENT=development
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/web/node_modules
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # API Gateway (Fastify)
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    container_name: agentworks-api-gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8080
+      - PROJECT_ID=agentworks-dev
+      - ENVIRONMENT=development
+      - REGION=us-central1
+      - DATABASE_URL=postgresql://agentworks:dev_password@postgres:5432/agentworks
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-dev_jwt_secret_key}
+      - SESSION_SECRET=${SESSION_SECRET:-dev_session_secret_key}
+      - CORE_SERVICE_URL=http://core-service:8000
+      - AGENT_ORCHESTRATOR_URL=http://agent-orchestrator:8001
+      - LOG_STREAMING_URL=http://log-streaming:8003
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      core-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Core Service (Data Layer)
+  core-service:
+    build:
+      context: .
+      dockerfile: apps/core-service/Dockerfile
+      target: development
+    container_name: agentworks-core-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - PROJECT_ID=agentworks-dev
+      - DATABASE_URL=postgresql://agentworks:dev_password@postgres:5432/agentworks
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/core-service:/app/apps/core-service
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/core-service/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Agent Orchestrator
+  agent-orchestrator:
+    build:
+      context: .
+      dockerfile: apps/agent-orchestrator/Dockerfile
+      target: development
+    container_name: agentworks-agent-orchestrator
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8001
+      - PROJECT_ID=agentworks-dev
+      - CORE_SERVICE_URL=http://core-service:8000
+      - PROVIDER_ROUTER_URL=http://provider-router:8002
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./apps/agent-orchestrator:/app/apps/agent-orchestrator
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/agent-orchestrator/node_modules
+    depends_on:
+      core-service:
+        condition: service_healthy
+      provider-router:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Provider Router
+  provider-router:
+    build:
+      context: .
+      dockerfile: apps/provider-router/Dockerfile
+      target: development
+    container_name: agentworks-provider-router
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8002
+      - PROJECT_ID=agentworks-dev
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_AI_API_KEY=${GOOGLE_AI_API_KEY}
+      - NANOBANANA_API_KEY=${NANOBANANA_API_KEY}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./apps/provider-router:/app/apps/provider-router
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/provider-router/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Log Streaming Service
+  log-streaming:
+    build:
+      context: .
+      dockerfile: apps/log-streaming/Dockerfile
+      target: development
+    container_name: agentworks-log-streaming
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8003
+      - PROJECT_ID=agentworks-dev
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./apps/log-streaming:/app/apps/log-streaming
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/log-streaming/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Billing Service
+  billing-service:
+    build:
+      context: .
+      dockerfile: apps/billing-service/Dockerfile
+      target: development
+    container_name: agentworks-billing-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8004
+      - PROJECT_ID=agentworks-dev
+      - DATABASE_URL=postgresql://agentworks:dev_password@postgres:5432/agentworks
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./apps/billing-service:/app/apps/billing-service
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/billing-service/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Terminal Gateway Service (PTY WebSocket)
+  terminal-gateway:
+    build:
+      context: .
+      dockerfile: apps/terminal-gateway/Dockerfile
+      target: development
+    container_name: agentworks-terminal-gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8005
+      - PROJECT_ID=agentworks-dev
+      - REDIS_URL=redis://redis:6379
+      - GATEWAY_ID=gateway-docker
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./apps/terminal-gateway:/app/apps/terminal-gateway
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/terminal-gateway/node_modules
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Dev Environment Manager Service
+  dev-env-manager:
+    build:
+      context: .
+      dockerfile: apps/dev-env-manager/Dockerfile
+      target: development
+    container_name: agentworks-dev-env-manager
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=8006
+      - PROJECT_ID=agentworks-dev
+      - DATABASE_URL=postgresql://agentworks:dev_password@postgres:5432/agentworks
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./apps/dev-env-manager:/app/apps/dev-env-manager
+      - ./packages:/app/packages
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /app/node_modules
+      - /app/apps/dev-env-manager/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - agentworks
+    command: pnpm dev
+
+  # Development Tools Container
+  dev-tools:
+    image: node:18-alpine
+    container_name: agentworks-dev-tools
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://agentworks:dev_password@postgres:5432/agentworks
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - agentworks
+    command: tail -f /dev/null  # Keep container running
+    profiles:
+      - dev-tools
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  agentworks:
+    driver: bridge
+    name: agentworks-network

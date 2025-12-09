@@ -1,0 +1,210 @@
+{
+  "id": "agentworks-platform-development",
+  "name": "AgentWorks Platform Development",
+  "status": "lane2_ready",
+  "created": "2025-12-02T19:20:33.763Z",
+  "owner": "EngageSuite Bot",
+  "lanes": {
+    "0": {
+      "name": "Vision & CoPilot Planning",
+      "cards": [
+        {
+          "type": "qa_session",
+          "id": "1764703251",
+          "status": "in_progress",
+          "created": "2025-12-02T19:20:51.740Z"
+        },
+        {
+          "type": "strategy_analysis",
+          "status": "completed",
+          "created": "2025-12-02T19:23:05.531Z"
+        },
+        {
+          "type": "ux_storyboards",
+          "status": "completed",
+          "created": "2025-12-02T19:23:24.203Z"
+        },
+        {
+          "type": "blueprint_finalization",
+          "status": "completed",
+          "created": "2025-12-02T19:23:43.031Z"
+        }
+      ],
+      "status": "completed",
+      "completed_at": "2025-12-02T19:24:50.563Z"
+    },
+    "1": {
+      "name": "PRD / MVP Definition",
+      "cards": [
+        {
+          "type": "prd_generation",
+          "status": "completed",
+          "created": "2025-12-02T19:23:43.014Z",
+          "artifact": "docs/PRD.md"
+        },
+        {
+          "type": "prd_generation",
+          "status": "completed",
+          "created": "2025-12-02T19:24:50.587Z",
+          "artifact": "docs/PRD.md"
+        },
+        {
+          "type": "mvp_definition",
+          "status": "completed",
+          "created": "2025-12-02T19:31:28.795Z",
+          "artifact": "docs/MVP.md"
+        },
+        {
+          "type": "feature_cards",
+          "status": "completed",
+          "created": "2025-12-02T19:31:50.048Z",
+          "artifact": "cards/features/"
+        }
+      ],
+      "status": "completed",
+      "activated_at": "2025-12-02T19:24:50.563Z",
+      "completed_at": "2025-12-02T19:31:50.048Z"
+    },
+    "2": {
+      "name": "Research",
+      "cards": [],
+      "status": "ready"
+    },
+    "3": {
+      "name": "Architecture & Stack",
+      "cards": []
+    },
+    "4": {
+      "name": "Planning & Task Breakdown",
+      "cards": []
+    },
+    "5": {
+      "name": "Scaffolding / Setup",
+      "cards": []
+    },
+    "6": {
+      "name": "Build",
+      "cards": []
+    },
+    "7": {
+      "name": "Test & QA",
+      "cards": []
+    },
+    "8": {
+      "name": "Deploy",
+      "cards": []
+    },
+    "9": {
+      "name": "Docs & Training",
+      "cards": []
+    },
+    "10": {
+      "name": "Learn & Optimize",
+      "cards": []
+    }
+  },
+  "agents": {
+    "ceo_copilot": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": true,
+      "last_run": "2025-12-02T19:20:51.740Z"
+    },
+    "strategy": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": true,
+      "last_run": "2025-12-02T19:23:05.531Z"
+    },
+    "storyboard_ux": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": true,
+      "last_run": "2025-12-02T19:23:24.203Z"
+    },
+    "prd": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": true,
+      "last_run": "2025-12-02T19:24:50.587Z"
+    },
+    "mvp": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": true,
+      "last_run": "2025-12-02T19:31:28.795Z"
+    },
+    "research": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": false
+    },
+    "architect": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    },
+    "planner": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": false
+    },
+    "devops": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    },
+    "dev_backend": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    },
+    "dev_frontend": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    },
+    "qa": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    },
+    "troubleshooter": {
+      "provider": "google",
+      "model": "gemini-1.5-pro",
+      "active": false
+    },
+    "docs": {
+      "provider": "openai",
+      "model": "gpt-4-turbo",
+      "active": false
+    },
+    "refactor": {
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "active": false
+    }
+  },
+  "usage": {
+    "total_calls": 0,
+    "total_cost": 0.0,
+    "total_price": 0.0,
+    "calls_by_agent": {},
+    "calls_by_provider": {}
+  },
+  "blueprint_approved": true,
+  "blueprint_approval": {
+    "approved_by": "EngageSuite Bot",
+    "approved_at": "2025-12-02T19:24:50.563Z",
+    "version": "1.0"
+  },
+  "updated": "2025-12-02T19:31:50.048Z",
+  "feature_cards": {
+    "total": 8,
+    "epic": 1,
+    "must_have": 3,
+    "should_have": 2,
+    "could_have": 2,
+    "estimated_effort_days": 23
+  }
+}

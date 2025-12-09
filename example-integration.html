@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentWorks - Agent Coordination System Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">AgentWorks Agent Coordination System Demo</h1>
+        
+        <!-- System Status -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">System Status</h2>
+            <div id="systemStatus" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Status cards will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Agent Management -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Agent Management</h2>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <button onclick="deployPlanningAgent()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                    <i class="fas fa-brain mr-2"></i>Deploy Planning Agent
+                </button>
+                <button onclick="deployUIAgent()" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+                    <i class="fas fa-paint-brush mr-2"></i>Deploy UI Agent
+                </button>
+                <button onclick="deployDatabaseAgent()" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                    <i class="fas fa-database mr-2"></i>Deploy Database Agent
+                </button>
+                <button onclick="deployWorkflowAgent()" class="bg-orange-600 text-white px-4 py-2 rounded hover:bg-orange-700">
+                    <i class="fas fa-cogs mr-2"></i>Deploy Workflow Agent
+                </button>
+            </div>
+            <div id="activeAgents" class="mt-4">
+                <!-- Active agents will be listed here -->
+            </div>
+        </div>
+        
+        <!-- Task Execution -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Task Execution Demo</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Planning Tasks -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-3">Planning Tasks</h3>
+                    <div class="space-y-2">
+                        <button onclick="analyzeVision()" class="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded">
+                            <i class="fas fa-eye mr-2"></i>Analyze Project Vision
+                        </button>
+                        <button onclick="generateFeatures()" class="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded">
+                            <i class="fas fa-list mr-2"></i>Generate Features
+                        </button>
+                        <button onclick="researchMarket()" class="w-full text-left bg-blue-50 hover:bg-blue-100 p-3 rounded">
+                            <i class="fas fa-chart-line mr-2"></i>Market Research
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- UI Tasks -->
+                <div class="border rounded-lg p-4">
+                    <h3 class="font-semibold mb-3">UI Design Tasks</h3>
+                    <div class="space-y-2">
+                        <button onclick="generateComponent()" class="w-full text-left bg-purple-50 hover:bg-purple-100 p-3 rounded">
+                            <i class="fas fa-cubes mr-2"></i>Generate Component
+                        </button>
+                        <button onclick="createLayout()" class="w-full text-left bg-purple-50 hover:bg-purple-100 p-3 rounded">
+                            <i class="fas fa-layout mr-2"></i>Create Layout
+                        </button>
+                        <button onclick="analyzeAccessibility()" class="w-full text-left bg-purple-50 hover:bg-purple-100 p-3 rounded">
+                            <i class="fas fa-universal-access mr-2"></i>Accessibility Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Workflow Demonstration -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">Multi-Agent Workflow Demo</h2>
+            <div class="flex flex-wrap gap-4 mb-4">
+                <button onclick="runFullStackWorkflow()" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-purple-700">
+                    <i class="fas fa-play mr-2"></i>Run Full-Stack Development Workflow
+                </button>
+                <button onclick="runDataFlowWorkflow()" class="bg-gradient-to-r from-green-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-blue-700">
+                    <i class="fas fa-exchange-alt mr-2"></i>Run Cross-Module Data Flow
+                </button>
+            </div>
+            <div id="workflowStatus" class="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p class="text-gray-600">No workflows running</p>
+            </div>
+        </div>
+        
+        <!-- Event Log -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-semibold mb-4">Event Log</h2>
+            <div id="eventLog" class="h-64 overflow-y-auto bg-gray-50 p-4 rounded border font-mono text-sm">
+                <!-- Event log will be populated here -->
+            </div>
+            <button onclick="clearEventLog()" class="mt-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                Clear Log
+            </button>
+        </div>
+    </div>
+    
+    <!-- Load AgentWorks Scripts -->
+    <!-- Note: In a real implementation, these would be your actual AgentWorks files -->
+    <script>
+        // Mock enhanced-modules.js functionality for demo
+        window.AgentWorksState = {
+            planning: {
+                currentSession: {
+                    vision: null,
+                    features: [],
+                    research: null
+                }
+            },
+            ui: {
+                components: [],
+                mockups: []
+            },
+            database: {
+                schema: null,
+                entities: []
+            },
+            workflows: {
+                current: null,
+                templates: []
+            },
+            agents: {
+                available: [],
+                active: [],
+                contracts: []
+            }
+        };
+
+        window.AgentWorksEvents = {
+            listeners: {},
+            emit: function(event, data) {
+                logEvent(`Event: ${event}`, data);
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(callback => callback(data));
+                }
+            },
+            on: function(event, callback) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(callback);
+            },
+            off: function(event, callback) {
+                if (this.listeners[event]) {
+                    this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+                }
+            }
+        };
+
+        window.DataFlowIntegration = {
+            planningToKanban: function(data) {
+                logEvent('Data Flow: Planning to Kanban', data);
+            }
+        };
+
+        function showNotification(message, type = 'info') {
+            logEvent(`Notification (${type}): ${message}`);
+        }
+    </script>
+    
+    <!-- Load Agent System -->
+    <script src="agent-coordination-system.js"></script>
+    <script src="specialized-agents.js"></script>
+    <script src="agent-integration.js"></script>
+    
+    <script>
+        // Demo functionality
+        let eventLogContainer;
+        let systemStatusContainer;
+        let activeAgentsContainer;
+        let workflowStatusContainer;
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize containers
+            eventLogContainer = document.getElementById('eventLog');
+            systemStatusContainer = document.getElementById('systemStatus');
+            activeAgentsContainer = document.getElementById('activeAgents');
+            workflowStatusContainer = document.getElementById('workflowStatus');
+            
+            logEvent('Demo initialized');
+            
+            // Wait for agent system to load
+            setTimeout(async () => {
+                if (window.AgentCoordinator && window.AgentIntegration) {
+                    logEvent('Agent system detected, initializing...');
+                    await initializeAgentSystem();
+                } else {
+                    logEvent('⚠️ Agent system not loaded. Please check file paths.');
+                }
+            }, 1000);
+            
+            // Start status updates
+            setInterval(updateStatus, 2000);
+        });
+
+        async function initializeAgentSystem() {
+            try {
+                logEvent('Initializing Agent Coordination System...');
+                const result = await AgentCoordinator.initialize();
+                
+                if (result.success) {
+                    logEvent('✅ Agent Coordination System initialized successfully');
+                    
+                    // Initialize integration layer
+                    const integrationResult = await AgentIntegration.initialize();
+                    if (integrationResult.success) {
+                        logEvent('✅ Agent Integration Layer initialized successfully');
+                    }
+                } else {
+                    logEvent(`❌ Failed to initialize: ${result.error}`);
+                }
+            } catch (error) {
+                logEvent(`❌ Initialization error: ${error.message}`);
+            }
+        }
+
+        function updateStatus() {
+            if (!window.AgentCoordinator) return;
+            
+            const status = AgentCoordinator.getSystemStatus();
+            
+            // Update system status
+            systemStatusContainer.innerHTML = `
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-${status.system.status === 'healthy' ? 'green' : 'red'}-600">${status.agents.total}</div>
+                    <div class="text-sm text-gray-600">Total Agents</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">${status.agents.active}</div>
+                    <div class="text-sm text-gray-600">Active Agents</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">${status.workflows.total}</div>
+                    <div class="text-sm text-gray-600">Workflows</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-orange-600">${Math.round(status.performance.avgResponseTime)}ms</div>
+                    <div class="text-sm text-gray-600">Avg Response</div>
+                </div>
+            `;
+            
+            // Update active agents
+            const activeAgents = Array.from(AgentCoordinator.state.activeAgents.values());
+            activeAgentsContainer.innerHTML = activeAgents.length === 0 ? 
+                '<p class="text-gray-500">No active agents</p>' :
+                activeAgents.map(agent => `
+                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded mb-2">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-${agent.status === 'active' ? 'green' : 'yellow'}-500 rounded-full mr-3"></div>
+                            <div>
+                                <div class="font-medium">${agent.definition.name}</div>
+                                <div class="text-sm text-gray-600">${agent.definition.type}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm">${agent.status}</div>
+                            <div class="text-xs text-gray-500">${agent.performance.tasksCompleted} tasks</div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function logEvent(message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'mb-1';
+            logEntry.innerHTML = `<span class="text-blue-600">[${timestamp}]</span> ${message}`;
+            
+            if (data) {
+                const dataDiv = document.createElement('div');
+                dataDiv.className = 'ml-4 text-gray-600 text-xs';
+                dataDiv.textContent = JSON.stringify(data, null, 2);
+                logEntry.appendChild(dataDiv);
+            }
+            
+            if (eventLogContainer) {
+                eventLogContainer.appendChild(logEntry);
+                eventLogContainer.scrollTop = eventLogContainer.scrollHeight;
+            } else {
+                console.log(message, data);
+            }
+        }
+
+        function clearEventLog() {
+            if (eventLogContainer) {
+                eventLogContainer.innerHTML = '';
+            }
+        }
+
+        // Agent deployment functions
+        async function deployPlanningAgent() {
+            try {
+                logEvent('Deploying Planning Agent...');
+                const agent = AgentCoordinator.createPlanningAgent();
+                const registration = await AgentCoordinator.registerAgent(agent);
+                
+                if (registration.success) {
+                    const deployment = await AgentCoordinator.deployAgent(registration.agentId);
+                    if (deployment.success) {
+                        logEvent('✅ Planning Agent deployed successfully');
+                    } else {
+                        logEvent(`❌ Failed to deploy Planning Agent: ${deployment.error}`);
+                    }
+                }
+            } catch (error) {
+                logEvent(`❌ Error deploying Planning Agent: ${error.message}`);
+            }
+        }
+
+        async function deployUIAgent() {
+            try {
+                logEvent('Deploying UI Design Agent...');
+                const agent = AgentCoordinator.createUIDesignAgent();
+                const registration = await AgentCoordinator.registerAgent(agent);
+                
+                if (registration.success) {
+                    const deployment = await AgentCoordinator.deployAgent(registration.agentId);
+                    if (deployment.success) {
+                        logEvent('✅ UI Design Agent deployed successfully');
+                    } else {
+                        logEvent(`❌ Failed to deploy UI Design Agent: ${deployment.error}`);
+                    }
+                }
+            } catch (error) {
+                logEvent(`❌ Error deploying UI Design Agent: ${error.message}`);
+            }
+        }
+
+        async function deployDatabaseAgent() {
+            try {
+                logEvent('Deploying Database Agent...');
+                const agent = AgentCoordinator.createDatabaseAgent();
+                const registration = await AgentCoordinator.registerAgent(agent);
+                
+                if (registration.success) {
+                    const deployment = await AgentCoordinator.deployAgent(registration.agentId);
+                    if (deployment.success) {
+                        logEvent('✅ Database Agent deployed successfully');
+                    } else {
+                        logEvent(`❌ Failed to deploy Database Agent: ${deployment.error}`);
+                    }
+                }
+            } catch (error) {
+                logEvent(`❌ Error deploying Database Agent: ${error.message}`);
+            }
+        }
+
+        async function deployWorkflowAgent() {
+            try {
+                logEvent('Deploying Workflow Agent...');
+                const agent = AgentCoordinator.createWorkflowAgent();
+                const registration = await AgentCoordinator.registerAgent(agent);
+                
+                if (registration.success) {
+                    const deployment = await AgentCoordinator.deployAgent(registration.agentId);
+                    if (deployment.success) {
+                        logEvent('✅ Workflow Agent deployed successfully');
+                    } else {
+                        logEvent(`❌ Failed to deploy Workflow Agent: ${deployment.error}`);
+                    }
+                }
+            } catch (error) {
+                logEvent(`❌ Error deploying Workflow Agent: ${error.message}`);
+            }
+        }
+
+        // Task execution functions
+        async function analyzeVision() {
+            const planningAgent = findAgentByType('planning-agent');
+            if (!planningAgent) {
+                logEvent('❌ No Planning Agent available. Deploy one first.');
+                return;
+            }
+
+            const visionData = {
+                description: 'A modern e-commerce platform for selling digital products with subscription management',
+                audience: 'business',
+                category: 'ecommerce'
+            };
+
+            logEvent('Analyzing vision with Planning Agent...');
+            const result = await AgentCoordinator.executeTask(planningAgent.id, {
+                type: 'analyze-vision',
+                data: visionData
+            });
+
+            if (result.success) {
+                logEvent('✅ Vision analysis completed', result.result);
+            } else {
+                logEvent(`❌ Vision analysis failed: ${result.error}`);
+            }
+        }
+
+        async function generateFeatures() {
+            const planningAgent = findAgentByType('planning-agent');
+            if (!planningAgent) {
+                logEvent('❌ No Planning Agent available. Deploy one first.');
+                return;
+            }
+
+            logEvent('Generating features with Planning Agent...');
+            const result = await AgentCoordinator.executeTask(planningAgent.id, {
+                type: 'suggest-features',
+                data: { category: 'ecommerce', audience: 'business' }
+            });
+
+            if (result.success) {
+                logEvent('✅ Feature suggestions generated', result.result);
+            } else {
+                logEvent(`❌ Feature generation failed: ${result.error}`);
+            }
+        }
+
+        async function researchMarket() {
+            const planningAgent = findAgentByType('planning-agent');
+            if (!planningAgent) {
+                logEvent('❌ No Planning Agent available. Deploy one first.');
+                return;
+            }
+
+            logEvent('Conducting market research with Planning Agent...');
+            const result = await AgentCoordinator.executeTask(planningAgent.id, {
+                type: 'research-market',
+                data: { category: 'ecommerce', audience: 'business' }
+            });
+
+            if (result.success) {
+                logEvent('✅ Market research completed', result.result);
+            } else {
+                logEvent(`❌ Market research failed: ${result.error}`);
+            }
+        }
+
+        async function generateComponent() {
+            const uiAgent = findAgentByType('ui-design-agent');
+            if (!uiAgent) {
+                logEvent('❌ No UI Design Agent available. Deploy one first.');
+                return;
+            }
+
+            logEvent('Generating component with UI Design Agent...');
+            const result = await AgentCoordinator.executeTask(uiAgent.id, {
+                type: 'generate-component',
+                data: { type: 'form', name: 'User Registration Form' }
+            });
+
+            if (result.success) {
+                logEvent('✅ Component generated', result.result);
+            } else {
+                logEvent(`❌ Component generation failed: ${result.error}`);
+            }
+        }
+
+        async function createLayout() {
+            const uiAgent = findAgentByType('ui-design-agent');
+            if (!uiAgent) {
+                logEvent('❌ No UI Design Agent available. Deploy one first.');
+                return;
+            }
+
+            logEvent('Creating layout with UI Design Agent...');
+            const result = await AgentCoordinator.executeTask(uiAgent.id, {
+                type: 'create-layout',
+                data: { type: 'dashboard', components: ['header', 'sidebar', 'main'] }
+            });
+
+            if (result.success) {
+                logEvent('✅ Layout created', result.result);
+            } else {
+                logEvent(`❌ Layout creation failed: ${result.error}`);
+            }
+        }
+
+        async function analyzeAccessibility() {
+            const uiAgent = findAgentByType('ui-design-agent');
+            if (!uiAgent) {
+                logEvent('❌ No UI Design Agent available. Deploy one first.');
+                return;
+            }
+
+            logEvent('Analyzing accessibility with UI Design Agent...');
+            const result = await AgentCoordinator.executeTask(uiAgent.id, {
+                type: 'analyze-accessibility',
+                data: { components: [{ type: 'button' }, { type: 'form' }] }
+            });
+
+            if (result.success) {
+                logEvent('✅ Accessibility analysis completed', result.result);
+            } else {
+                logEvent(`❌ Accessibility analysis failed: ${result.error}`);
+            }
+        }
+
+        async function runFullStackWorkflow() {
+            logEvent('Starting Full-Stack Development Workflow...');
+            workflowStatusContainer.innerHTML = '<p class="text-blue-600">Running full-stack workflow...</p>';
+
+            const workflowDefinition = {
+                name: 'Full Stack Development Workflow',
+                description: 'End-to-end application development',
+                steps: [
+                    {
+                        agentType: 'planning-agent',
+                        task: { 
+                            type: 'analyze-vision', 
+                            data: { 
+                                description: 'E-commerce platform for digital products',
+                                category: 'ecommerce',
+                                audience: 'business'
+                            }
+                        }
+                    },
+                    {
+                        agentType: 'ui-design-agent',
+                        task: { 
+                            type: 'generate-mockup', 
+                            data: { type: 'ecommerce', pages: ['home', 'products', 'cart'] }
+                        }
+                    },
+                    {
+                        agentType: 'database-agent',
+                        task: { 
+                            type: 'design-schema', 
+                            data: { entities: ['User', 'Product', 'Order'] }
+                        }
+                    }
+                ],
+                parallelExecution: false
+            };
+
+            try {
+                const workflow = await AgentCoordinator.createWorkflow(workflowDefinition);
+                if (workflow.success) {
+                    const execution = await AgentCoordinator.executeWorkflow(workflow.workflowId);
+                    if (execution.success) {
+                        logEvent('✅ Full-stack workflow completed successfully', execution.workflow);
+                        workflowStatusContainer.innerHTML = '<p class="text-green-600">✅ Full-stack workflow completed successfully</p>';
+                    } else {
+                        logEvent(`❌ Workflow execution failed: ${execution.error}`);
+                        workflowStatusContainer.innerHTML = `<p class="text-red-600">❌ Workflow failed: ${execution.error}</p>`;
+                    }
+                } else {
+                    logEvent(`❌ Failed to create workflow: ${workflow.error}`);
+                    workflowStatusContainer.innerHTML = `<p class="text-red-600">❌ Failed to create workflow: ${workflow.error}</p>`;
+                }
+            } catch (error) {
+                logEvent(`❌ Workflow error: ${error.message}`);
+                workflowStatusContainer.innerHTML = `<p class="text-red-600">❌ Workflow error: ${error.message}</p>`;
+            }
+        }
+
+        async function runDataFlowWorkflow() {
+            logEvent('Starting Cross-Module Data Flow Workflow...');
+            workflowStatusContainer.innerHTML = '<p class="text-blue-600">Running cross-module data flow...</p>';
+
+            // Simulate cross-module data flow
+            AgentWorksEvents.emit('planning:visionSubmitted', {
+                description: 'SaaS platform for team collaboration',
+                category: 'saas',
+                audience: 'business'
+            });
+
+            setTimeout(() => {
+                AgentWorksEvents.emit('ui:componentCreated', {
+                    type: 'dashboard',
+                    components: ['team-list', 'project-board', 'activity-feed']
+                });
+            }, 1000);
+
+            setTimeout(() => {
+                AgentWorksEvents.emit('database:schemaCreated', {
+                    entities: ['Team', 'Project', 'Task', 'User']
+                });
+            }, 2000);
+
+            setTimeout(() => {
+                logEvent('✅ Cross-module data flow completed');
+                workflowStatusContainer.innerHTML = '<p class="text-green-600">✅ Cross-module data flow completed</p>';
+            }, 3000);
+        }
+
+        function findAgentByType(agentType) {
+            for (const [_, agent] of AgentCoordinator.state.activeAgents) {
+                if (agent.definition.type === agentType) {
+                    return agent;
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>

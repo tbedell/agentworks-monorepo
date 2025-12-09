@@ -1,0 +1,112 @@
+# Base Dockerfile for AgentWorks Node.js services
+# This provides a common base for all TypeScript services
+
+FROM node:18-alpine AS base
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Install pnpm globally
+RUN npm install -g pnpm@9.14.2
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/*/package.json ./packages/*/
+
+# Development stage
+FROM base AS development
+
+# Install all dependencies (including devDependencies)
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN pnpm --filter @agentworks/db generate
+
+# Build packages
+RUN pnpm build:packages
+
+# Expose common ports (can be overridden in service-specific Dockerfiles)
+EXPOSE 3000 8000 8001 8002 8003 8004 8080
+
+# Default command (should be overridden in service-specific Dockerfiles)
+CMD ["pnpm", "dev"]
+
+# Production dependencies stage
+FROM base AS production-deps
+
+# Install only production dependencies
+RUN pnpm install --frozen-lockfile --prod
+
+# Production build stage
+FROM base AS production-build
+
+# Install all dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN pnpm --filter @agentworks/db generate
+
+# Build the application
+RUN pnpm build
+
+# Production runtime stage
+FROM node:18-alpine AS production
+
+# Install system dependencies for production
+RUN apk add --no-cache \
+    dumb-init \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Create app user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Set working directory
+WORKDIR /app
+
+# Copy production dependencies
+COPY --from=production-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=production-deps --chown=nextjs:nodejs /app/packages/*/node_modules ./packages/*/node_modules
+
+# Copy built application
+COPY --from=production-build --chown=nextjs:nodejs /app/dist ./dist
+COPY --from=production-build --chown=nextjs:nodejs /app/packages/*/dist ./packages/*/dist
+
+# Copy package.json files
+COPY --chown=nextjs:nodejs package.json pnpm-workspace.yaml ./
+COPY --chown=nextjs:nodejs packages/*/package.json ./packages/*/
+
+# Copy Prisma schema and generated client
+COPY --from=production-build --chown=nextjs:nodejs /app/packages/db/prisma ./packages/db/prisma
+COPY --from=production-build --chown=nextjs:nodejs /app/packages/db/node_modules/.prisma ./packages/db/node_modules/.prisma
+
+# Install pnpm for production
+RUN npm install -g pnpm@9.14.2
+
+# Switch to non-root user
+USER nextjs
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:$PORT/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Default command (should be overridden)
+CMD ["node", "dist/index.js"]

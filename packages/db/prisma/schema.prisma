@@ -1,0 +1,1210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String    @id @default(uuid())
+  email       String    @unique
+  name        String
+  password    String?
+  avatarUrl   String?
+  tenantId    String?
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  tenant             Tenant?    @relation(fields: [tenantId], references: [id])
+  sessions           Session[]
+  ownedWorkspaces    Workspace[]
+  workspaceMemberships WorkspaceMember[]
+  assignedCards      Card[]
+  affiliate          Affiliate?
+  preferences        UserPreferences?
+
+  @@index([tenantId])
+}
+
+model UserPreferences {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  emailNotifications    Boolean  @default(true)
+  desktopNotifications  Boolean  @default(true)
+  agentStatusUpdates    Boolean  @default(true)
+  projectsBasePath      String?  // Local filesystem path for projects (e.g., /home/user/AgentWorks/Projects)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  ownerId     String
+  tenantId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant?           @relation(fields: [tenantId], references: [id])
+  owner       User              @relation(fields: [ownerId], references: [id])
+  members     WorkspaceMember[]
+  projects    Project[]
+  usageEvents UsageEvent[]
+
+  @@index([ownerId])
+  @@index([tenantId])
+}
+
+model WorkspaceMember {
+  id          String   @id @default(uuid())
+  workspaceId String
+  userId      String
+  role        String   @default("member")
+  createdAt   DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  workspaceId String
+  name        String
+  slug        String?
+  description String?
+  status      String   @default("Active")
+  phase       String   @default("vision")
+  localPath   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  workspace    Workspace            @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  boards       Board[]
+  docs         ProjectDoc[]
+  agentConfigs AgentConfig[]
+  usageEvents  UsageEvent[]
+  workflows    WorkflowDefinition[]
+  copilotConversations CoPilotConversation[]
+  deployments  ProjectDeployment[]
+  components   ProjectComponent[]
+  todos        ProjectTodo[]
+  sessions     AgentSession[]
+  gitConfig    ProjectGitConfig?
+  styleGuide   StyleGuide?
+  agentDocuments AgentDocument[]
+  files        ProjectFile[]
+  gitOperationRequests GitOperationRequest[]
+  terminalSessions TerminalSession[]
+  devEnvironments  DevEnvironment[]
+  repository       ProjectRepository?
+  builderStates    BuilderState[]
+
+  @@index([workspaceId])
+  @@index([slug])
+}
+
+model Board {
+  id        String   @id @default(uuid())
+  projectId String
+  name      String   @default("Development Board")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  lanes   Lane[]
+  cards   Card[]
+
+  @@index([projectId])
+}
+
+model Lane {
+  id                  String   @id @default(uuid())
+  boardId             String
+  laneNumber          Int
+  name                String
+  wipLimit            Int?
+  requiresHumanReview Boolean  @default(true)
+  autoAdvance         Boolean  @default(false)
+  createdAt           DateTime @default(now())
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards Card[]
+
+  @@unique([boardId, laneNumber])
+  @@index([boardId])
+}
+
+model Card {
+  id              String    @id @default(uuid())
+  boardId         String
+  laneId          String
+  title           String
+  description     String?
+  type            String
+  priority        String    @default("Medium")
+  status          String    @default("Draft")
+  assigneeId      String?
+  assignedAgent   String?   // Agent slug (e.g., 'frontend-agent', 'backend-agent', 'ceo-copilot')
+  position        Int       @default(0)
+  parentId        String?
+  reviewStatus    String?
+  approvedAt      DateTime?
+  approvedBy      String?
+  rejectedAt      DateTime?
+  rejectedBy      String?
+  reviewNotes     String?
+  contextFilePath String?   // Path to context file (e.g., /project/context/card-{id}.md)
+  completedAt     DateTime? // When the card was marked as Done
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  board     Board               @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  lane      Lane                @relation(fields: [laneId], references: [id])
+  assignee  User?               @relation(fields: [assigneeId], references: [id])
+  parent    Card?               @relation("CardHierarchy", fields: [parentId], references: [id])
+  children  Card[]              @relation("CardHierarchy")
+  agentRuns AgentRun[]
+  workflow  WorkflowDefinition?
+
+  @@index([boardId])
+  @@index([laneId])
+  @@index([assigneeId])
+  @@index([assignedAgent])
+  @@index([parentId])
+  @@index([reviewStatus])
+}
+
+model Agent {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  displayName  String
+  description  String
+  allowedLanes Int[]
+  defaultProvider String
+  defaultModel String
+  systemPrompt String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  runs    AgentRun[]
+  configs AgentConfig[]
+}
+
+model AgentConfig {
+  id        String   @id @default(uuid())
+  projectId String
+  agentId   String
+  provider  String
+  model     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id])
+
+  @@unique([projectId, agentId])
+}
+
+model AgentRun {
+  id           String    @id @default(uuid())
+  cardId       String
+  agentId      String
+  status       String    @default("pending")
+  provider     String
+  model        String
+  inputTokens  Int       @default(0)
+  outputTokens Int       @default(0)
+  cost         Float     @default(0)
+  price        Float     @default(0)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  card       Card             @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  agent      Agent            @relation(fields: [agentId], references: [id])
+  logs       RunLog[]
+  usageEvent UsageEvent?
+  runSummary AgentRunSummary?
+
+  @@index([cardId])
+  @@index([agentId])
+  @@index([status])
+}
+
+model RunLog {
+  id        String   @id @default(uuid())
+  runId     String
+  timestamp DateTime @default(now())
+  level     String
+  message   String
+  metadata  Json?
+
+  run AgentRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
+  @@index([timestamp])
+}
+
+model UsageEvent {
+  id           String   @id @default(uuid())
+  workspaceId  String
+  projectId    String
+  cardId       String?
+  agentId      String?
+  runId        String?  @unique
+  provider     String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  cost         Float
+  price        Float
+  createdAt    DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id])
+  project   Project   @relation(fields: [projectId], references: [id])
+  run       AgentRun? @relation(fields: [runId], references: [id])
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([createdAt])
+}
+
+model ProjectDoc {
+  id        String   @id @default(uuid())
+  projectId String
+  type      String
+  content   String   @default("")
+  version   Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, type])
+  @@index([projectId])
+}
+
+model UsageRecord {
+  id           String   @id @default(uuid())
+  provider     String
+  model        String
+  operation    String
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  providerCost Float
+  billedAmount Float
+  workspaceId  String
+  projectId    String?
+  agentId      String?
+  metadata     String?
+  createdAt    DateTime @default(now())
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([agentId])
+  @@index([provider])
+  @@index([createdAt])
+}
+
+model ProviderConfig {
+  id                String   @id @default(uuid())
+  provider          String   @unique
+  displayName       String   @default("")
+  enabled           Boolean  @default(true)
+  apiKeyConfigured  Boolean  @default(false)
+  secretName        String
+  rateLimit         Int?
+  monthlyBudget     Float?
+  currentSpend      Float    @default(0)
+  metadata          String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model MediaJob {
+  id           String    @id @default(uuid())
+  provider     String
+  model        String
+  jobType      String
+  externalJobId String
+  status       String    @default("pending")
+  prompt       String
+  inputUrl     String?
+  resultUrl    String?
+  duration     Float?
+  resolution   String?
+  providerCost Float?
+  billedAmount Float?
+  workspaceId  String
+  projectId    String?
+  agentId      String?
+  metadata     String?
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@index([workspaceId])
+  @@index([projectId])
+  @@index([status])
+  @@index([externalJobId])
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("support_agent")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions  AdminSession[]
+  auditLogs AdminAuditLog[]
+}
+
+model AdminSession {
+  id        String   @id @default(uuid())
+  adminId   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  admin AdminUser @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+}
+
+model Tenant {
+  id                   String   @id @default(uuid())
+  name                 String
+  slug                 String   @unique
+  status               String   @default("trial")
+  planId               String?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  tokenUsageThisMonth  Int      @default(0)
+  tokenLimit           Int?
+  tokenBalance         Int      @default(0)
+  adminGranted         Boolean  @default(false)
+  adminGrantedBy       String?
+  adminGrantedAt       DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  plan          Plan?        @relation(fields: [planId], references: [id])
+  subscriptions Subscription[]
+  users         User[]
+  workspaces    Workspace[]
+  settings      TenantSettings?
+  copilotConversations CoPilotConversation[]
+  deployments   ProjectDeployment[]
+  providerCredentials TenantProviderCredential[]
+  devEnvironments DevEnvironment[]
+  githubConnections GitHubConnection[]
+
+  @@index([status])
+  @@index([stripeCustomerId])
+}
+
+model Plan {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  stripePriceId String?
+  monthlyPrice  Float
+  tokenLimit    Int?
+  features      String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tenants       Tenant[]
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String    @id @default(uuid())
+  tenantId             String
+  planId               String
+  stripeSubscriptionId String?
+  status               String    @default("active")
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  cancelAtPeriodEnd    Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model AdminAuditLog {
+  id           String   @id @default(uuid())
+  adminId      String
+  action       String
+  resourceType String
+  resourceId   String
+  tenantId     String?
+  details      Json?
+  ipAddress    String
+  timestamp    DateTime @default(now())
+
+  admin AdminUser @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([action])
+  @@index([resourceType])
+  @@index([timestamp])
+}
+
+model PlatformSettings {
+  id                      String   @id @default(uuid())
+  key                     String   @unique
+  value                   String
+  description             String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model PaymentProvider {
+  id                String   @id @default(uuid())
+  name              String   @unique
+  displayName       String
+  enabled           Boolean  @default(false)
+  apiKeyConfigured  Boolean  @default(false)
+  secretName        String?
+  webhookSecret     String?
+  testMode          Boolean  @default(true)
+  metadata          Json?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model CryptoWallet {
+  id              String   @id @default(uuid())
+  currency        String   @unique
+  displayName     String
+  walletAddress   String
+  qrCodeUrl       String?
+  enabled         Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model WorkflowDefinition {
+  id          String   @id @default(uuid())
+  projectId   String
+  cardId      String?  @unique
+  name        String
+  description String?
+  category    String   @default("custom")
+  status      String   @default("draft")
+  version     Int      @default(1)
+  isTemplate  Boolean  @default(false)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project    Project              @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  card       Card?                @relation(fields: [cardId], references: [id])
+  nodes      WorkflowNode[]
+  edges      WorkflowEdge[]
+  executions WorkflowExecution[]
+
+  @@index([projectId])
+  @@index([category])
+  @@index([isTemplate])
+}
+
+model WorkflowNode {
+  id           String   @id @default(uuid())
+  workflowId   String
+  nodeType     String
+  label        String
+  description  String?
+  positionX    Float
+  positionY    Float
+  config       Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  workflow     WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  sourceEdges  WorkflowEdge[]     @relation("SourceNode")
+  targetEdges  WorkflowEdge[]     @relation("TargetNode")
+
+  @@index([workflowId])
+  @@index([nodeType])
+}
+
+model WorkflowEdge {
+  id           String   @id @default(uuid())
+  workflowId   String
+  sourceNodeId String
+  targetNodeId String
+  sourceHandle String?
+  targetHandle String?
+  label        String?
+  edgeType     String   @default("default")
+  config       Json?
+  createdAt    DateTime @default(now())
+
+  workflow   WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  sourceNode WorkflowNode       @relation("SourceNode", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode WorkflowNode       @relation("TargetNode", fields: [targetNodeId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([sourceNodeId])
+  @@index([targetNodeId])
+}
+
+model WorkflowExecution {
+  id           String    @id @default(uuid())
+  workflowId   String
+  status       String    @default("pending")
+  triggeredBy  String?
+  input        Json?
+  output       Json?
+  logs         Json?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  workflow WorkflowDefinition @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model FounderPlan {
+  id            String   @id @default(uuid())
+  tier          String   @unique
+  name          String
+  price         Float
+  totalSpots    Int
+  remainingSpots Int
+  features      String[]
+  affiliateBonus Float   @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  waitlistLeads WaitlistLead[]
+  conversions   AffiliateConversion[]
+}
+
+model WaitlistLead {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String?
+  referralCode      String    @unique
+  referredByCode    String?
+  referralCount     Int       @default(0)
+  position          Int
+  status            String    @default("waiting")
+  founderPlanId     String?
+  reservedTenantId  String?
+  affiliateId       String?
+  ipAddress         String?
+  userAgent         String?
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  convertedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  founderPlan       FounderPlan? @relation(fields: [founderPlanId], references: [id])
+  affiliate         Affiliate?   @relation(fields: [affiliateId], references: [id])
+
+  @@index([referralCode])
+  @@index([referredByCode])
+  @@index([status])
+  @@index([affiliateId])
+  @@index([position])
+}
+
+model Affiliate {
+  id                String    @id @default(uuid())
+  userId            String?   @unique
+  email             String    @unique
+  name              String
+  code              String    @unique
+  status            String    @default("pending")
+  tier              String    @default("standard")
+  commissionRate    Float     @default(0.30)
+  lifetimeEarnings  Float     @default(0)
+  pendingEarnings   Float     @default(0)
+  paidEarnings      Float     @default(0)
+  totalReferrals    Int       @default(0)
+  totalConversions  Int       @default(0)
+  paypalEmail       String?
+  stripeAccountId   String?
+  website           String?
+  socialLinks       Json?
+  notes             String?
+  approvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  user              User?     @relation(fields: [userId], references: [id])
+  leads             WaitlistLead[]
+  conversions       AffiliateConversion[]
+  payouts           AffiliatePayout[]
+
+  @@index([code])
+  @@index([status])
+  @@index([tier])
+}
+
+model AffiliateConversion {
+  id              String    @id @default(uuid())
+  affiliateId     String
+  leadEmail       String
+  founderPlanId   String?
+  amount          Float
+  commission      Float
+  bonus           Float     @default(0)
+  status          String    @default("pending")
+  stripePaymentId String?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+
+  affiliate       Affiliate    @relation(fields: [affiliateId], references: [id])
+  founderPlan     FounderPlan? @relation(fields: [founderPlanId], references: [id])
+
+  @@index([affiliateId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AffiliatePayout {
+  id              String    @id @default(uuid())
+  affiliateId     String
+  amount          Float
+  method          String
+  status          String    @default("pending")
+  transactionId   String?
+  processedAt     DateTime?
+  createdAt       DateTime  @default(now())
+
+  affiliate       Affiliate @relation(fields: [affiliateId], references: [id])
+
+  @@index([affiliateId])
+  @@index([status])
+}
+
+model TenantSettings {
+  id                    String   @id @default(uuid())
+  tenantId              String   @unique
+  defaultAgentProvider  String   @default("openai")
+  defaultAgentModel     String   @default("gpt-4-turbo")
+  billingEmail          String?
+  companySize           String?
+  industry              String?
+  timezone              String   @default("America/New_York")
+  notificationPrefs     Json?
+  brandingConfig        Json?
+  gcpProjectId          String?
+  gcpRegion             String   @default("us-central1")
+  gcpServiceAccount     String?
+  customDomain          String?
+  onboardingCompleted   Boolean  @default(false)
+  onboardingStep        Int      @default(0)
+  tourCompleted         Boolean  @default(false)
+  tourStep              Int      @default(0)
+  tourDismissed         Boolean  @default(false)
+  tourDismissedAt       DateTime?
+  byoaEnabled           Boolean  @default(false)
+  byoaDefaultProvider   String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model TenantProviderCredential {
+  id               String    @id @default(uuid())
+  tenantId         String
+  provider         String
+  credentialType   String
+  encryptedToken   String
+  refreshToken     String?
+  tokenExpiresAt   DateTime?
+  subscriptionTier String?
+  isDefault        Boolean   @default(false)
+  assignedAgents   String[]
+  lastUsedAt       DateTime?
+  lastRefreshedAt  DateTime?
+  status           String    @default("active")
+  metadata         Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  tenant           Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, provider])
+  @@index([tenantId])
+  @@index([provider])
+  @@index([status])
+}
+
+model CoPilotConversation {
+  id          String   @id @default(uuid())
+  tenantId    String
+  projectId   String?
+  cardId      String?
+  context     String
+  title       String?
+  status      String   @default("active")
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  messages    CoPilotMessage[]
+
+  @@index([tenantId])
+  @@index([projectId])
+  @@index([context])
+  @@index([status])
+}
+
+model CoPilotMessage {
+  id              String   @id @default(uuid())
+  conversationId  String
+  role            String
+  content         String
+  metadata        Json?
+  tokenCount      Int?
+  createdAt       DateTime @default(now())
+
+  conversation    CoPilotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model ProjectDeployment {
+  id              String    @id @default(uuid())
+  tenantId        String
+  projectId       String
+  environment     String    @default("production")
+  status          String    @default("pending")
+  version         String?
+  gcpProjectId    String?
+  cloudRunService String?
+  cloudSqlInstance String?
+  customDomain    String?
+  publicUrl       String?
+  buildLogs       Json?
+  deployedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([projectId])
+  @@index([status])
+  @@index([environment])
+}
+
+model ProjectComponent {
+  id          String   @id @default(uuid())
+  projectId   String
+  type        String
+  name        String
+  data        Json
+  version     Int      @default(1)
+  lastSavedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, type, name])
+  @@index([projectId])
+  @@index([type])
+}
+
+model ProjectTodo {
+  id          String    @id @default(uuid())
+  projectId   String
+  cardId      String?
+  content     String
+  completed   Boolean   @default(false)
+  priority    Int       @default(0)
+  category    String    @default("general")
+  agentSource String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([cardId])
+  @@index([completed])
+}
+
+model AgentSession {
+  id          String    @id @default(uuid())
+  projectId   String
+  cardId      String?
+  context     String
+  phase       String?
+  logData     Json      @default("[]")
+  summary     String?
+  tokenCount  Int       @default(0)
+  status      String    @default("active")
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
+  createdAt   DateTime  @default(now())
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([cardId])
+  @@index([context])
+  @@index([status])
+}
+
+// ============================================
+// Agent Infrastructure Enhancement Models
+// ============================================
+
+model ProjectGitConfig {
+  id                String   @id @default(uuid())
+  projectId         String   @unique
+  repositoryUrl     String?
+  defaultBranch     String   @default("main")
+  developmentBranch String   @default("development")
+  productionBranch  String   @default("production")
+  autoCommit        Boolean  @default(false)
+  autoPush          Boolean  @default(false)
+  requireApproval   Boolean  @default(true)
+  branchPrefix      String   @default("feature/")
+  commitMessageTemplate String?
+  lastSyncedAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model StyleGuide {
+  id                String   @id @default(uuid())
+  projectId         String   @unique
+  version           Int      @default(1)
+
+  // Naming Conventions
+  variableCase      String   @default("camelCase")
+  functionCase      String   @default("camelCase")
+  classCase         String   @default("PascalCase")
+  constantCase      String   @default("UPPER_SNAKE")
+  fileCase          String   @default("kebab-case")
+  componentCase     String   @default("PascalCase")
+
+  // Formatting
+  indentStyle       String   @default("spaces")
+  indentSize        Int      @default(2)
+  maxLineLength     Int      @default(100)
+  semicolons        Boolean  @default(true)
+  singleQuotes      Boolean  @default(true)
+  trailingCommas    String   @default("es5")
+
+  // Data Formats
+  dateFormat        String   @default("ISO8601")
+  currencyFormat    String   @default("USD")
+  phoneFormat       String   @default("E164")
+  zipCodeFormat     String   @default("US")
+  numberFormat      String   @default("1,234.56")
+
+  // Code Standards
+  maxFunctionLength Int      @default(50)
+  maxFileLength     Int      @default(500)
+  requireDocstrings Boolean  @default(true)
+  testNamingPattern String   @default("*.test.ts")
+
+  // Language-specific
+  primaryLanguage   String   @default("typescript")
+  frameworks        String[] @default([])
+
+  // Custom Rules (JSON)
+  customRules       Json?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  project           Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model AgentDocument {
+  id          String   @id @default(uuid())
+  projectId   String
+  agentName   String
+  docType     String   // Plan, Task, Todo
+  content     String   @default("")
+  version     Int      @default(1)
+  tokenCount  Int      @default(0)
+  lastAgentRunId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, agentName, docType])
+  @@index([projectId])
+  @@index([agentName])
+  @@index([docType])
+}
+
+model ProjectFile {
+  id          String    @id @default(uuid())
+  projectId   String
+  path        String
+  type        String    // source, test, config, doc, asset
+  language    String?
+  size        Int       @default(0)
+  hash        String?
+  lastAgentId String?
+  gitStatus   String?   // untracked, modified, staged, committed
+  isGenerated Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, path])
+  @@index([projectId])
+  @@index([type])
+  @@index([gitStatus])
+  @@index([lastAgentId])
+}
+
+model GitOperationRequest {
+  id            String    @id @default(uuid())
+  projectId     String
+  operation     String    // commit, push, create_pr, merge
+  requestedBy   String    // agent name or 'copilot' or 'human'
+  status        String    @default("pending") // pending, approved, rejected, executed
+  details       Json?
+  approvedBy    String?
+  approvedAt    DateTime?
+  rejectedBy    String?
+  rejectedAt    DateTime?
+  rejectionReason String?
+  executedAt    DateTime?
+  executionResult Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([status])
+  @@index([requestedBy])
+}
+
+// ============================================
+// Cloud Platform V2 - Terminal & Dev Environment Models
+// ============================================
+
+model TerminalSession {
+  id             String    @id @default(uuid())
+  projectId      String
+  userId         String
+  devEnvId       String?
+  status         String    @default("active") // active, disconnected, terminated
+  cols           Int       @default(80)
+  rows           Int       @default(24)
+  gatewayId      String?   // Which terminal-gateway instance is handling this session
+  shellType      String    @default("bash") // bash, zsh, sh
+  lastActivityAt DateTime  @default(now())
+  createdAt      DateTime  @default(now())
+
+  project        Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  devEnvironment DevEnvironment? @relation(fields: [devEnvId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([userId])
+  @@index([devEnvId])
+  @@index([status])
+}
+
+model DevEnvironment {
+  id             String    @id @default(uuid())
+  projectId      String
+  tenantId       String
+  status         String    @default("provisioning") // provisioning, running, suspended, terminated, error
+  containerImage String    @default("gcr.io/agentworks/devenv:latest")
+  resourceTier   String    @default("standard") // basic, standard, performance
+  cpuLimit       String    @default("2")
+  memoryLimit    String    @default("4Gi")
+  storageLimit   String    @default("10Gi")
+  containerHost  String?   // Hostname/IP of the running container
+  containerPort  Int?
+  workspaceDir   String    @default("/workspace")
+  lastActiveAt   DateTime  @default(now())
+  idleTimeoutMs  Int       @default(3600000) // 1 hour default
+  suspendedAt    DateTime?
+  errorMessage   String?
+  metadata       Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant           Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  terminalSessions TerminalSession[]
+  mcpServers       McpServer[]
+
+  @@index([projectId])
+  @@index([tenantId])
+  @@index([status])
+}
+
+model McpServer {
+  id           String   @id @default(uuid())
+  devEnvId     String
+  serverType   String   // filesystem, terminal, git, database
+  name         String
+  port         Int
+  status       String   @default("starting") // starting, running, stopped, error
+  config       Json?
+  errorMessage String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  devEnvironment DevEnvironment @relation(fields: [devEnvId], references: [id], onDelete: Cascade)
+
+  @@unique([devEnvId, serverType])
+  @@index([devEnvId])
+  @@index([status])
+}
+
+// ============================================
+// Cloud Platform V2 - GitHub Integration Models
+// ============================================
+
+model GitHubConnection {
+  id             String    @id @default(uuid())
+  tenantId       String
+  installationId String?   // GitHub App installation ID
+  accessToken    String    // Encrypted OAuth token
+  refreshToken   String?
+  tokenExpiresAt DateTime?
+  githubUserId   String
+  githubUsername String
+  avatarUrl      String?
+  scopes         String[]  @default([])
+  status         String    @default("active") // active, expired, revoked
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  tenant              Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  projectRepositories ProjectRepository[]
+
+  @@unique([tenantId, githubUserId])
+  @@index([tenantId])
+  @@index([githubUsername])
+}
+
+model ProjectRepository {
+  id             String   @id @default(uuid())
+  projectId      String   @unique
+  githubConnId   String
+  repoOwner      String
+  repoName       String
+  repoFullName   String   // owner/repo
+  defaultBranch  String   @default("main")
+  webhookId      String?
+  webhookSecret  String?
+  lastSyncedAt   DateTime?
+  clonedAt       DateTime?
+  syncStatus     String   @default("pending") // pending, syncing, synced, error
+  errorMessage   String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  githubConnection GitHubConnection @relation(fields: [githubConnId], references: [id], onDelete: Cascade)
+
+  @@index([githubConnId])
+  @@index([repoFullName])
+}
+
+// ============================================
+// Cloud Platform V2 - Claude Code Agent Models
+// ============================================
+
+model BuilderState {
+  id          String   @id @default(uuid())
+  projectId   String
+  builderType String   // "ui" | "db" | "workflow"
+  state       Json     @default("{}")
+  version     Int      @default(1)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, builderType])
+  @@index([projectId])
+}
+
+model AgentRunSummary {
+  id              String   @id @default(uuid())
+  agentRunId      String   @unique
+  filesRead       String[] @default([])
+  filesWritten    String[] @default([])
+  commandsRun     String[] @default([])
+  docsUpdated     String[] @default([])
+  cardUpdates     Json     @default("{}")
+  todoChanges     Json     @default("{}")
+  builderChanges  Json     @default("{}")
+  followUpItems   String[] @default([])
+  summary         String?
+  createdAt       DateTime @default(now())
+
+  agentRun        AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+
+  @@index([agentRunId])
+}
+
+model CardTodo {
+  id          String    @id @default(uuid())
+  cardId      String
+  content     String
+  completed   Boolean   @default(false)
+  priority    Int       @default(0)
+  agentSource String?   // Which agent created this todo
+  completedAt DateTime?
+  completedBy String?   // Agent name or user ID
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([cardId])
+  @@index([completed])
+}

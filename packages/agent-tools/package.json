@@ -1,0 +1,30 @@
+{
+  "name": "@agentworks/agent-tools",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@agentworks/db": "workspace:*",
+    "@agentworks/shared": "workspace:*",
+    "@agentworks/project-files": "workspace:*",
+    "@agentworks/style-guide": "workspace:*",
+    "@agentworks/git-service": "workspace:*",
+    "glob": "^10.3.10"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}

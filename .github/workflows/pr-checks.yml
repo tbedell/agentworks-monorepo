@@ -1,0 +1,400 @@
+name: Pull Request Checks
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.14.2'
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run linting
+        run: pnpm lint
+
+      - name: Run type checking
+        run: pnpm typecheck
+
+      - name: Check formatting
+        run: |
+          pnpm prettier --check "**/*.{ts,tsx,js,jsx,json,md}"
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run security audit
+        run: pnpm audit --audit-level moderate
+
+      - name: Check for vulnerable dependencies
+        run: |
+          # Check if any high or critical vulnerabilities exist
+          if pnpm audit --audit-level high; then
+            echo "No high-severity vulnerabilities found"
+          else
+            echo "High-severity vulnerabilities detected"
+            exit 1
+          fi
+
+  build-check:
+    name: Build Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Check build artifacts
+        run: |
+          # Verify that all expected build artifacts exist
+          find packages -name "dist" -type d | while read dir; do
+            if [ -z "$(ls -A "$dir")" ]; then
+              echo "Empty build directory: $dir"
+              exit 1
+            fi
+          done
+
+  quick-tests:
+    name: Quick Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Setup test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+
+      - name: Run quick unit tests (Core Service)
+        run: pnpm test:unit --selectProjects core-service --testPathPattern="auth|database" --maxWorkers=2
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          REDIS_URL: redis://localhost:6379/1
+          JWT_SECRET: test-jwt-secret
+
+      - name: Run quick unit tests (Frontend)
+        run: pnpm test:unit --selectProjects web --testPathPattern="components.*test\.(ts|tsx)$" --maxWorkers=2
+        env:
+          NODE_ENV: test
+
+  pr-size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        run: |
+          # Count lines changed
+          LINES_CHANGED=$(git diff --stat origin/${{ github.base_ref }}..HEAD | tail -1 | grep -o '[0-9]\+ insertions\|[0-9]\+ deletions' | awk '{sum += $1} END {print sum}')
+          
+          echo "Lines changed: $LINES_CHANGED"
+          
+          # Warn if PR is very large
+          if [ "$LINES_CHANGED" -gt 1000 ]; then
+            echo "::warning::This PR modifies $LINES_CHANGED lines. Consider breaking it into smaller PRs for easier review."
+          fi
+          
+          # Fail if PR is extremely large
+          if [ "$LINES_CHANGED" -gt 5000 ]; then
+            echo "::error::This PR modifies $LINES_CHANGED lines, which is too large. Please break it into smaller PRs."
+            exit 1
+          fi
+
+      - name: Check file count
+        run: |
+          # Count files changed
+          FILES_CHANGED=$(git diff --name-only origin/${{ github.base_ref }}..HEAD | wc -l)
+          
+          echo "Files changed: $FILES_CHANGED"
+          
+          # Warn if too many files changed
+          if [ "$FILES_CHANGED" -gt 50 ]; then
+            echo "::warning::This PR modifies $FILES_CHANGED files. Consider breaking it into smaller PRs."
+          fi
+
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for dependency changes
+        run: |
+          # Check if package.json files were modified
+          if git diff --name-only origin/${{ github.base_ref }}..HEAD | grep -E "package\.json$|pnpm-lock\.yaml$"; then
+            echo "::notice::This PR modifies dependencies. Please ensure:"
+            echo "- Dependencies are necessary and well-justified"
+            echo "- Version constraints are appropriate"
+            echo "- No security vulnerabilities are introduced"
+            echo "- Bundle size impact is considered"
+          fi
+
+      - name: Check for new dependencies
+        run: |
+          # Check for new dependencies added
+          if git diff origin/${{ github.base_ref }}..HEAD -- "**/package.json" | grep "^\+" | grep -E '"\s*:\s*"'; then
+            echo "::notice::New dependencies detected. Review checklist:"
+            echo "- Is this dependency actively maintained?"
+            echo "- Does it have a good security track record?"
+            echo "- Is the license compatible?"
+            echo "- Could existing dependencies be used instead?"
+          fi
+
+  test-coverage-check:
+    name: Test Coverage Check
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: agentworks_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Setup test database
+        run: |
+          pnpm --filter @agentworks/db generate
+          pnpm --filter @agentworks/db push
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+
+      - name: Run tests with coverage for changed files
+        run: |
+          # Get list of changed TypeScript files
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}..HEAD | grep -E '\.(ts|tsx)$' | grep -v '\.test\.' | grep -v '\.spec\.' | head -20)
+          
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Running tests for changed files:"
+            echo "$CHANGED_FILES"
+            
+            # Run tests with coverage
+            pnpm test:coverage --selectProjects core-service web --testPathIgnorePatterns="/node_modules/" --collectCoverageOnlyFrom="$CHANGED_FILES"
+          else
+            echo "No relevant source files changed"
+          fi
+        env:
+          NODE_ENV: test
+          DATABASE_URL: postgresql://test:test@localhost:5432/agentworks_test
+          REDIS_URL: redis://localhost:6379/1
+          JWT_SECRET: test-jwt-secret
+
+  pr-checklist:
+    name: PR Checklist Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+            
+            const body = pr.body || '';
+            const requiredSections = [
+              'Description',
+              'Changes',
+              'Testing',
+              'Breaking Changes'
+            ];
+            
+            const missingSections = requiredSections.filter(section => 
+              !body.toLowerCase().includes(section.toLowerCase())
+            );
+            
+            if (missingSections.length > 0) {
+              core.warning(`PR description missing sections: ${missingSections.join(', ')}`);
+            }
+            
+            // Check if PR addresses testing
+            if (!body.toLowerCase().includes('test')) {
+              core.warning('PR description should mention testing approach');
+            }
+
+  ready-for-review:
+    name: Ready for Review
+    runs-on: ubuntu-latest
+    needs: [lint-and-typecheck, security-audit, build-check, quick-tests]
+    
+    steps:
+      - name: All checks passed
+        run: |
+          echo "✅ All PR checks passed successfully!"
+          echo "This PR is ready for code review."

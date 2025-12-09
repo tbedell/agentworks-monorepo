@@ -1,0 +1,30 @@
+{
+  "name": "@agentworks/agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agentworks/shared": "workspace:*",
+    "@agentworks/db": "workspace:*",
+    "@agentworks/providers": "workspace:*",
+    "@agentworks/ai-gateway": "workspace:*",
+    "@agentworks/style-guide": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "typescript": "^5.7.2"
+  }
+}

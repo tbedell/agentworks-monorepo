@@ -1,0 +1,29 @@
+{
+  "name": "@agentworks/queue",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agentworks/shared": "workspace:*",
+    "@google-cloud/pubsub": "^4.9.0",
+    "@google-cloud/tasks": "^5.5.0",
+    "bullmq": "^5.30.1",
+    "ioredis": "^5.4.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  }
+}

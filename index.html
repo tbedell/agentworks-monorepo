@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentWorks Studio - Agent-Native Kanban Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="enhanced-modules.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'agentworks-blue': '#2563eb',
+                        'agentworks-gray': '#f8fafc'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-agentworks-gray min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 flex-shrink-0">
+        <div class="px-6">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-agentworks-blue rounded flex items-center justify-center">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>
+                        <h1 class="text-lg font-semibold text-agentworks-blue">AgentWorks</h1>
+                    </div>
+                    
+                    <!-- Navigation Tabs -->
+                    <nav class="flex space-x-6">
+                        <button id="tab-planning" class="px-3 py-2 text-sm font-medium text-agentworks-blue border-b-2 border-agentworks-blue bg-blue-50 rounded-t main-tab" onclick="switchMainTab('planning', this)">
+                            Planning
+                        </button>
+                        <button id="tab-kanban" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('kanban', this)">
+                            Kanban
+                        </button>
+                        <button id="tab-ui-builder" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('ui-builder', this)">
+                            UI Builder
+                        </button>
+                        <button id="tab-db-builder" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('db-builder', this)">
+                            DB Builder
+                        </button>
+                        <button id="tab-workflows" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('workflows', this)">
+                            Workflows
+                        </button>
+                        <button id="tab-agents" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('agents', this)">
+                            Agents
+                        </button>
+                        <button id="tab-usage" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-agentworks-blue rounded-t hover:bg-gray-50 main-tab" onclick="switchMainTab('usage', this)">
+                            Usage & Billing
+                        </button>
+                    </nav>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="bg-agentworks-blue text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                        CoPilot
+                    </button>
+                    <div class="w-8 h-8 bg-agentworks-blue rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        TB
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Left Panel: CoPilot Console -->
+        <main class="flex-1 flex flex-col min-w-0">
+            <div class="flex-1 p-6 overflow-auto">
+                <div class="max-w-4xl">
+                    <!-- CoPilot Console Header -->
+                    <div class="mb-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-2">CoPilot Console</h2>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-agentworks-blue rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-crown text-white text-sm"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">CEO CoPilot</p>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        Welcome to AgentWorks! I'm here to guide you through setting up your agent-native development environment. Let's start by understanding your project vision and technical requirements.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Vision Step -->
+                    <div class="mb-8">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-6 h-6 bg-agentworks-blue rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                1
+                            </div>
+                            <h3 class="text-base font-medium text-gray-900">Project Vision</h3>
+                        </div>
+                        
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-gray-700 mb-3">
+                                Let me understand what type of application you want to build. What's the core problem your application will solve?
+                            </p>
+                            <div class="space-y-3">
+                                <textarea 
+                                    class="w-full p-3 border border-gray-300 rounded text-sm resize-none" 
+                                    rows="3" 
+                                    placeholder="Describe your application idea and the problem it solves..."
+                                ></textarea>
+                                <div class="flex justify-end">
+                                    <button class="bg-agentworks-blue text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                                        Next Step
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Infrastructure Profile Selection -->
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900 mb-3">Select your infrastructure profile:</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Standard SaaS -->
+                                <div class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-agentworks-blue cursor-pointer transition-colors">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i class="fas fa-cloud text-agentworks-blue"></i>
+                                        <h5 class="font-medium text-gray-900">Standard SaaS</h5>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mb-3">
+                                        Multi-tenant web application with REST APIs, database, and basic authentication.
+                                    </p>
+                                    <div class="space-y-1 text-xs text-gray-500">
+                                        <div>• React/Vue frontend</div>
+                                        <div>• Node.js/Python backend</div>
+                                        <div>• PostgreSQL database</div>
+                                        <div>• JWT authentication</div>
+                                    </div>
+                                </div>
+
+                                <!-- SaaS + Mobile -->
+                                <div class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-agentworks-blue cursor-pointer transition-colors">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i class="fas fa-mobile-alt text-agentworks-blue"></i>
+                                        <h5 class="font-medium text-gray-900">SaaS + Mobile</h5>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mb-3">
+                                        Full-stack application with native mobile apps and advanced features.
+                                    </p>
+                                    <div class="space-y-1 text-xs text-gray-500">
+                                        <div>• Cross-platform mobile</div>
+                                        <div>• GraphQL APIs</div>
+                                        <div>• Real-time features</div>
+                                        <div>• Push notifications</div>
+                                    </div>
+                                </div>
+
+                                <!-- Internal Tool -->
+                                <div class="bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-agentworks-blue cursor-pointer transition-colors">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i class="fas fa-tools text-agentworks-blue"></i>
+                                        <h5 class="font-medium text-gray-900">Internal Tool</h5>
+                                    </div>
+                                    <p class="text-xs text-gray-600 mb-3">
+                                        Enterprise internal tools with advanced integrations and compliance.
+                                    </p>
+                                    <div class="space-y-1 text-xs text-gray-500">
+                                        <div>• SSO integration</div>
+                                        <div>• Admin dashboards</div>
+                                        <div>• API integrations</div>
+                                        <div>• Audit logging</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel -->
+        <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-0">
+                    <button class="px-4 py-3 text-sm font-medium text-agentworks-blue border-b-2 border-agentworks-blue bg-blue-50 flex-1 text-center">
+                        Summary
+                    </button>
+                    <button class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-agentworks-blue flex-1 text-center">
+                        Terminal
+                    </button>
+                    <button class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-agentworks-blue flex-1 text-center">
+                        Docs
+                    </button>
+                    <button class="px-4 py-3 text-sm font-medium text-gray-600 hover:text-agentworks-blue flex-1 text-center">
+                        Runs
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Panel Content -->
+            <div class="flex-1 p-4 overflow-auto">
+                <div class="space-y-4">
+                    <!-- Quick Stats -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Quick Stats</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Active Agents:</span>
+                                <span class="text-gray-900">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Cards in Flow:</span>
+                                <span class="text-gray-900">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Project Status:</span>
+                                <span class="text-orange-600">Planning</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Recent Activity</h4>
+                        <div class="text-sm text-gray-600">
+                            <p>No recent activity. Start by defining your project vision above.</p>
+                        </div>
+                    </div>
+
+                    <!-- Agent Status -->
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 mb-2">Agent Status</h4>
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                <span class="text-sm text-gray-600">CEO CoPilot - Ready</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <span class="text-sm text-gray-600">Strategy Agent - Idle</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
+                                <span class="text-sm text-gray-600">PRD Agent - Idle</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Terminal Panel -->
+    <footer class="bg-gray-900 text-gray-100 flex-shrink-0">
+        <div class="px-6 py-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                        <span class="text-sm">No active run</span>
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        Loaded view: planning
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-6 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-orange-400">In Progress</span>
+                        <span class="text-orange-400">15%</span>
+                    </div>
+                    <div class="flex items-center space-x-4 text-gray-400">
+                        <span>2 weeks</span>
+                        <span>0 cards</span>
+                        <span>0 agents</span>
+                        <span class="text-green-400">Listening...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // AgentWorks Studio Frontend JavaScript
+        
+        // Tab switching functionality
+        function switchTab(tabName, element) {
+            // Remove active state from all tabs
+            const tabs = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => {
+                tab.classList.remove('text-agentworks-blue', 'border-b-2', 'border-agentworks-blue', 'bg-blue-50');
+                tab.classList.add('text-gray-600');
+            });
+            
+            // Add active state to clicked tab
+            element.classList.remove('text-gray-600');
+            element.classList.add('text-agentworks-blue', 'border-b-2', 'border-agentworks-blue', 'bg-blue-50');
+            
+            // Update panel content based on tab
+            updatePanelContent(tabName);
+        }
+        
+        // Update right panel content
+        function updatePanelContent(tabName) {
+            const panelContent = document.getElementById('panel-content');
+            
+            switch(tabName) {
+                case 'terminal':
+                    panelContent.innerHTML = `
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-medium text-gray-900">Terminal Output</h4>
+                            <div class="bg-gray-900 text-green-400 p-3 rounded text-xs font-mono h-32 overflow-auto">
+                                <div>AgentWorks Studio v1.0.0</div>
+                                <div>Initializing agent environment...</div>
+                                <div>Waiting for agent commands...</div>
+                                <div class="text-gray-500">No active agents</div>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'docs':
+                    panelContent.innerHTML = `
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-medium text-gray-900">Documentation</h4>
+                            <div class="space-y-2 text-sm">
+                                <a href="#" class="block text-agentworks-blue hover:underline">Getting Started Guide</a>
+                                <a href="#" class="block text-agentworks-blue hover:underline">Agent Configuration</a>
+                                <a href="#" class="block text-agentworks-blue hover:underline">Kanban Workflow</a>
+                                <a href="#" class="block text-agentworks-blue hover:underline">API Reference</a>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                case 'runs':
+                    panelContent.innerHTML = `
+                        <div class="space-y-4">
+                            <h4 class="text-sm font-medium text-gray-900">Agent Runs</h4>
+                            <div class="text-sm text-gray-600">
+                                <p>No agent runs yet. Start by completing the project vision step.</p>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                default:
+                    // Summary tab (default content already in HTML)
+                    break;
+            }
+        }
+        
+        // Infrastructure profile selection
+        function selectProfile(profileType, element) {
+            // Remove selection from all profiles
+            const profiles = document.querySelectorAll('.profile-card');
+            profiles.forEach(profile => {
+                profile.classList.remove('border-agentworks-blue', 'bg-blue-50');
+                profile.classList.add('border-gray-200');
+            });
+            
+            // Add selection to clicked profile
+            element.classList.remove('border-gray-200');
+            element.classList.add('border-agentworks-blue', 'bg-blue-50');
+            
+            console.log('Selected profile:', profileType);
+        }
+        
+        // Navigation tab switching
+        function switchMainTab(tabName, element) {
+            // Remove active state from all main tabs
+            const mainTabs = document.querySelectorAll('.main-tab');
+            mainTabs.forEach(tab => {
+                tab.classList.remove('text-agentworks-blue', 'border-b-2', 'border-agentworks-blue', 'bg-blue-50');
+                tab.classList.add('text-gray-600');
+            });
+            
+            // Add active state to clicked tab
+            element.classList.remove('text-gray-600');
+            element.classList.add('text-agentworks-blue', 'border-b-2', 'border-agentworks-blue', 'bg-blue-50');
+            
+            console.log('Switched to tab:', tabName);
+            
+            // Load different views based on tab
+            loadTabContent(tabName);
+        }
+        
+        // Load tab content
+        function loadTabContent(tabName) {
+            const mainContent = document.querySelector('main .flex-1');
+            
+            switch(tabName) {
+                case 'kanban':
+                    loadKanbanView();
+                    break;
+                case 'planning':
+                    loadPlanningView();
+                    break;
+                case 'ui-builder':
+                    loadUIBuilderView();
+                    break;
+                case 'db-builder':
+                    loadDBBuilderView();
+                    break;
+                case 'workflows':
+                    loadWorkflowsView();
+                    break;
+                case 'agents':
+                    loadAgentsView();
+                    break;
+                case 'usage':
+                    loadUsageView();
+                    break;
+                default:
+                    mainContent.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="text-gray-400 mb-4">
+                                <i class="fas fa-cog text-4xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">${tabName} Coming Soon</h3>
+                            <p class="text-gray-600">This feature is under development.</p>
+                        </div>
+                    `;
+                    break;
+            }
+        }
+        
+        // Load planning view (existing content)
+        function loadPlanningView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 p-6 overflow-auto'; // Restore padding for planning
+            mainContent.innerHTML = `
+                <div class="max-w-4xl">
+                    <!-- CoPilot Console Header -->
+                    <div class="mb-6">
+                        <h2 class="text-lg font-medium text-gray-900 mb-2">CoPilot Console</h2>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-agentworks-blue rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-crown text-white text-sm"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-sm font-medium text-gray-900">CEO CoPilot</p>
+                                    <p class="text-sm text-gray-600 mt-1">
+                                        Welcome to AgentWorks! I'm here to guide you through setting up your agent-native development environment.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Vision Step -->
+                    <div class="mb-8">
+                        <div class="flex items-center space-x-3 mb-4">
+                            <div class="w-6 h-6 bg-agentworks-blue rounded-full flex items-center justify-center text-white text-xs font-medium">1</div>
+                            <h3 class="text-base font-medium text-gray-900">Project Vision</h3>
+                        </div>
+                        
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-gray-700 mb-3">Let me understand what type of application you want to build.</p>
+                            <div class="space-y-3">
+                                <textarea class="w-full p-3 border border-gray-300 rounded text-sm resize-none" rows="3" 
+                                    placeholder="Describe your application idea..."></textarea>
+                                <div class="flex justify-end">
+                                    <button class="bg-agentworks-blue text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                                        Next Step
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load Kanban view
+        function loadKanbanView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden'; // Remove padding, allow full space
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col bg-gray-50">
+                    <!-- Kanban Header -->
+                    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-xl font-semibold text-gray-900">Development Board</h2>
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">11-Lane Process</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="flex items-center gap-2 px-3 py-2 bg-agentworks-blue text-white rounded text-sm hover:bg-blue-700" onclick="showAddCardModal()">
+                                    <i class="fas fa-plus"></i>
+                                    Add Card
+                                </button>
+                                <button class="p-2 border border-gray-300 rounded hover:bg-gray-50">
+                                    <i class="fas fa-filter"></i>
+                                </button>
+                                <button class="p-2 border border-gray-300 rounded hover:bg-gray-50">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Search and Filters -->
+                        <div class="flex items-center gap-3">
+                            <div class="relative flex-1 max-w-md">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" placeholder="Search cards..." 
+                                    class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <button class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded hover:bg-gray-50">
+                                <i class="fas fa-users"></i>
+                                Team
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kanban Board -->
+                    <div class="flex-1 overflow-auto p-6">
+                        <div id="kanban-board" class="flex gap-6 min-w-max h-full">
+                            <!-- Lanes will be generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize the Kanban board
+            initializeKanbanBoard();
+        }
+        
+        // Load UI Builder view
+        function loadUIBuilderView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden'; // Remove padding, allow full space
+            mainContent.innerHTML = `
+                <div class="h-full flex bg-gray-100">
+                    <!-- Left Sidebar - Component Library -->
+                    <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+                        <div class="p-4 border-b border-gray-200">
+                            <h2 class="font-semibold text-gray-900 mb-4">Component Library</h2>
+                        </div>
+
+                        <div class="flex-1 overflow-auto">
+                            <!-- LAYOUT Section -->
+                            <div class="p-4">
+                                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">LAYOUT</h3>
+                                <div class="space-y-2">
+                                    <button onclick="handleComponentDrop('container')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-square text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Container</div>
+                                                <div class="text-xs text-gray-500 mt-1">Basic container component</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('grid')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-th text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Grid</div>
+                                                <div class="text-xs text-gray-500 mt-1">Grid layout system</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('flexbox')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-cube text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Flexbox</div>
+                                                <div class="text-xs text-gray-500 mt-1">Flexible box layout</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- COMPONENTS Section -->
+                            <div class="p-4">
+                                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">COMPONENTS</h3>
+                                <div class="space-y-2">
+                                    <button onclick="handleComponentDrop('button')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-mouse-pointer text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Button</div>
+                                                <div class="text-xs text-gray-500 mt-1">Interactive button element</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('input')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-keyboard text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Input</div>
+                                                <div class="text-xs text-gray-500 mt-1">Text input field</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('card')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-credit-card text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Card</div>
+                                                <div class="text-xs text-gray-500 mt-1">Content card component</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('table')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-table text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Table</div>
+                                                <div class="text-xs text-gray-500 mt-1">Data table component</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('modal')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-window-restore text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Modal</div>
+                                                <div class="text-xs text-gray-500 mt-1">Modal dialog overlay</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('navigation')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-bars text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Navigation</div>
+                                                <div class="text-xs text-gray-500 mt-1">Navigation menu</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- DATA Section -->
+                            <div class="p-4">
+                                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">DATA</h3>
+                                <div class="space-y-2">
+                                    <button onclick="handleComponentDrop('list')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-list text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">List</div>
+                                                <div class="text-xs text-gray-500 mt-1">Dynamic list component</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('chart')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-chart-bar text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Chart</div>
+                                                <div class="text-xs text-gray-500 mt-1">Data visualization chart</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button onclick="handleComponentDrop('form')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-wpforms text-gray-500 group-hover:text-blue-600"></i>
+                                            <div>
+                                                <div class="font-medium text-sm text-gray-900">Form</div>
+                                                <div class="text-xs text-gray-500 mt-1">Form input collection</div>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="flex-1 flex flex-col">
+                        <!-- Top Toolbar -->
+                        <div class="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+                            <div class="flex items-center gap-4">
+                                <h1 class="font-semibold text-gray-900">AgentWorks - Dashboard</h1>
+                                <div class="flex items-center gap-2">
+                                    <button class="p-2 text-gray-500 hover:text-gray-700 rounded">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-500 hover:text-gray-700 rounded">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                    <button class="p-2 text-gray-500 hover:text-gray-700 rounded">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button onclick="exportJSON()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                                    <i class="fas fa-download"></i>
+                                    Export JSON
+                                </button>
+                                <button onclick="generateCode()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                                    <i class="fas fa-code"></i>
+                                    Generate Code
+                                </button>
+                                <button onclick="previewUI()" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg">
+                                    <i class="fas fa-eye"></i>
+                                    Preview
+                                </button>
+                                
+                                <!-- Breakpoint Selector -->
+                                <div class="flex items-center bg-gray-100 rounded-lg p-1">
+                                    <button onclick="setBreakpoint('mobile')" id="mobile-btn" class="flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors text-gray-600 hover:text-gray-900">
+                                        <i class="fas fa-mobile-alt"></i>
+                                        <span class="hidden sm:inline">Mobile</span>
+                                    </button>
+                                    <button onclick="setBreakpoint('tablet')" id="tablet-btn" class="flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors text-gray-600 hover:text-gray-900">
+                                        <i class="fas fa-tablet-alt"></i>
+                                        <span class="hidden sm:inline">Tablet</span>
+                                    </button>
+                                    <button onclick="setBreakpoint('desktop')" id="desktop-btn" class="flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors bg-white text-gray-900 shadow-sm">
+                                        <i class="fas fa-desktop"></i>
+                                        <span class="hidden sm:inline">Desktop</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Canvas Area -->
+                        <div class="flex-1 flex">
+                            <!-- Design Canvas -->
+                            <div class="flex-1 bg-gray-50 p-8 overflow-auto">
+                                <div class="flex justify-center">
+                                    <!-- Browser Frame -->
+                                    <div class="bg-gray-200 rounded-lg p-2 shadow-lg">
+                                        <div class="bg-white rounded-t border border-gray-300 p-2 flex items-center gap-2 mb-0">
+                                            <div class="flex gap-2">
+                                                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                            </div>
+                                            <div class="flex-1 bg-gray-100 rounded text-xs px-3 py-1 text-gray-600 text-center">
+                                                localhost:3010/ui-builder
+                                            </div>
+                                        </div>
+                                        
+                                        <div id="ui-canvas" class="bg-white border-l border-r border-b border-gray-300 rounded-b overflow-hidden relative" 
+                                             style="width: 1024px; min-height: 600px;">
+                                            <!-- Canvas Content -->
+                                            <div id="canvas-content" class="relative h-full">
+                                                <div class="flex items-center justify-center h-full p-8">
+                                                    <div class="text-center">
+                                                        <div class="h-16 w-16 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                                                            <i class="fas fa-puzzle-piece text-gray-400 text-2xl"></i>
+                                                        </div>
+                                                        <h3 class="text-lg font-semibold text-gray-900 mb-2">AgentWorks - Dashboard</h3>
+                                                        <p class="text-gray-600">
+                                                            Drag components from the library to start building your interface
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Properties Panel -->
+                            <div class="w-80 bg-white border-l border-gray-200 flex flex-col">
+                                <div class="p-4 border-b border-gray-200">
+                                    <h3 class="font-semibold text-gray-900">Properties</h3>
+                                    <div class="flex mt-3 bg-gray-100 rounded-lg p-1">
+                                        <button onclick="setActiveTab('styles')" id="styles-tab" class="flex-1 px-3 py-1.5 text-sm rounded bg-white text-gray-900 shadow-sm">
+                                            Styles
+                                        </button>
+                                        <button onclick="setActiveTab('data')" id="data-tab" class="flex-1 px-3 py-1.5 text-sm rounded text-gray-600 hover:text-gray-900">
+                                            Data
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex-1 overflow-auto p-4" id="properties-content">
+                                    <div class="text-center text-gray-500 mt-8">
+                                        <i class="fas fa-puzzle-piece text-gray-300 text-3xl mb-4"></i>
+                                        <p>Select a component to edit its properties</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize UI Builder
+            initializeUIBuilder();
+        }
+        
+        // Initialize Kanban board with 11 lanes
+        function initializeKanbanBoard() {
+            const lanes = [
+                { id: 'lane-0', name: 'Copilot Sessions', description: 'Initial project planning', color: '#3B82F6', wipLimit: 3, agentTypes: ['copilot'] },
+                { id: 'lane-1', name: 'Blueprint Approval', description: 'Review and approve blueprints', color: '#10B981', wipLimit: 5, agentTypes: ['reviewer', 'architect'] },
+                { id: 'lane-2', name: 'Feature Cards', description: 'Break down into actionable cards', color: '#8B5CF6', wipLimit: 10, agentTypes: ['planner'] },
+                { id: 'lane-3', name: 'Requirements', description: 'Define detailed requirements', color: '#F59E0B', wipLimit: 8, agentTypes: ['analyst'] },
+                { id: 'lane-4', name: 'Architecture', description: 'System design and planning', color: '#EF4444', wipLimit: 6, agentTypes: ['architect'] },
+                { id: 'lane-5', name: 'Implementation', description: 'Code development', color: '#06B6D4', wipLimit: 15, agentTypes: ['developer', 'coder'] },
+                { id: 'lane-6', name: 'Code Review', description: 'Peer review and QA', color: '#84CC16', wipLimit: 10, agentTypes: ['reviewer'] },
+                { id: 'lane-7', name: 'Testing', description: 'Quality assurance', color: '#F97316', wipLimit: 8, agentTypes: ['tester'] },
+                { id: 'lane-8', name: 'Documentation', description: 'Knowledge management', color: '#6366F1', wipLimit: 5, agentTypes: ['documenter'] },
+                { id: 'lane-9', name: 'Deployment', description: 'Production release', color: '#EC4899', wipLimit: 3, agentTypes: ['deployer'] },
+                { id: 'lane-10', name: 'Monitoring', description: 'Post-deployment monitoring', color: '#14B8A6', wipLimit: 5, agentTypes: ['monitor'] }
+            ];
+            
+            const sampleCards = [
+                {
+                    id: 'card-1',
+                    title: 'Setup Kanban Board Architecture',
+                    description: 'Design the component structure and data flow for the Kanban board system',
+                    laneId: 'lane-0',
+                    priority: 'high',
+                    type: 'feature',
+                    assignedAgents: ['copilot'],
+                    estimatedPoints: 8,
+                    labels: ['frontend', 'architecture']
+                },
+                {
+                    id: 'card-2',
+                    title: 'Implement Drag & Drop',
+                    description: 'Add drag and drop functionality between lanes',
+                    laneId: 'lane-5',
+                    priority: 'medium',
+                    type: 'feature',
+                    assignedAgents: ['developer'],
+                    estimatedPoints: 5,
+                    labels: ['frontend', 'interaction']
+                }
+            ];
+            
+            renderKanbanBoard(lanes, sampleCards);
+        }
+        
+        // Render the Kanban board
+        function renderKanbanBoard(lanes, cards) {
+            const board = document.getElementById('kanban-board');
+            if (!board) return;
+            
+            board.innerHTML = lanes.map(lane => {
+                const laneCards = cards.filter(card => card.laneId === lane.id);
+                const wipWarning = lane.wipLimit && laneCards.length >= lane.wipLimit * 0.8;
+                
+                return `
+                    <div class="flex-shrink-0 w-80">
+                        <div class="bg-white rounded-lg border-2 border-gray-200 h-full flex flex-col">
+                            <!-- Lane Header -->
+                            <div class="p-4 border-t-4 rounded-t-lg" style="border-top-color: ${lane.color}">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="font-semibold text-gray-900 truncate">${lane.name}</h3>
+                                    <span class="text-sm text-gray-500">${laneCards.length}${lane.wipLimit ? ` / ${lane.wipLimit}` : ''}</span>
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">${lane.description}</p>
+                                
+                                ${lane.agentTypes.length > 0 ? `
+                                    <div class="flex flex-wrap gap-1">
+                                        ${lane.agentTypes.map(type => `
+                                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">${type}</span>
+                                        `).join('')}
+                                    </div>
+                                ` : ''}
+                                
+                                ${wipWarning ? `
+                                    <div class="mt-2 px-2 py-1 text-xs rounded ${
+                                        laneCards.length >= lane.wipLimit 
+                                            ? 'bg-red-100 text-red-700 border border-red-200' 
+                                            : 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+                                    }">
+                                        ${laneCards.length >= lane.wipLimit 
+                                            ? `WIP limit reached (${lane.wipLimit})` 
+                                            : `Approaching WIP limit (${lane.wipLimit})`
+                                        }
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Cards Container -->
+                            <div class="flex-1 p-3 space-y-3 overflow-y-auto min-h-32" data-lane-id="${lane.id}">
+                                ${laneCards.map(card => renderCard(card)).join('')}
+                                
+                                ${laneCards.length === 0 ? `
+                                    <div class="text-center py-8 text-gray-400">
+                                        <div class="text-sm">No cards in this lane</div>
+                                        <button class="mt-2 text-sm text-blue-600 hover:text-blue-700 font-medium" onclick="addCard('${lane.id}')">
+                                            Add a card
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add drag and drop functionality
+            enableDragAndDrop();
+        }
+        
+        // Render individual card
+        function renderCard(card) {
+            const priorityColors = {
+                low: 'bg-gray-100 text-gray-600',
+                medium: 'bg-blue-100 text-blue-700',
+                high: 'bg-orange-100 text-orange-700',
+                urgent: 'bg-red-100 text-red-700'
+            };
+            
+            const typeColors = {
+                feature: 'bg-green-100 text-green-700',
+                bug: 'bg-red-100 text-red-700',
+                task: 'bg-blue-100 text-blue-700',
+                epic: 'bg-purple-100 text-purple-700',
+                story: 'bg-indigo-100 text-indigo-700'
+            };
+            
+            return `
+                <div class="bg-white rounded-lg border border-gray-200 p-3 cursor-pointer hover:border-gray-300 hover:shadow-sm transition-all duration-200" 
+                     draggable="true" data-card-id="${card.id}" onmousedown="startDrag(event, '${card.id}')">
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex gap-1">
+                            <span class="px-2 py-1 text-xs font-medium rounded ${typeColors[card.type] || typeColors.task}">
+                                ${card.type}
+                            </span>
+                            <span class="px-2 py-1 text-xs font-medium rounded ${priorityColors[card.priority] || priorityColors.medium}">
+                                ${card.priority}
+                            </span>
+                        </div>
+                        ${card.estimatedPoints ? `
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                ${card.estimatedPoints}pts
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <h4 class="font-medium text-gray-900 mb-1 line-clamp-2">${card.title}</h4>
+                    
+                    ${card.description ? `
+                        <p class="text-sm text-gray-600 mb-3 line-clamp-2">${card.description}</p>
+                    ` : ''}
+
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            ${card.assignedAgents && card.assignedAgents.length > 0 ? `
+                                <div class="flex items-center gap-1 text-xs text-gray-500">
+                                    <i class="fas fa-user"></i>
+                                    <span>${card.assignedAgents.length}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    ${card.labels && card.labels.length > 0 ? `
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${card.labels.slice(0, 3).map(label => `
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">${label}</span>
+                            `).join('')}
+                            ${card.labels.length > 3 ? `
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                                    +${card.labels.length - 3}
+                                </span>
+                            ` : ''}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+        
+        // Enable drag and drop functionality
+        function enableDragAndDrop() {
+            let draggedCard = null;
+            
+            // Add drag event listeners to all cards
+            document.querySelectorAll('[data-card-id]').forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    draggedCard = e.target;
+                    e.target.style.opacity = '0.5';
+                });
+                
+                card.addEventListener('dragend', (e) => {
+                    e.target.style.opacity = '1';
+                    draggedCard = null;
+                });
+            });
+            
+            // Add drop zone listeners to lanes
+            document.querySelectorAll('[data-lane-id]').forEach(lane => {
+                lane.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    lane.classList.add('bg-blue-50');
+                });
+                
+                lane.addEventListener('dragleave', (e) => {
+                    if (!lane.contains(e.relatedTarget)) {
+                        lane.classList.remove('bg-blue-50');
+                    }
+                });
+                
+                lane.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    lane.classList.remove('bg-blue-50');
+                    
+                    if (draggedCard) {
+                        const cardId = draggedCard.dataset.cardId;
+                        const newLaneId = lane.dataset.laneId;
+                        
+                        // Move card to new lane
+                        lane.appendChild(draggedCard);
+                        
+                        // Remove empty state if it exists
+                        const emptyState = lane.querySelector('.text-center.py-8');
+                        if (emptyState) {
+                            emptyState.remove();
+                        }
+                        
+                        console.log(`Card ${cardId} moved to lane ${newLaneId}`);
+                        
+                        // In a real app, this would update the backend
+                        showNotification(`Card moved to ${lane.closest('.w-80').querySelector('h3').textContent}`);
+                    }
+                });
+            });
+        }
+        
+        // Add card function
+        function addCard(laneId) {
+            const title = prompt('Enter card title:');
+            if (!title) return;
+            
+            const description = prompt('Enter card description (optional):') || '';
+            
+            const newCard = {
+                id: 'card-' + Date.now(),
+                title: title,
+                description: description,
+                laneId: laneId,
+                priority: 'medium',
+                type: 'task',
+                assignedAgents: [],
+                estimatedPoints: null,
+                labels: []
+            };
+            
+            const lane = document.querySelector(`[data-lane-id="${laneId}"]`);
+            if (lane) {
+                // Remove empty state
+                const emptyState = lane.querySelector('.text-center.py-8');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                
+                // Add new card
+                const cardElement = document.createElement('div');
+                cardElement.innerHTML = renderCard(newCard);
+                cardElement.firstElementChild.addEventListener('dragstart', (e) => {
+                    e.target.style.opacity = '0.5';
+                });
+                cardElement.firstElementChild.addEventListener('dragend', (e) => {
+                    e.target.style.opacity = '1';
+                });
+                
+                lane.appendChild(cardElement.firstElementChild);
+                
+                showNotification('Card created successfully!');
+            }
+        }
+        
+        // Show notification
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        // Show add card modal (simplified version)
+        function showAddCardModal() {
+            const title = prompt('Enter card title:');
+            if (!title) return;
+            
+            const description = prompt('Enter card description (optional):') || '';
+            const laneId = 'lane-0'; // Default to first lane
+            
+            const newCard = {
+                id: 'card-' + Date.now(),
+                title: title,
+                description: description,
+                laneId: laneId,
+                priority: 'medium',
+                type: 'task',
+                assignedAgents: [],
+                estimatedPoints: null,
+                labels: []
+            };
+            
+            addCardToLane(newCard, laneId);
+        }
+        
+        // Add card to specific lane
+        function addCardToLane(card, laneId) {
+            const lane = document.querySelector(`[data-lane-id="${laneId}"]`);
+            if (lane) {
+                // Remove empty state
+                const emptyState = lane.querySelector('.text-center.py-8');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                
+                // Add new card
+                const cardElement = document.createElement('div');
+                cardElement.innerHTML = renderCard(card);
+                const cardNode = cardElement.firstElementChild;
+                
+                // Add drag event listeners
+                cardNode.addEventListener('dragstart', (e) => {
+                    e.target.style.opacity = '0.5';
+                });
+                cardNode.addEventListener('dragend', (e) => {
+                    e.target.style.opacity = '1';
+                });
+                
+                lane.appendChild(cardNode);
+                showNotification('Card created successfully!');
+            }
+        }
+        
+        // UI Builder functionality
+        let canvasComponents = [];
+        let selectedComponent = null;
+        let currentBreakpoint = 'desktop';
+        let activeTab = 'styles';
+        
+        // Initialize UI Builder
+        function initializeUIBuilder() {
+            // Set default breakpoint
+            setBreakpoint('desktop');
+        }
+        
+        // Handle component drop
+        function handleComponentDrop(componentType) {
+            const component = {
+                id: componentType + '_' + Date.now(),
+                type: componentType,
+                name: capitalizeFirst(componentType),
+                x: 100 + (canvasComponents.length * 20),
+                y: 100 + (canvasComponents.length * 20),
+                width: 200,
+                height: 100,
+                properties: {
+                    text: capitalizeFirst(componentType),
+                    backgroundColor: '#FFFFFF',
+                    color: '#000000',
+                    padding: '12px',
+                    margin: '8px',
+                    borderRadius: '4px'
+                }
+            };
+            
+            canvasComponents.push(component);
+            renderCanvas();
+            selectComponent(component);
+            showNotification(`${component.name} component added to canvas`);
+        }
+        
+        // Render canvas
+        function renderCanvas() {
+            const canvasContent = document.getElementById('canvas-content');
+            if (!canvasContent) return;
+            
+            if (canvasComponents.length === 0) {
+                canvasContent.innerHTML = `
+                    <div class="flex items-center justify-center h-full p-8">
+                        <div class="text-center">
+                            <div class="h-16 w-16 bg-gray-200 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                                <i class="fas fa-puzzle-piece text-gray-400 text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">AgentWorks - Dashboard</h3>
+                            <p class="text-gray-600">
+                                Drag components from the library to start building your interface
+                            </p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                canvasContent.innerHTML = `
+                    <div class="p-4">
+                        <h2 class="text-2xl font-bold mb-6">AgentWorks Dashboard</h2>
+                        ${canvasComponents.map(comp => renderUIComponent(comp)).join('')}
+                    </div>
+                `;
+            }
+        }
+        
+        // Render individual component
+        function renderUIComponent(comp) {
+            const isSelected = selectedComponent && selectedComponent.id === comp.id;
+            
+            return `
+                <div onclick="selectComponent(${JSON.stringify(comp).replace(/"/g, '&quot;')})"
+                     class="absolute border-2 rounded cursor-pointer transition-all ${
+                         isSelected
+                             ? 'border-blue-500 shadow-lg'
+                             : 'border-gray-300 hover:border-gray-400'
+                     }"
+                     style="left: ${comp.x}px; top: ${comp.y}px; width: ${comp.width}px; height: ${comp.height}px; 
+                            background-color: ${comp.properties.backgroundColor}; padding: ${comp.properties.padding};">
+                    <div class="flex items-center justify-center h-full">
+                        ${getComponentHTML(comp)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Get component HTML based on type
+        function getComponentHTML(comp) {
+            switch(comp.type) {
+                case 'button':
+                    return `<button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">${comp.properties.text}</button>`;
+                case 'input':
+                    return `<input class="w-full px-3 py-2 border border-gray-300 rounded" placeholder="${comp.properties.text}" />`;
+                case 'card':
+                    return `<div class="w-full h-full bg-white border border-gray-200 rounded p-4 shadow"><h4 class="font-medium">${comp.properties.text}</h4></div>`;
+                case 'table':
+                    return `<div class="w-full"><table class="min-w-full"><thead><tr><th class="border px-4 py-2">Column 1</th><th class="border px-4 py-2">Column 2</th></tr></thead><tbody><tr><td class="border px-4 py-2">Data 1</td><td class="border px-4 py-2">Data 2</td></tr></tbody></table></div>`;
+                case 'list':
+                    return `<ul class="space-y-2"><li class="flex items-center gap-2"><i class="fas fa-circle text-xs"></i> List Item 1</li><li class="flex items-center gap-2"><i class="fas fa-circle text-xs"></i> List Item 2</li></ul>`;
+                case 'chart':
+                    return `<div class="w-full h-full flex items-center justify-center bg-gray-100 rounded"><i class="fas fa-chart-bar text-2xl text-gray-400"></i></div>`;
+                case 'navigation':
+                    return `<nav class="w-full"><ul class="flex space-x-4"><li><a href="#" class="text-blue-600 hover:text-blue-800">Home</a></li><li><a href="#" class="text-blue-600 hover:text-blue-800">About</a></li></ul></nav>`;
+                default:
+                    return `<span class="text-gray-700">${comp.properties.text}</span>`;
+            }
+        }
+        
+        // Select component
+        function selectComponent(comp) {
+            selectedComponent = comp;
+            renderCanvas();
+            updatePropertiesPanel();
+        }
+        
+        // Update properties panel
+        function updatePropertiesPanel() {
+            const content = document.getElementById('properties-content');
+            if (!content) return;
+            
+            if (!selectedComponent) {
+                content.innerHTML = `
+                    <div class="text-center text-gray-500 mt-8">
+                        <i class="fas fa-puzzle-piece text-gray-300 text-3xl mb-4"></i>
+                        <p>Select a component to edit its properties</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (activeTab === 'styles') {
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Text</label>
+                            <input type="text" value="${selectedComponent.properties.text}" 
+                                   onchange="updateComponentProperty('text', this.value)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+                            <input type="color" value="${selectedComponent.properties.backgroundColor}" 
+                                   onchange="updateComponentProperty('backgroundColor', this.value)"
+                                   class="w-full h-10 border border-gray-300 rounded-lg" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Width</label>
+                            <input type="number" value="${selectedComponent.width}" 
+                                   onchange="updateComponentDimension('width', parseInt(this.value))"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Height</label>
+                            <input type="number" value="${selectedComponent.height}" 
+                                   onchange="updateComponentDimension('height', parseInt(this.value))"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Padding</label>
+                            <input type="text" value="${selectedComponent.properties.padding}" 
+                                   onchange="updateComponentProperty('padding', this.value)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Border Radius</label>
+                            <input type="text" value="${selectedComponent.properties.borderRadius}" 
+                                   onchange="updateComponentProperty('borderRadius', this.value)"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Component Type</label>
+                            <input type="text" value="${selectedComponent.type}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50" readonly />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Component ID</label>
+                            <input type="text" value="${selectedComponent.id}" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50" readonly />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position X</label>
+                            <input type="number" value="${selectedComponent.x}" 
+                                   onchange="updateComponentPosition('x', parseInt(this.value))"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Position Y</label>
+                            <input type="number" value="${selectedComponent.y}" 
+                                   onchange="updateComponentPosition('y', parseInt(this.value))"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Update component property
+        function updateComponentProperty(property, value) {
+            if (selectedComponent) {
+                selectedComponent.properties[property] = value;
+                renderCanvas();
+            }
+        }
+        
+        // Update component dimension
+        function updateComponentDimension(dimension, value) {
+            if (selectedComponent) {
+                selectedComponent[dimension] = value;
+                renderCanvas();
+                updatePropertiesPanel();
+            }
+        }
+        
+        // Update component position
+        function updateComponentPosition(axis, value) {
+            if (selectedComponent) {
+                selectedComponent[axis] = value;
+                renderCanvas();
+            }
+        }
+        
+        // Set active tab
+        function setActiveTab(tab) {
+            activeTab = tab;
+            
+            // Update tab buttons
+            document.getElementById('styles-tab').className = tab === 'styles' 
+                ? 'flex-1 px-3 py-1.5 text-sm rounded bg-white text-gray-900 shadow-sm'
+                : 'flex-1 px-3 py-1.5 text-sm rounded text-gray-600 hover:text-gray-900';
+                
+            document.getElementById('data-tab').className = tab === 'data'
+                ? 'flex-1 px-3 py-1.5 text-sm rounded bg-white text-gray-900 shadow-sm'
+                : 'flex-1 px-3 py-1.5 text-sm rounded text-gray-600 hover:text-gray-900';
+            
+            updatePropertiesPanel();
+        }
+        
+        // Set breakpoint
+        function setBreakpoint(breakpoint) {
+            currentBreakpoint = breakpoint;
+            
+            // Update breakpoint buttons
+            ['mobile', 'tablet', 'desktop'].forEach(bp => {
+                const btn = document.getElementById(bp + '-btn');
+                if (btn) {
+                    btn.className = bp === breakpoint
+                        ? 'flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors bg-white text-gray-900 shadow-sm'
+                        : 'flex items-center gap-2 px-3 py-1.5 rounded text-sm transition-colors text-gray-600 hover:text-gray-900';
+                }
+            });
+            
+            // Update canvas width
+            const canvas = document.getElementById('ui-canvas');
+            if (canvas) {
+                const widths = { mobile: 375, tablet: 768, desktop: 1024 };
+                canvas.style.width = widths[breakpoint] + 'px';
+            }
+        }
+        
+        // Export JSON
+        function exportJSON() {
+            const data = {
+                components: canvasComponents,
+                breakpoint: currentBreakpoint,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ui-design.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Design exported as JSON');
+        }
+        
+        // Generate code
+        function generateCode() {
+            let code = `// Generated UI Code\\n\\n`;
+            code += `import React from 'react';\\n\\n`;
+            code += `export default function GeneratedDashboard() {\\n`;
+            code += `  return (\\n`;
+            code += `    <div className="relative w-full h-full p-4">\\n`;
+            code += `      <h2 className="text-2xl font-bold mb-6">AgentWorks Dashboard</h2>\\n`;
+            
+            canvasComponents.forEach(comp => {
+                code += `      <div className="absolute" style={{\\n`;
+                code += `        left: '${comp.x}px',\\n`;
+                code += `        top: '${comp.y}px',\\n`;
+                code += `        width: '${comp.width}px',\\n`;
+                code += `        height: '${comp.height}px'\\n`;
+                code += `      }}>\\n`;
+                
+                switch(comp.type) {
+                    case 'button':
+                        code += `        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">\\n`;
+                        code += `          ${comp.properties.text}\\n`;
+                        code += `        </button>\\n`;
+                        break;
+                    case 'input':
+                        code += `        <input className="w-full px-3 py-2 border border-gray-300 rounded" placeholder="${comp.properties.text}" />\\n`;
+                        break;
+                    default:
+                        code += `        <div className="w-full h-full flex items-center justify-center">\\n`;
+                        code += `          ${comp.properties.text}\\n`;
+                        code += `        </div>\\n`;
+                }
+                
+                code += `      </div>\\n`;
+            });
+            
+            code += `    </div>\\n`;
+            code += `  );\\n`;
+            code += `}`;
+            
+            // Show code in alert (in a real app, this would open a modal)
+            alert('Generated Code:\\n\\n' + code.replace(/\\\\n/g, '\\n'));
+        }
+        
+        // Preview UI
+        function previewUI() {
+            const previewWindow = window.open('', '_blank', 'width=800,height=600');
+            previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>UI Preview</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                </head>
+                <body class="bg-gray-100 p-8">
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h2 class="text-2xl font-bold mb-6">AgentWorks Dashboard - Preview</h2>
+                        <div class="relative" style="width: ${currentBreakpoint === 'mobile' ? '375' : currentBreakpoint === 'tablet' ? '768' : '1024'}px; height: 600px;">
+                            ${canvasComponents.map(comp => `
+                                <div class="absolute border border-gray-200 rounded" style="left: ${comp.x}px; top: ${comp.y}px; width: ${comp.width}px; height: ${comp.height}px; background-color: ${comp.properties.backgroundColor}; padding: ${comp.properties.padding};">
+                                    <div class="flex items-center justify-center h-full">
+                                        ${getComponentHTML(comp)}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `);
+            previewWindow.document.close();
+        }
+        
+        // Utility function to capitalize first letter
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+        
+        // Load DB Builder view
+        function loadDBBuilderView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden';
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col bg-gray-50">
+                    <!-- DB Builder Header -->
+                    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-database text-blue-600 text-xl"></i>
+                                <h2 class="text-xl font-semibold text-gray-900">Database Schema Builder</h2>
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Visual Designer</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="exportDBSchema()" class="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">
+                                    <i class="fas fa-download"></i>
+                                    Export JSON
+                                </button>
+                                <button onclick="generateMigrations()" class="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">
+                                    <i class="fas fa-file-code"></i>
+                                    Generate SQL
+                                </button>
+                                <button onclick="validateDBSchema()" class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                    <i class="fas fa-check-circle"></i>
+                                    Validate Schema
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex">
+                        <!-- Entity Palette -->
+                        <div class="w-64 bg-white border-r border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Database Entities</h3>
+                            <div class="space-y-2">
+                                <button onclick="addDBEntity('users')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-users text-blue-600"></i>
+                                        <span class="font-medium">Users</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">User accounts & auth</div>
+                                </button>
+                                <button onclick="addDBEntity('workspaces')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-building text-green-600"></i>
+                                        <span class="font-medium">Workspaces</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Project workspaces</div>
+                                </button>
+                                <button onclick="addDBEntity('projects')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-project-diagram text-purple-600"></i>
+                                        <span class="font-medium">Projects</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Development projects</div>
+                                </button>
+                                <button onclick="addDBEntity('agents')" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50">
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-robot text-orange-600"></i>
+                                        <span class="font-medium">Agents</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">AI agent definitions</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Schema Canvas -->
+                        <div class="flex-1 bg-gray-100 p-6 overflow-auto">
+                            <div id="db-canvas" class="min-h-full bg-white rounded-lg border-2 border-dashed border-gray-300 p-8">
+                                <div class="text-center">
+                                    <i class="fas fa-database text-gray-400 text-4xl mb-4"></i>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Database Schema Designer</h3>
+                                    <p class="text-gray-600 mb-4">Add entities from the left panel to start designing your schema</p>
+                                    <div class="text-sm text-gray-500">
+                                        <div>• Drag entities to design relationships</div>
+                                        <div>• Click entities to edit fields</div>
+                                        <div>• Export as JSON or SQL migrations</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Properties Panel -->
+                        <div class="w-80 bg-white border-l border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Entity Properties</h3>
+                            <div id="db-properties" class="text-center text-gray-500 mt-8">
+                                <i class="fas fa-table text-gray-300 text-3xl mb-4"></i>
+                                <p>Select an entity to edit its properties</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load Workflows view
+        function loadWorkflowsView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden';
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col bg-gray-50">
+                    <!-- Workflows Header -->
+                    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-sitemap text-purple-600 text-xl"></i>
+                                <h2 class="text-xl font-semibold text-gray-900">Workflow Designer</h2>
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Agent Orchestration</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="createWorkflow()" class="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded text-sm hover:bg-purple-700">
+                                    <i class="fas fa-plus"></i>
+                                    New Workflow
+                                </button>
+                                <button onclick="saveWorkflow()" class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                    <i class="fas fa-save"></i>
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex">
+                        <!-- Workflow Templates -->
+                        <div class="w-64 bg-white border-r border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Workflow Templates</h3>
+                            <div class="space-y-2">
+                                <div class="p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-sm">Code Review</div>
+                                    <div class="text-xs text-gray-500 mt-1">Automated code review workflow</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-sm">Testing Pipeline</div>
+                                    <div class="text-xs text-gray-500 mt-1">Automated testing & QA</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg">
+                                    <div class="font-medium text-sm">Deployment</div>
+                                    <div class="text-xs text-gray-500 mt-1">CI/CD deployment workflow</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Canvas -->
+                        <div class="flex-1 bg-gray-100 p-6 overflow-auto">
+                            <div class="bg-white rounded-lg border p-6 h-full">
+                                <div class="text-center py-12">
+                                    <i class="fas fa-sitemap text-gray-400 text-4xl mb-4"></i>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">Workflow Canvas</h3>
+                                    <p class="text-gray-600">Design agent workflows with visual drag-and-drop</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Workflow Properties -->
+                        <div class="w-80 bg-white border-l border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Workflow Settings</h3>
+                            <div class="text-center text-gray-500 mt-8">
+                                <i class="fas fa-cogs text-gray-300 text-3xl mb-4"></i>
+                                <p>Select a workflow node to configure</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load Agents view  
+        function loadAgentsView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden';
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col bg-gray-50">
+                    <!-- Agents Header -->
+                    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-robot text-green-600 text-xl"></i>
+                                <h2 class="text-xl font-semibold text-gray-900">Agent Contracts</h2>
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Prompt Management</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="importContracts()" class="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded text-sm hover:bg-gray-200">
+                                    <i class="fas fa-download"></i>
+                                    Import Contracts
+                                </button>
+                                <button onclick="createNewContract()" class="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded text-sm hover:bg-green-700">
+                                    <i class="fas fa-plus"></i>
+                                    New Contract
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contract Status Overview -->
+                    <div class="bg-white border-b border-gray-200 p-4">
+                        <div class="flex gap-4">
+                            <div class="flex items-center gap-2 px-3 py-2 bg-green-100 rounded-lg">
+                                <i class="fas fa-check-circle text-green-600"></i>
+                                <span class="font-medium text-green-900">4 Validated</span>
+                            </div>
+                            <div class="flex items-center gap-2 px-3 py-2 bg-yellow-100 rounded-lg">
+                                <i class="fas fa-clock text-yellow-600"></i>
+                                <span class="font-medium text-yellow-900">2 Pending</span>
+                            </div>
+                            <div class="flex items-center gap-2 px-3 py-2 bg-red-100 rounded-lg">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                <span class="font-medium text-red-900">1 Failed</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex">
+                        <!-- Agent List -->
+                        <div class="w-80 bg-white border-r border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Agent Contracts</h3>
+                            <div class="space-y-3">
+                                <div class="p-3 border border-gray-200 rounded-lg hover:border-green-300 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium">CEO CoPilot</span>
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">Strategic planning and project management</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg hover:border-green-300 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium">Dev Backend Agent</span>
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">Backend development and API design</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg hover:border-yellow-300 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium">Architect Agent</span>
+                                        <span class="w-2 h-2 bg-yellow-500 rounded-full"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">System architecture and design patterns</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg hover:border-green-300 cursor-pointer">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="font-medium">UI Agent</span>
+                                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500">Frontend development and UI design</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Agent Contract Editor -->
+                        <div class="flex-1 bg-white p-6">
+                            <div class="text-center py-12">
+                                <i class="fas fa-file-contract text-gray-400 text-4xl mb-4"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Agent Contract Editor</h3>
+                                <p class="text-gray-600">Select an agent contract to view and edit prompts</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Load Usage & Billing view
+        function loadUsageView() {
+            const mainContent = document.querySelector('main .flex-1');
+            mainContent.className = 'flex-1 overflow-hidden';
+            mainContent.innerHTML = `
+                <div class="h-full flex flex-col bg-gray-50">
+                    <!-- Usage Header -->
+                    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chart-line text-blue-600 text-xl"></i>
+                                <h2 class="text-xl font-semibold text-gray-900">Usage & Billing Dashboard</h2>
+                                <span class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">Real-time Analytics</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <select class="px-3 py-2 border border-gray-300 rounded text-sm">
+                                    <option>Last 7 days</option>
+                                    <option>Last 30 days</option>
+                                    <option>Last 90 days</option>
+                                </select>
+                                <button onclick="exportUsageReport()" class="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded text-sm hover:bg-blue-700">
+                                    <i class="fas fa-download"></i>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Summary Cards -->
+                    <div class="bg-white border-b border-gray-200 p-6">
+                        <div class="grid grid-cols-4 gap-6">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h3 class="text-sm font-medium text-blue-900">Total API Calls</h3>
+                                <div class="text-2xl font-bold text-blue-900 mt-2">1,247</div>
+                                <div class="text-sm text-blue-600 mt-1">+12% from last month</div>
+                            </div>
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <h3 class="text-sm font-medium text-red-900">Total Cost (to us)</h3>
+                                <div class="text-2xl font-bold text-red-900 mt-2">$567.89</div>
+                                <div class="text-sm text-red-600 mt-1">Provider fees</div>
+                            </div>
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                                <h3 class="text-sm font-medium text-green-900">Total Price (to customer)</h3>
+                                <div class="text-2xl font-bold text-green-900 mt-2">$2,839.45</div>
+                                <div class="text-sm text-green-600 mt-1">5x markup</div>
+                            </div>
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <h3 class="text-sm font-medium text-purple-900">Gross Margin</h3>
+                                <div class="text-2xl font-bold text-purple-900 mt-2">80%</div>
+                                <div class="text-sm text-purple-600 mt-1">On target</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex">
+                        <!-- Usage Chart -->
+                        <div class="flex-1 bg-white p-6">
+                            <h3 class="font-semibold text-gray-900 mb-4">Daily Usage Trend</h3>
+                            <div class="h-64 flex items-center justify-center border border-gray-200 rounded-lg">
+                                <div class="text-center text-gray-500">
+                                    <i class="fas fa-chart-line text-gray-300 text-3xl mb-2"></i>
+                                    <p>Daily usage chart would render here</p>
+                                </div>
+                            </div>
+                            
+                            <h3 class="font-semibold text-gray-900 mt-6 mb-4">Usage by Provider</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                        <span class="font-medium">OpenAI</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-medium">456 calls</div>
+                                        <div class="text-sm text-gray-500">$234.56 cost</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                        <span class="font-medium">Anthropic</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-medium">523 calls</div>
+                                        <div class="text-sm text-gray-500">$267.89 cost</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <span class="font-medium">Google</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-medium">268 calls</div>
+                                        <div class="text-sm text-gray-500">$65.44 cost</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing Details -->
+                        <div class="w-80 bg-white border-l border-gray-200 p-4">
+                            <h3 class="font-semibold text-gray-900 mb-4">Billing Details</h3>
+                            <div class="space-y-4">
+                                <div class="p-3 border border-gray-200 rounded-lg">
+                                    <div class="text-sm font-medium text-gray-900">Current Plan</div>
+                                    <div class="text-sm text-gray-600">Professional</div>
+                                    <div class="text-xs text-gray-500 mt-1">$299/month</div>
+                                </div>
+                                <div class="p-3 border border-gray-200 rounded-lg">
+                                    <div class="text-sm font-medium text-gray-900">Next Billing</div>
+                                    <div class="text-sm text-gray-600">Dec 15, 2025</div>
+                                    <div class="text-xs text-gray-500 mt-1">Auto-renewal enabled</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // DB Builder utility functions
+        function addDBEntity(entityType) {
+            console.log('Adding DB entity:', entityType);
+            showNotification(`${entityType} entity added to schema`);
+        }
+        
+        async function exportDBSchema() {
+            try {
+                const schemaData = await apiCall('/db/schema');
+                const dataStr = JSON.stringify(schemaData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'database-schema.json';
+                link.click();
+                URL.revokeObjectURL(url);
+                showNotification('Schema exported as JSON');
+            } catch (error) {
+                showNotification('Failed to export schema', 'error');
+            }
+        }
+        
+        function generateMigrations() {
+            showNotification('SQL migrations generated');
+        }
+        
+        function validateDBSchema() {
+            showNotification('Schema validation completed');
+        }
+        
+        // Workflow utility functions
+        function createWorkflow() {
+            showNotification('New workflow created');
+        }
+        
+        function saveWorkflow() {
+            showNotification('Workflow saved successfully');
+        }
+        
+        // Agents utility functions  
+        function importContracts() {
+            showNotification('Agent contracts imported');
+        }
+        
+        function createNewContract() {
+            showNotification('New agent contract created');
+        }
+        
+        // Usage utility functions
+        async function exportUsageReport() {
+            await exportUsageData();
+        }
+
+        // ===========================================
+        // API SERVICE LAYER
+        // ===========================================
+        
+        // API configuration
+        const API_BASE_URL = 'http://localhost:3010/api';
+        
+        // Generic API helper function
+        async function apiCall(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed: ${response.status}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('API Error:', error);
+                showNotification(`Error: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        // Kanban API functions
+        async function loadKanbanData() {
+            try {
+                const boards = await apiCall('/boards');
+                const cards = await apiCall('/cards');
+                return { boards, cards };
+            } catch (error) {
+                console.error('Failed to load kanban data:', error);
+                return { boards: [], cards: [] };
+            }
+        }
+        
+        async function createCard(cardData) {
+            try {
+                return await apiCall('/cards', {
+                    method: 'POST',
+                    body: JSON.stringify(cardData)
+                });
+            } catch (error) {
+                console.error('Failed to create card:', error);
+                return null;
+            }
+        }
+        
+        async function updateCardLane(cardId, newLaneId) {
+            try {
+                return await apiCall(`/cards/${cardId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ laneId: newLaneId })
+                });
+            } catch (error) {
+                console.error('Failed to update card lane:', error);
+                return null;
+            }
+        }
+        
+        // Agent API functions
+        async function loadAgents() {
+            try {
+                return await apiCall('/agents');
+            } catch (error) {
+                console.error('Failed to load agents:', error);
+                return [];
+            }
+        }
+        
+        async function createAgent(agentData) {
+            try {
+                return await apiCall('/agents', {
+                    method: 'POST',
+                    body: JSON.stringify(agentData)
+                });
+            } catch (error) {
+                console.error('Failed to create agent:', error);
+                return null;
+            }
+        }
+        
+        async function runAgent(agentId, cardId) {
+            try {
+                return await apiCall('/agents/run', {
+                    method: 'POST',
+                    body: JSON.stringify({ agentId, cardId })
+                });
+            } catch (error) {
+                console.error('Failed to run agent:', error);
+                return null;
+            }
+        }
+        
+        // Usage API functions
+        async function loadUsageData(timeframe = '7d') {
+            try {
+                return await apiCall(`/usage?timeframe=${timeframe}`);
+            } catch (error) {
+                console.error('Failed to load usage data:', error);
+                return null;
+            }
+        }
+        
+        async function exportUsageData(timeframe = '7d') {
+            try {
+                const response = await fetch(`${API_BASE_URL}/usage/export?timeframe=${timeframe}`, {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to export usage data');
+                }
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `usage-report-${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                showNotification('Usage report downloaded successfully');
+            } catch (error) {
+                console.error('Failed to export usage data:', error);
+                showNotification('Failed to export usage data', 'error');
+            }
+        }
+        
+        // Workspace & Project API functions
+        async function loadWorkspaces() {
+            try {
+                return await apiCall('/workspaces');
+            } catch (error) {
+                console.error('Failed to load workspaces:', error);
+                return [];
+            }
+        }
+        
+        async function createProject(projectData) {
+            try {
+                return await apiCall('/projects', {
+                    method: 'POST',
+                    body: JSON.stringify(projectData)
+                });
+            } catch (error) {
+                console.error('Failed to create project:', error);
+                return null;
+            }
+        }
+        
+        // Enhanced notification system
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 px-4 py-2 rounded shadow-lg ${
+                type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 3000);
+        }
+        
+        // WebSocket connection for real-time updates
+        let wsConnection = null;
+        
+        function initializeWebSocket() {
+            if (wsConnection && wsConnection.readyState === WebSocket.OPEN) {
+                return;
+            }
+            
+            try {
+                wsConnection = new WebSocket('ws://localhost:3010');
+                
+                wsConnection.onopen = () => {
+                    console.log('WebSocket connected');
+                    showNotification('Connected to real-time updates');
+                };
+                
+                wsConnection.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                wsConnection.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    // Attempt to reconnect after 3 seconds
+                    setTimeout(initializeWebSocket, 3000);
+                };
+                
+                wsConnection.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+            } catch (error) {
+                console.error('Failed to initialize WebSocket:', error);
+            }
+        }
+        
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'card_updated':
+                    // Refresh kanban board if currently viewing it
+                    if (document.querySelector('#kanban-board')) {
+                        loadKanbanView();
+                    }
+                    showNotification(`Card updated: ${data.payload.title}`);
+                    break;
+                case 'agent_run_completed':
+                    showNotification(`Agent run completed: ${data.payload.agentName}`);
+                    break;
+                case 'usage_threshold_exceeded':
+                    showNotification(`Usage threshold exceeded: ${data.payload.message}`, 'error');
+                    break;
+                default:
+                    console.log('Unknown WebSocket message:', data);
+            }
+        }
+        
+        // Initialize WebSocket when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize WebSocket connection
+            initializeWebSocket();
+        });
+        
+        // Project vision submission
+        function submitProjectVision() {
+            const textarea = document.querySelector('textarea[placeholder*="Describe your application"]');
+            const vision = textarea.value.trim();
+            
+            if (!vision) {
+                alert('Please describe your project vision before proceeding.');
+                return;
+            }
+            
+            console.log('Project vision submitted:', vision);
+            
+            // In a real app, this would send to the backend
+            alert('Project vision submitted! The CEO CoPilot will now analyze your requirements and proceed to the next step.');
+            
+            // Update terminal status
+            const terminalStatus = document.querySelector('.text-green-400');
+            if (terminalStatus) {
+                terminalStatus.textContent = 'Processing...';
+                terminalStatus.classList.remove('text-green-400');
+                terminalStatus.classList.add('text-orange-400');
+            }
+        }
+        
+        // Add event listeners when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers to infrastructure profiles
+            const profiles = document.querySelectorAll('.profile-card');
+            profiles.forEach((profile, index) => {
+                const profileTypes = ['standard-saas', 'saas-mobile', 'internal-tool'];
+                profile.classList.add('profile-card');
+                profile.onclick = () => selectProfile(profileTypes[index], profile);
+            });
+            
+            // Navigation tabs already have onclick handlers in HTML
+            
+            // Add click handlers to right panel tabs
+            const panelTabs = document.querySelectorAll('.flex-1.text-center');
+            panelTabs.forEach((tab, index) => {
+                const tabNames = ['summary', 'terminal', 'docs', 'runs'];
+                tab.classList.add('tab-button');
+                tab.onclick = () => switchTab(tabNames[index], tab);
+            });
+            
+            // Add click handler to Next Step button
+            const nextStepButton = document.querySelector('button[class*="bg-agentworks-blue"]:last-of-type');
+            if (nextStepButton && nextStepButton.textContent.includes('Next Step')) {
+                nextStepButton.onclick = submitProjectVision;
+            }
+            
+            // Set panel content container ID
+            const panelContent = document.querySelector('.flex-1.p-4.overflow-auto > div');
+            if (panelContent) {
+                panelContent.id = 'panel-content';
+            }
+        });
+    </script>
+</body>
+</html>

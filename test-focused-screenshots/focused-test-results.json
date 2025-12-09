@@ -1,0 +1,147 @@
+{
+  "timestamp": "2025-12-03T00:08:31.056Z",
+  "summary": {
+    "totalSections": 7,
+    "passedSections": 0,
+    "failedSections": 0,
+    "errors": [
+      {
+        "type": "PageError",
+        "message": "Unexpected end of input",
+        "timestamp": "2025-12-03T00:08:31.909Z"
+      }
+    ]
+  },
+  "sections": {},
+  "screenshots": [
+    {
+      "name": "platform-overview.png",
+      "description": "Complete platform overview",
+      "timestamp": "2025-12-03T00:08:32.984Z"
+    },
+    {
+      "name": "area-agentworks-dashboard.png",
+      "description": "AgentWorks Dashboard functional area",
+      "timestamp": "2025-12-03T00:08:34.479Z"
+    },
+    {
+      "name": "area-database-schema-builder.png",
+      "description": "Database Schema Builder functional area",
+      "timestamp": "2025-12-03T00:08:35.937Z"
+    },
+    {
+      "name": "area-workflow-templates.png",
+      "description": "Workflow Templates functional area",
+      "timestamp": "2025-12-03T00:08:37.412Z"
+    },
+    {
+      "name": "area-agent-contracts.png",
+      "description": "Agent Contracts functional area",
+      "timestamp": "2025-12-03T00:08:38.876Z"
+    }
+  ],
+  "performance": {
+    "initialLoad": 1063
+  },
+  "console": [
+    {
+      "type": "warn",
+      "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+      "timestamp": "2025-12-03T00:08:31.846Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+      "timestamp": "2025-12-03T00:08:32.097Z"
+    }
+  ],
+  "functionalAreas": {
+    "CRUD Service": {
+      "error": "sectionElement.scrollIntoView is not a function"
+    },
+    "Project Setup": {
+      "error": "sectionElement.scrollIntoView is not a function"
+    },
+    "AgentWorks Dashboard": {
+      "present": true,
+      "relatedElements": 25
+    },
+    "Database Schema Builder": {
+      "present": true,
+      "relatedElements": 4
+    },
+    "Workflow Templates": {
+      "present": true,
+      "relatedElements": 1
+    },
+    "Agent Contracts": {
+      "present": true,
+      "relatedElements": 25
+    },
+    "Usage Metrics": {
+      "error": "sectionElement.scrollIntoView is not a function"
+    }
+  },
+  "structureAnalysis": {
+    "hasNavigation": true,
+    "hasSidebar": false,
+    "mainSections": [
+      "AgentWorks",
+      "CoPilot Console",
+      "Project Vision",
+      "AgentWorks Dashboard - Preview",
+      "Database Schema Builder",
+      "Database Entities",
+      "Database Schema Designer",
+      "Entity Properties",
+      "Workflow Designer",
+      "Workflow Templates",
+      "Workflow Canvas",
+      "Workflow Settings",
+      "Agent Contracts",
+      "Agent Contracts",
+      "Agent Contract Editor",
+      "Usage & Billing Dashboard",
+      "Total API Calls",
+      "Total Cost (to us)",
+      "Total Price (to customer)",
+      "Gross Margin",
+      "Daily Usage Trend",
+      "Usage by Provider",
+      "Billing Details"
+    ],
+    "buttons": [
+      "Planning",
+      "Kanban",
+      "UI Builder",
+      "DB Builder",
+      "Workflows",
+      "Agents",
+      "Usage & Billing",
+      "CoPilot",
+      "Next Step",
+      "Summary",
+      "Terminal",
+      "Docs",
+      "Runs",
+      "Export JSON",
+      "Generate SQL",
+      "Validate Schema",
+      "New Workflow",
+      "Save",
+      "Import Contracts",
+      "New Contract",
+      "Export CSV"
+    ],
+    "forms": [],
+    "cards": 0,
+    "lists": 0
+  },
+  "interactiveElements": 46,
+  "formInteractions": false,
+  "apiIntegration": {
+    "hasAPIElements": false,
+    "networkRequests": 0,
+    "dynamicContent": 0
+  }
+}

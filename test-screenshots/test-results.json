@@ -1,0 +1,239 @@
+{
+  "timestamp": "2025-12-03T00:06:43.674Z",
+  "summary": {
+    "totalTabs": 7,
+    "passedTabs": 0,
+    "failedTabs": 7,
+    "errors": [
+      {
+        "type": "PageError",
+        "message": "Unexpected end of input",
+        "timestamp": "2025-12-03T00:06:44.498Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:45.556Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "Planning",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:45.557Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:46.931Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "Kanban",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:46.931Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:48.384Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "UI Builder",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:48.384Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:49.860Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "DB Builder",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:49.860Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:51.334Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "Workflows",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:51.335Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:52.827Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "Agents",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:52.828Z"
+      },
+      {
+        "type": "PageError",
+        "message": "switchMainTab is not defined",
+        "timestamp": "2025-12-03T00:06:54.276Z"
+      },
+      {
+        "type": "TabNavigation",
+        "tab": "Usage & Billing",
+        "message": "page.waitForTimeout is not a function",
+        "timestamp": "2025-12-03T00:06:54.277Z"
+      }
+    ]
+  },
+  "tabs": {
+    "Planning": {
+      "name": "Planning",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-planning-error.png"
+    },
+    "Kanban": {
+      "name": "Kanban",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-kanban-error.png"
+    },
+    "UI Builder": {
+      "name": "UI Builder",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-ui-builder-error.png"
+    },
+    "DB Builder": {
+      "name": "DB Builder",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-db-builder-error.png"
+    },
+    "Workflows": {
+      "name": "Workflows",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-workflows-error.png"
+    },
+    "Agents": {
+      "name": "Agents",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-agents-error.png"
+    },
+    "Usage & Billing": {
+      "name": "Usage & Billing",
+      "accessible": true,
+      "loadTime": 0,
+      "hasContent": false,
+      "interactiveElements": 0,
+      "errors": [
+        "page.waitForTimeout is not a function"
+      ],
+      "screenshot": "tab-usage---billing-error.png"
+    }
+  },
+  "screenshots": [
+    {
+      "name": "initial-load.png",
+      "description": "Initial platform load",
+      "timestamp": "2025-12-03T00:06:45.529Z"
+    },
+    {
+      "name": "tab-planning-error.png",
+      "description": "Planning tab error state",
+      "timestamp": "2025-12-03T00:06:45.905Z"
+    },
+    {
+      "name": "tab-kanban-error.png",
+      "description": "Kanban tab error state",
+      "timestamp": "2025-12-03T00:06:47.368Z"
+    },
+    {
+      "name": "tab-ui-builder-error.png",
+      "description": "UI Builder tab error state",
+      "timestamp": "2025-12-03T00:06:48.840Z"
+    },
+    {
+      "name": "tab-db-builder-error.png",
+      "description": "DB Builder tab error state",
+      "timestamp": "2025-12-03T00:06:50.313Z"
+    },
+    {
+      "name": "tab-workflows-error.png",
+      "description": "Workflows tab error state",
+      "timestamp": "2025-12-03T00:06:51.804Z"
+    },
+    {
+      "name": "tab-agents-error.png",
+      "description": "Agents tab error state",
+      "timestamp": "2025-12-03T00:06:53.266Z"
+    },
+    {
+      "name": "tab-usage---billing-error.png",
+      "description": "Usage & Billing tab error state",
+      "timestamp": "2025-12-03T00:06:54.729Z"
+    }
+  ],
+  "performance": {
+    "initialLoad": 984
+  },
+  "console": [
+    {
+      "type": "warn",
+      "text": "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation",
+      "timestamp": "2025-12-03T00:06:44.435Z"
+    },
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 404 (File not found)",
+      "timestamp": "2025-12-03T00:06:44.668Z"
+    },
+    {
+      "type": "error",
+      "text": "WebSocket connection to 'ws://localhost:3010/' failed: Error during WebSocket handshake: Unexpected response code: 404",
+      "timestamp": "2025-12-03T00:06:55.738Z"
+    }
+  ],
+  "pageTitle": "AgentWorks Studio - Agent-Native Kanban Platform",
+  "apiConnectivity": "healthy",
+  "websocketConnectivity": {
+    "status": "error",
+    "message": "WebSocket connection failed"
+  }
+}
