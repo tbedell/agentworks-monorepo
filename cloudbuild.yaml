@@ -1,0 +1,83 @@
+# Cloud Build configuration for AgentWorks
+# Builds API, Web, Admin, and Marketing services for GCP Cloud Run deployment
+
+steps:
+  # Step 1: Build API Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:$SHORT_SHA', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:latest', '-f', 'apps/api/Dockerfile', '--target', 'production', '.']
+    id: 'build-api'
+
+  # Step 2: Build Web Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:$SHORT_SHA', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:latest', '-f', 'apps/web/Dockerfile', '--target', 'production', '.']
+    id: 'build-web'
+
+  # Step 3: Build Admin Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:$SHORT_SHA', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:latest', '-f', 'apps/admin/Dockerfile', '--target', 'production', '.']
+    id: 'build-admin'
+
+  # Step 4: Build Marketing Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:$SHORT_SHA', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:latest', '-f', 'apps/marketing/Dockerfile', '--target', 'production', '.']
+    id: 'build-marketing'
+
+  # Step 5: Push API image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:$SHORT_SHA']
+    id: 'push-api-sha'
+    waitFor: ['build-api']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:latest']
+    id: 'push-api-latest'
+    waitFor: ['build-api']
+
+  # Step 6: Push Web image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:$SHORT_SHA']
+    id: 'push-web-sha'
+    waitFor: ['build-web']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:latest']
+    id: 'push-web-latest'
+    waitFor: ['build-web']
+
+  # Step 7: Push Admin image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:$SHORT_SHA']
+    id: 'push-admin-sha'
+    waitFor: ['build-admin']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:latest']
+    id: 'push-admin-latest'
+    waitFor: ['build-admin']
+
+  # Step 8: Push Marketing image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:$SHORT_SHA']
+    id: 'push-marketing-sha'
+    waitFor: ['build-marketing']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:latest']
+    id: 'push-marketing-latest'
+    waitFor: ['build-marketing']
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/api:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/web:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/admin:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:$SHORT_SHA'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/agentworks/marketing:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1800s'

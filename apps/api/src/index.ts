@@ -1,3 +1,9 @@
+// Polyfill for global crypto (required by Lucia in Node.js)
+import { webcrypto } from 'node:crypto';
+if (typeof globalThis.crypto === 'undefined') {
+  (globalThis as unknown as { crypto: typeof webcrypto }).crypto = webcrypto;
+}
+
 import { config } from 'dotenv';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';

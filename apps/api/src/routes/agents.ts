@@ -295,7 +295,7 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
 
     let runSummary;
     if (existingSummary) {
-      // Update existing summary
+      // Update existing summary - use Prisma.JsonNull for null values
       runSummary = await prisma.agentRunSummary.update({
         where: { agentRunId: runId },
         data: {
@@ -303,9 +303,9 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
           filesWritten: filesWritten ?? existingSummary.filesWritten,
           commandsRun: commandsRun ?? existingSummary.commandsRun,
           docsUpdated: docsUpdated ?? existingSummary.docsUpdated,
-          cardUpdates: cardUpdates ?? existingSummary.cardUpdates,
-          todoChanges: todoChanges ?? existingSummary.todoChanges,
-          builderChanges: builderChanges ?? existingSummary.builderChanges,
+          cardUpdates: cardUpdates ?? (existingSummary.cardUpdates === null ? undefined : existingSummary.cardUpdates),
+          todoChanges: todoChanges ?? (existingSummary.todoChanges === null ? undefined : existingSummary.todoChanges),
+          builderChanges: builderChanges ?? (existingSummary.builderChanges === null ? undefined : existingSummary.builderChanges),
           followUpItems: followUpItems ?? existingSummary.followUpItems,
           summary: summary ?? existingSummary.summary,
         },

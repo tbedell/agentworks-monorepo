@@ -110,7 +110,7 @@ export default function FounderTerms() {
   const [openFaqs, setOpenFaqs] = useState<number[]>([])
 
   const toggleTerm = (id: string) => {
-    setOpenTerms(prev => 
+    setOpenTerms(prev =>
       prev.includes(id) ? prev.filter(t => t !== id) : [...prev, id]
     )
   }
@@ -122,8 +122,8 @@ export default function FounderTerms() {
   }
 
   return (
-    <section className="py-20">
-      <div className="section-container">
+    <section className="py-20 bg-slate-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -131,10 +131,10 @@ export default function FounderTerms() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Terms & <span className="gradient-text">Restrictions</span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
+              Terms & <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Restrictions</span>
             </h2>
-            <p className="text-dark-300">
+            <p className="text-slate-600">
               We believe in transparency. Here's exactly what you're agreeing to.
             </p>
           </motion.div>
@@ -147,21 +147,21 @@ export default function FounderTerms() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className="glass rounded-xl overflow-hidden"
+                className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm"
               >
                 <button
                   onClick={() => toggleTerm(term.id)}
                   className="w-full px-6 py-4 flex items-center justify-between text-left"
                 >
                   <div className="flex items-center gap-3">
-                    <term.icon className="w-5 h-5 text-brand-400" />
-                    <span className="font-semibold text-white">{term.title}</span>
+                    <term.icon className="w-5 h-5 text-blue-600" />
+                    <span className="font-semibold text-slate-900">{term.title}</span>
                   </div>
                   <motion.div
                     animate={{ rotate: openTerms.includes(term.id) ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ChevronDown className="w-5 h-5 text-dark-400" />
+                    <ChevronDown className="w-5 h-5 text-slate-500" />
                   </motion.div>
                 </button>
                 <AnimatePresence>
@@ -176,8 +176,8 @@ export default function FounderTerms() {
                       <div className="px-6 pb-4 pt-0">
                         <ul className="space-y-2">
                           {term.content.map((item, i) => (
-                            <li key={i} className="text-dark-300 text-sm flex items-start gap-2">
-                              <span className="text-brand-400 mt-1">•</span>
+                            <li key={i} className="text-slate-600 text-sm flex items-start gap-2">
+                              <span className="text-blue-600 mt-1">•</span>
                               {item}
                             </li>
                           ))}
@@ -196,8 +196,8 @@ export default function FounderTerms() {
             viewport={{ once: true }}
             className="text-center mb-8"
           >
-            <h2 className="text-3xl font-bold mb-4">
-              Frequently Asked <span className="gradient-text">Questions</span>
+            <h2 className="text-3xl font-bold mb-4 text-slate-900">
+              Frequently Asked <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Questions</span>
             </h2>
           </motion.div>
 
@@ -209,19 +209,19 @@ export default function FounderTerms() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.03 }}
-                className="glass rounded-xl overflow-hidden"
+                className="bg-white rounded-xl overflow-hidden border border-slate-200 shadow-sm"
               >
                 <button
                   onClick={() => toggleFaq(index)}
                   className="w-full px-6 py-4 flex items-center justify-between text-left"
                 >
-                  <span className="font-medium text-white pr-4">{faq.question}</span>
+                  <span className="font-medium text-slate-900 pr-4">{faq.question}</span>
                   <motion.div
                     animate={{ rotate: openFaqs.includes(index) ? 180 : 0 }}
                     transition={{ duration: 0.2 }}
                     className="flex-shrink-0"
                   >
-                    <ChevronDown className="w-5 h-5 text-dark-400" />
+                    <ChevronDown className="w-5 h-5 text-slate-500" />
                   </motion.div>
                 </button>
                 <AnimatePresence>
@@ -234,7 +234,7 @@ export default function FounderTerms() {
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-4 pt-0">
-                        <p className="text-dark-300 text-sm">{faq.answer}</p>
+                        <p className="text-slate-600 text-sm">{faq.answer}</p>
                       </div>
                     </motion.div>
                   )}

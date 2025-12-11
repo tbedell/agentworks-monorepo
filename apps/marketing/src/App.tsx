@@ -1,27 +1,30 @@
 import { Routes, Route } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { WaitlistProvider } from './hooks/useWaitlist'
-import Layout from './components/Layout'
-import Home from './pages/Home'
-import Features from './pages/Features'
-import Pricing from './pages/Pricing'
-import Compare from './pages/Compare'
+import HomeV2 from './pages/HomeV2'
 import Waitlist from './pages/Waitlist'
-import Affiliate from './pages/Affiliate'
+import PricingV2 from './pages/PricingV2'
+import CompareV2 from './pages/CompareV2'
+import BYOA from './pages/BYOA'
+import FeaturesV2 from './pages/FeaturesV2'
 
 export default function App() {
   return (
     <WaitlistProvider>
       <AnimatePresence mode="wait">
         <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Home />} />
-            <Route path="features" element={<Features />} />
-            <Route path="pricing" element={<Pricing />} />
-            <Route path="compare" element={<Compare />} />
-            <Route path="waitlist" element={<Waitlist />} />
-            <Route path="affiliate" element={<Affiliate />} />
-          </Route>
+          {/* Marketing page - light mode matching web app */}
+          <Route path="/" element={<HomeV2 />} />
+          {/* Features */}
+          <Route path="/features" element={<FeaturesV2 />} />
+          {/* Pricing */}
+          <Route path="/pricing" element={<PricingV2 />} />
+          {/* Compare */}
+          <Route path="/compare" element={<CompareV2 />} />
+          {/* BYOA */}
+          <Route path="/byoa" element={<BYOA />} />
+          {/* Waitlist */}
+          <Route path="/waitlist" element={<Waitlist />} />
         </Routes>
       </AnimatePresence>
     </WaitlistProvider>

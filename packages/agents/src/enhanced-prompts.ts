@@ -246,6 +246,20 @@ export const ENHANCED_PROMPT_SECTIONS: Record<AgentName, EnhancedPromptSection> 
       todo: 'Tech debt backlog, code smells to fix, optimizations to make',
     },
   },
+
+  claude_code_agent: {
+    tools: ['read_file', 'write_file', 'update_file', 'list_files', 'delete_file', 'run_tests', 'run_linter', 'run_typecheck', 'run_build', 'validate_style', 'git_status', 'git_diff', 'git_commit', 'git_push', 'git_create_branch', 'grep', 'find_files', 'search_symbol'],
+    coordination: {
+      receivesFrom: ['All Agents (complex implementation requests)', 'CEO CoPilot (direct tasks)', 'Planner (development tasks)'],
+      sendsTo: ['QA (features for testing)', 'Docs (implementation documentation)', 'Code Standards (code for review)'],
+      collaboratesWith: ['Dev Backend (API development)', 'Dev Frontend (UI development)', 'DevOps (deployment)'],
+    },
+    documentation: {
+      plan: 'Implementation approach, Claude Code specific strategies, autonomous development patterns',
+      task: 'Features built, bugs fixed, refactors completed, tests written',
+      todo: 'Pending implementation, code reviews needed, tests to write',
+    },
+  },
 };
 
 /**

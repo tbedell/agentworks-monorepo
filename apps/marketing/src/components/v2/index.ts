@@ -1,0 +1,5 @@
+export { default as NavigationV2 } from './NavigationV2'
+export { default as HeroV2 } from './HeroV2'
+export { default as KanbanDemoV2 } from './KanbanDemoV2'
+export { default as TerminalDemoV2 } from './TerminalDemoV2'
+export { default as FooterV2 } from './FooterV2'

@@ -1,4 +1,4 @@
-# Frontend (Vite React) Dockerfile
+# Marketing Site (Vite React) Dockerfile
 
 FROM node:18-alpine AS base
 
@@ -10,7 +10,7 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/web/package.json ./apps/web/
+COPY apps/marketing/package.json ./apps/marketing/
 COPY packages/db/package.json ./packages/db/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/providers/package.json ./packages/providers/
@@ -35,11 +35,11 @@ COPY . .
 # Generate Prisma client
 RUN pnpm --filter @agentworks/db generate
 
-WORKDIR /app/apps/web
+WORKDIR /app/apps/marketing
 
-EXPOSE 5173
+EXPOSE 5175
 
-ENV PORT 5173
+ENV PORT 5175
 ENV HOST "0.0.0.0"
 
 # Enable hot reload for development
@@ -63,7 +63,7 @@ COPY . .
 RUN pnpm --filter @agentworks/shared build || true
 
 # Build the Vite application
-WORKDIR /app/apps/web
+WORKDIR /app/apps/marketing
 
 # Set build-time environment variables
 ARG VITE_API_URL=https://api.agentworksstudio.com
@@ -78,10 +78,10 @@ FROM nginx:alpine AS production
 RUN apk add --no-cache curl
 
 # Copy custom nginx config
-COPY apps/web/nginx.conf /etc/nginx/nginx.conf
+COPY apps/marketing/nginx.conf /etc/nginx/nginx.conf
 
 # Copy built static files from builder
-COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
+COPY --from=builder /app/apps/marketing/dist /usr/share/nginx/html
 
 # Expose port 80
 EXPOSE 80
