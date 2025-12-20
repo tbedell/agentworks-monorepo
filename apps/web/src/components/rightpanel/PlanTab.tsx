@@ -1,4 +1,5 @@
-import { CheckCircle, Circle, AlertCircle, FileText, Target, Layers, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle, Circle, AlertCircle, FileText, Target, Layers, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
@@ -69,6 +70,7 @@ const phaseToLane: Record<string, number> = {
   'blueprint-review': 1,
   'prd-review': 1,
   'mvp-review': 1,
+  'playbook-review': 1,
   'planning-complete': 2,
   'general': 2,
 };
@@ -81,6 +83,7 @@ function getDocumentStatus(components: any[], docType: string): 'complete' | 'in
 }
 
 export default function PlanTab() {
+  const navigate = useNavigate();
   const { currentProjectId } = useWorkspaceStore();
   
   const { data: projectData, isLoading: projectLoading } = useQuery({
@@ -146,53 +149,77 @@ export default function PlanTab() {
           Project Documents
         </h3>
         <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+          <div
+            onClick={() => navigate('/planning?doc=blueprint')}
+            className="group flex items-center justify-between p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors"
+          >
             <div className="flex items-center gap-2">
               <StatusIcon status={planStatus.blueprint} />
               <div>
-                <span className="text-sm text-slate-700">Blueprint</span>
+                <span className="text-sm text-slate-700 group-hover:text-blue-700">Blueprint</span>
                 {planStatus.blueprint === 'not_started' && (
                   <p className="text-xs text-slate-400">Generated after architecture phase</p>
                 )}
               </div>
             </div>
-            <StatusLabel status={planStatus.blueprint} placeholder />
+            <div className="flex items-center gap-2">
+              <StatusLabel status={planStatus.blueprint} placeholder />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </div>
           </div>
-          <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+          <div
+            onClick={() => navigate('/planning?doc=prd')}
+            className="group flex items-center justify-between p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors"
+          >
             <div className="flex items-center gap-2">
               <StatusIcon status={planStatus.prd} />
               <div>
-                <span className="text-sm text-slate-700">PRD</span>
+                <span className="text-sm text-slate-700 group-hover:text-blue-700">PRD</span>
                 {planStatus.prd === 'not_started' && (
                   <p className="text-xs text-slate-400">Generated after blueprint review</p>
                 )}
               </div>
             </div>
-            <StatusLabel status={planStatus.prd} placeholder />
+            <div className="flex items-center gap-2">
+              <StatusLabel status={planStatus.prd} placeholder />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </div>
           </div>
-          <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+          <div
+            onClick={() => navigate('/planning?doc=mvp')}
+            className="group flex items-center justify-between p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors"
+          >
             <div className="flex items-center gap-2">
               <StatusIcon status={planStatus.mvp} />
               <div>
-                <span className="text-sm text-slate-700">MVP Definition</span>
+                <span className="text-sm text-slate-700 group-hover:text-blue-700">MVP Definition</span>
                 {planStatus.mvp === 'not_started' && (
                   <p className="text-xs text-slate-400">Generated after PRD review</p>
                 )}
               </div>
             </div>
-            <StatusLabel status={planStatus.mvp} placeholder />
+            <div className="flex items-center gap-2">
+              <StatusLabel status={planStatus.mvp} placeholder />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </div>
           </div>
-          <div className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+          <div
+            onClick={() => navigate('/planning?doc=playbook')}
+            className="group flex items-center justify-between p-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 border border-transparent transition-colors"
+          >
             <div className="flex items-center gap-2">
               <StatusIcon status={planStatus.playbook} />
               <div>
-                <span className="text-sm text-slate-700">Agent Playbook</span>
+                <span className="text-sm text-slate-700 group-hover:text-blue-700">Agent Playbook</span>
                 {planStatus.playbook === 'not_started' && (
                   <p className="text-xs text-slate-400">Generated with MVP definition</p>
                 )}
               </div>
             </div>
-            <StatusLabel status={planStatus.playbook} placeholder />
+            <div className="flex items-center gap-2">
+              <StatusLabel status={planStatus.playbook} placeholder />
+              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-blue-500 transition-colors" />
+            </div>
           </div>
         </div>
       </div>

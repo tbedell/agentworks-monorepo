@@ -25,6 +25,8 @@ import {
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { useFloatingCardsStore, FloatingCardState } from '../../stores/floatingCards';
+import { useWorkspaceStore } from '../../stores/workspace';
+import { useQueryClient } from '@tanstack/react-query';
 import { XTerminal } from '../terminal';
 
 interface FloatingCardWindowProps {
@@ -33,6 +35,7 @@ interface FloatingCardWindowProps {
   onReviewContext?: (cardId: string) => void;
   onApprove?: (cardId: string, data: { notes?: string; advance?: boolean }) => void;
   onReject?: (cardId: string, data: { notes?: string; returnToPrevious?: boolean }) => void;
+  onMarkComplete?: (cardId: string) => void;
   onDelete?: (cardId: string) => void;
   agentLogs?: { agentName: string; status: string; logs: string[] }[];
 }
@@ -93,11 +96,13 @@ export default function FloatingCardWindow({
   onReviewContext,
   onApprove,
   onReject,
+  onMarkComplete,
   onDelete,
 }: FloatingCardWindowProps) {
   const { card, position, size, minimized, zIndex } = floatingState;
-  const { closeCard, updatePosition, updateSize, minimizeCard, restoreCard, bringToFront } =
+  const { closeCard, updatePosition, updateSize, minimizeCard, restoreCard, bringToFront, updateCardData } =
     useFloatingCardsStore();
+  const queryClient = useQueryClient();
 
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -128,16 +133,112 @@ export default function FloatingCardWindow({
   const [isSavingInstructions, setIsSavingInstructions] = useState(false);
   const [isGeneratingInstructions, setIsGeneratingInstructions] = useState(false);
   const [instructionsExpanded, setInstructionsExpanded] = useState(true);
+  const [cardHistory, setCardHistory] = useState<Array<{
+    id: string;
+    cardId: string;
+    action: string;
+    previousValue: string | null;
+    newValue: string | null;
+    performedBy: string;
+    details: string | null;
+    metadata: Record<string, any> | null;
+    timestamp: string;
+  }>>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
 
   const currentLaneNumber = parseInt(card.laneId.replace('lane-', ''));
+
+  // Get projectId and documentType from card for approval
+  const projectId = (card as any).projectId;
+  const documentType = (card.metadata as any)?.documentType as 'blueprint' | 'prd' | 'mvp' | 'playbook' | undefined;
+  const isReviewCard = currentLaneNumber === 6 && documentType;
+
+  // Handle card approval - directly calls API and updates state
+  const handleApproveCard = async () => {
+    if (!projectId || !documentType || isApproving) return;
+
+    setIsApproving(true);
+    try {
+      // 1. Log approval to context file
+      await api.copilot.contextChat({
+        cardId: card.id,
+        message: `APPROVED - Human approved this ${documentType} document`,
+      });
+
+      // 2. Call the approve-review endpoint which:
+      //    - Moves card to Complete lane (7)
+      //    - Creates CardHistory entry
+      //    - Marks linked todos as complete
+      const result = await api.copilot.approveReviewCard({
+        projectId,
+        documentType,
+      });
+
+      // 3. Update card in floating cards store to reflect new lane
+      if (result.card) {
+        updateCardData(card.id, {
+          ...card,
+          laneId: 'lane-7', // Complete lane
+        });
+      }
+
+      // 4. Invalidate relevant queries to refresh UI
+      queryClient.invalidateQueries({ queryKey: ['cards'] });
+      queryClient.invalidateQueries({ queryKey: ['board'] });
+      queryClient.invalidateQueries({ queryKey: ['todos'] });
+
+      // 5. Also call onApprove callback if provided (for backwards compatibility)
+      onApprove?.(card.id, { notes: 'Approved via FloatingCardWindow', advance: true });
+
+      // 6. Close the card window
+      closeCard(card.id);
+    } catch (error) {
+      console.error('Failed to approve card:', error);
+    } finally {
+      setIsApproving(false);
+    }
+  };
   const availableAgents = (card.assignedAgents?.length > 0)
     ? card.assignedAgents
     : Object.keys(AGENT_INFO).slice(0, 3);
 
-  const mockHistory = [
-    { date: card.dates.created, action: 'Created', lane: 'lane-0' },
-    ...(card.dates.updated !== card.dates.created ? [{ date: card.dates.updated, action: 'Updated', lane: card.laneId }] : []),
-  ];
+  // Compute history to display: use real history from DB if available, fall back to basic dates
+  const displayHistory = cardHistory.length > 0
+    ? cardHistory.map(h => ({
+        date: h.timestamp,
+        action: h.action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        details: h.details,
+        lane: h.newValue || card.laneId,
+        performedBy: h.performedBy,
+      }))
+    : card.dates
+      ? [
+          { date: card.dates.created, action: 'Created', details: null, lane: 'lane-0', performedBy: 'system' },
+          ...(card.dates.updated !== card.dates.created
+            ? [{ date: card.dates.updated, action: 'Updated', details: null, lane: card.laneId, performedBy: 'system' }]
+            : []),
+        ]
+      : [];
+
+  // Fetch card history when component mounts or when history tab is selected
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (activeSection !== 'history') return;
+
+      setIsLoadingHistory(true);
+      try {
+        const response = await api.cards.getHistory(card.id);
+        setCardHistory(response.history);
+      } catch (err) {
+        console.error('Failed to fetch card history:', err);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchHistory();
+  }, [card.id, activeSection]);
 
   // Extended card type for review properties
   const cardWithReview = card as typeof card & {
@@ -483,6 +584,27 @@ export default function FloatingCardWindow({
           <h2 className="text-sm font-semibold text-slate-900 truncate">{card.title}</h2>
         </div>
         <div className="flex items-center gap-1 no-drag ml-2">
+          {/* Mark Complete Checkbox */}
+          {card.status !== 'Done' && (
+            <label
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-slate-600 hover:bg-green-50 rounded cursor-pointer transition-colors"
+              title="Mark card as complete"
+            >
+              <input
+                type="checkbox"
+                checked={false}
+                onChange={() => onMarkComplete?.(card.id)}
+                className="w-3.5 h-3.5 rounded border-slate-300 text-green-600 focus:ring-green-500"
+              />
+              <span className="hidden sm:inline">Done</span>
+            </label>
+          )}
+          {card.status === 'Done' && (
+            <span className="flex items-center gap-1 px-2 py-1 text-xs text-green-600 bg-green-50 rounded">
+              <CheckCircle className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Complete</span>
+            </span>
+          )}
           <button
             onClick={() => minimizeCard(card.id)}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
@@ -539,25 +661,31 @@ export default function FloatingCardWindow({
                   Timeline
                 </h3>
                 <div className="space-y-1.5 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Created:</span>
-                    <span className="text-slate-700">
-                      {new Date(card.dates.created).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-500">Updated:</span>
-                    <span className="text-slate-700">
-                      {new Date(card.dates.updated).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {card.dates.dueDate && (
-                    <div className="flex justify-between">
-                      <span className="text-slate-500">Due:</span>
-                      <span className="text-orange-600 font-medium">
-                        {new Date(card.dates.dueDate).toLocaleDateString()}
-                      </span>
-                    </div>
+                  {card.dates ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Created:</span>
+                        <span className="text-slate-700">
+                          {new Date(card.dates.created).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Updated:</span>
+                        <span className="text-slate-700">
+                          {new Date(card.dates.updated).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {card.dates.dueDate && (
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Due:</span>
+                          <span className="text-orange-600 font-medium">
+                            {new Date(card.dates.dueDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <span className="text-slate-400 text-xs">No date information available</span>
                   )}
                 </div>
               </div>
@@ -832,6 +960,11 @@ export default function FloatingCardWindow({
           <XTerminal
             sessionId={terminalSessionId}
             projectId={(card as any).projectId || card.id}
+            linkedCardId={card.id}
+            linkedLaneIndex={currentLaneNumber}
+            onAgentChange={(agentName, provider, model) => {
+              console.log('[FloatingCardWindow] Agent changed:', agentName, provider, model);
+            }}
           />
           {!terminalSessionId && (
             <div className="absolute inset-0 flex items-center justify-center bg-[#1a1b26]/90 z-10">
@@ -844,6 +977,14 @@ export default function FloatingCardWindow({
                     try {
                       const projectId = (card as any).projectId || card.id;
                       console.log('[Terminal] Project ID:', projectId);
+
+                      // Get project localPath from workspace store
+                      const { currentWorkspaceId, projects } = useWorkspaceStore.getState();
+                      const project = currentWorkspaceId && projectId
+                        ? projects[currentWorkspaceId]?.find(p => p.id === projectId)
+                        : null;
+                      console.log('[Terminal] Project localPath:', project?.localPath);
+
                       // Use same hostname as current page to avoid CORS issues
                       const terminalGatewayUrl = `http://${window.location.hostname}:8005/api/terminal/sessions`;
                       console.log('[Terminal] Fetching', terminalGatewayUrl);
@@ -853,6 +994,9 @@ export default function FloatingCardWindow({
                         body: JSON.stringify({
                           projectId,
                           userId: 'current-user',
+                          cwd: project?.localPath || undefined,
+                          projectName: project?.name || undefined,
+                          workspaceId: currentWorkspaceId || undefined,
                         }),
                       });
                       console.log('[Terminal] Response status:', response.status);
@@ -954,27 +1098,32 @@ export default function FloatingCardWindow({
                         <ThumbsUp className="h-4 w-4 text-green-600" />
                         <span className="font-medium text-sm text-green-700">Approve</span>
                       </div>
-                      <label className="flex items-center gap-2 text-xs text-green-700">
-                        <input
-                          type="checkbox"
-                          checked={advanceOnApprove}
-                          onChange={(e) => setAdvanceOnApprove(e.target.checked)}
-                          className="rounded text-green-600"
-                        />
-                        Advance to next lane
-                      </label>
+                      {!isReviewCard && (
+                        <label className="flex items-center gap-2 text-xs text-green-700">
+                          <input
+                            type="checkbox"
+                            checked={advanceOnApprove}
+                            onChange={(e) => setAdvanceOnApprove(e.target.checked)}
+                            className="rounded text-green-600"
+                          />
+                          Advance to next lane
+                        </label>
+                      )}
+                      {isReviewCard && (
+                        <span className="text-xs text-green-600">Moves to Complete lane</span>
+                      )}
                     </div>
                     <button
-                      onClick={() => {
+                      onClick={isReviewCard ? handleApproveCard : () => {
                         setIsReviewPending(true);
                         onApprove?.(card.id, { notes: reviewNotes, advance: advanceOnApprove });
                         setTimeout(() => setIsReviewPending(false), 1000);
                       }}
-                      disabled={isReviewPending}
+                      disabled={isReviewPending || isApproving}
                       className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
                     >
-                      {isReviewPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
-                      Approve Card
+                      {(isReviewPending || isApproving) ? <Loader2 className="h-4 w-4 animate-spin" /> : <ThumbsUp className="h-4 w-4" />}
+                      {isApproving ? 'Approving...' : 'Approve Card'}
                     </button>
                   </div>
 
@@ -1018,27 +1167,51 @@ export default function FloatingCardWindow({
         {activeSection === 'history' && (
           <div>
             <h3 className="text-sm font-semibold text-slate-700 mb-3">Card History</h3>
-            <div className="relative">
-              <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
-              <div className="space-y-4">
-                {mockHistory.map((event, i) => (
-                  <div key={i} className="relative flex items-start gap-4 pl-10">
-                    <div className="absolute left-2.5 w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-900">{event.action}</span>
-                        <span className="text-xs text-slate-500">
-                          {new Date(event.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <span className="text-xs text-slate-500">
-                        {LANE_NAMES[event.lane]}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
               </div>
-            </div>
+            ) : (
+              <div className="relative">
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-slate-200" />
+                <div className="space-y-4">
+                  {displayHistory.map((event, i) => (
+                    <div key={i} className="relative flex items-start gap-4 pl-10">
+                      <div className={`absolute left-2.5 w-3 h-3 rounded-full border-2 border-white ${
+                        event.action.toLowerCase().includes('approved') ? 'bg-green-500' :
+                        event.action.toLowerCase().includes('rejected') ? 'bg-red-500' :
+                        event.action.toLowerCase().includes('created') ? 'bg-blue-500' :
+                        event.action.toLowerCase().includes('lane') ? 'bg-purple-500' :
+                        'bg-slate-400'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-slate-900">{event.action}</span>
+                          <span className="text-xs text-slate-500">
+                            {new Date(event.date).toLocaleDateString()} {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {event.lane && LANE_NAMES[event.lane] && (
+                            <span className="text-xs text-slate-500">
+                              {LANE_NAMES[event.lane]}
+                            </span>
+                          )}
+                          {event.performedBy && event.performedBy !== 'system' && (
+                            <span className="text-xs text-slate-400">
+                              by {event.performedBy === 'copilot' ? 'CoPilot' : event.performedBy}
+                            </span>
+                          )}
+                        </div>
+                        {event.details && (
+                          <p className="text-xs text-slate-600 mt-1">{event.details}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -1246,37 +1419,38 @@ export default function FloatingCardWindow({
               </p>
             </div>
 
-            {/* Approval Section */}
-            <div className="p-3 bg-slate-50 border-t border-slate-200">
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    onApprove?.(card.id, {
-                      notes: 'Approved via Context tab',
-                      advance: true,
-                    });
-                  }}
-                  disabled={isAgentResponding}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  <CheckCircle className="w-4 h-4" />
-                  Approve & Advance
-                </button>
-                <button
-                  onClick={() => {
-                    // Focus the chat input for human to type feedback
-                    const input = document.querySelector('input[placeholder="Send a message to the agents..."]') as HTMLInputElement;
-                    input?.focus();
-                  }}
-                  className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-700"
-                >
-                  Request Changes
-                </button>
+            {/* Approval Section - Only shown for Review lane cards */}
+            {isReviewCard && (
+              <div className="p-3 bg-slate-50 border-t border-slate-200">
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleApproveCard}
+                    disabled={isAgentResponding || isApproving}
+                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isApproving ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CheckCircle className="w-4 h-4" />
+                    )}
+                    {isApproving ? 'Approving...' : 'Approve & Advance'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Focus the chat input for human to type feedback
+                      const input = document.querySelector('input[placeholder="Send a message to the agents..."]') as HTMLInputElement;
+                      input?.focus();
+                    }}
+                    className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-100 transition-colors text-slate-700"
+                  >
+                    Request Changes
+                  </button>
+                </div>
+                <p className="text-xs text-slate-400 mt-2 text-center">
+                  Approve to move the card to Complete lane, or request changes to continue the conversation.
+                </p>
               </div>
-              <p className="text-xs text-slate-400 mt-2 text-center">
-                Approve to move the card to the next lane, or request changes to continue the conversation.
-              </p>
-            </div>
+            )}
           </div>
         )}
       </div>

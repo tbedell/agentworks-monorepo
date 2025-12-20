@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Play, StopCircle, Settings, RefreshCw, Loader2, Bot, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Play, StopCircle, Settings, RefreshCw, Loader2, Bot, AlertCircle, Radio } from 'lucide-react';
 import ToolCallLog from './ToolCallLog';
 import RunSummaryView from './RunSummaryView';
 import AgentConfigModal from './AgentConfigModal';
@@ -8,14 +8,17 @@ import type {
   AgentRun,
   ClaudeAgentConfig,
   AgentRunSummary,
+  SSEEvent,
+  ConversationMessage,
 } from './types';
 
 const API_BASE = '/api';
 
 const DEFAULT_CONFIG: ClaudeAgentConfig = {
+  provider: 'anthropic',
   model: 'claude-sonnet-4-20250514',
-  temperature: 0.2,
-  maxTokens: 16384,
+  temperature: 1.0, // Default from backend: DEFAULT_AGENT_TEMPERATURE
+  maxTokens: 0, // 0 = use model max (from backend: getMaxTokensForModel)
   maxIterations: 10,
   tools: [
     'read_file',
@@ -48,6 +51,113 @@ export default function ClaudeAgentPanel({
   const [viewMode, setViewMode] = useState<ViewMode>('live');
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+
+  // SSE streaming state
+  const [streamMessages, setStreamMessages] = useState<ConversationMessage[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
+
+  // Connect to SSE stream for live updates
+  const connectToStream = useCallback(() => {
+    // Close existing connection
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+    }
+
+    const eventSource = new EventSource(`${API_BASE}/context/cards/${cardId}/stream`, {
+      withCredentials: true,
+    });
+
+    eventSource.onopen = () => {
+      setIsConnected(true);
+      console.log('SSE connected for card:', cardId);
+    };
+
+    eventSource.onmessage = (event) => {
+      try {
+        const sseEvent = JSON.parse(event.data) as SSEEvent;
+        handleSSEEvent(sseEvent);
+      } catch (err) {
+        console.error('Failed to parse SSE event:', err);
+      }
+    };
+
+    eventSource.onerror = () => {
+      setIsConnected(false);
+      console.log('SSE connection error, will retry...');
+    };
+
+    eventSourceRef.current = eventSource;
+  }, [cardId]);
+
+  // Handle SSE events
+  const handleSSEEvent = useCallback((event: SSEEvent) => {
+    switch (event.type) {
+      case 'connected':
+        console.log('SSE stream connected');
+        break;
+
+      case 'message':
+        // New message from agent
+        const message = event.data as ConversationMessage;
+        setStreamMessages((prev) => [...prev, message]);
+        break;
+
+      case 'iteration_start':
+        // Agent started a new iteration
+        setCurrentRun((prev) =>
+          prev ? { ...prev, status: 'running' as const } : prev
+        );
+        break;
+
+      case 'agent_complete':
+        // Agent completed - extract runId for logging
+        {
+          const { runId } = event.data as { runId: string; status: string; usage?: Record<string, unknown> };
+          console.log('Agent run completed:', runId);
+          setCurrentRun((prev) => {
+            if (!prev) return prev;
+            const updated = { ...prev, status: 'completed' as const };
+            if (onRunComplete) {
+              onRunComplete(updated);
+            }
+            return updated;
+          });
+        }
+        break;
+
+      case 'error':
+        // Error occurred
+        const errorData = event.data as { message?: string };
+        setError(errorData.message || 'An error occurred');
+        setCurrentRun((prev) =>
+          prev ? { ...prev, status: 'failed' as const } : prev
+        );
+        break;
+
+      case 'heartbeat':
+        // Just a keepalive
+        break;
+
+      default:
+        console.log('Unhandled SSE event:', event.type);
+    }
+  }, [onRunComplete]);
+
+  // Disconnect from stream
+  const disconnectStream = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+      setIsConnected(false);
+    }
+  }, []);
+
+  // Connect to stream when component mounts and when run starts
+  useEffect(() => {
+    connectToStream();
+    return () => disconnectStream();
+  }, [cardId, connectToStream, disconnectStream]);
 
   // Fetch run history on mount
   useEffect(() => {
@@ -125,6 +235,7 @@ export default function ClaudeAgentPanel({
   const handleStartRun = useCallback(async () => {
     setError(null);
     setIsStarting(true);
+    setStreamMessages([]); // Clear previous stream messages
 
     try {
       const response = await fetch(`${API_BASE}/agents/claude_code_agent/run`, {
@@ -182,6 +293,16 @@ export default function ClaudeAgentPanel({
               Running...
             </span>
           )}
+          {/* SSE Connection indicator */}
+          <span
+            className={`flex items-center gap-1 text-xs ${
+              isConnected ? 'text-green-600' : 'text-gray-400'
+            }`}
+            title={isConnected ? 'Live stream connected' : 'Connecting...'}
+          >
+            <Radio className={`h-3 w-3 ${isConnected ? 'animate-pulse' : ''}`} />
+            {isConnected ? 'Live' : 'Offline'}
+          </span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -288,6 +409,44 @@ export default function ClaudeAgentPanel({
                     </span>
                   </div>
                 </div>
+
+                {/* Live streaming messages */}
+                {streamMessages.length > 0 && (
+                  <div className="mb-4 space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <Radio className="h-4 w-4 text-green-500 animate-pulse" />
+                      Live Stream
+                    </h4>
+                    {streamMessages.map((msg) => (
+                      <div
+                        key={msg.id}
+                        className={`p-3 rounded-lg text-sm ${
+                          msg.role === 'assistant'
+                            ? 'bg-purple-50 border border-purple-100'
+                            : msg.role === 'user'
+                              ? 'bg-blue-50 border border-blue-100'
+                              : 'bg-gray-50 border border-gray-100'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-medium text-xs uppercase text-gray-500">
+                            {msg.role}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(msg.timestamp).toLocaleTimeString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">{msg.content}</p>
+                        {msg.toolCalls && msg.toolCalls.length > 0 && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            Tools used: {msg.toolCalls.map((tc) => tc.name).join(', ')}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <ToolCallLog toolCalls={currentRun.toolCalls || []} />
               </>
             ) : (
@@ -345,6 +504,8 @@ export default function ClaudeAgentPanel({
         isOpen={showConfig}
         onClose={() => setShowConfig(false)}
         cardId={cardId}
+        projectId={projectId}
+        agentName="claude_code_agent"
         config={config}
         onSave={setConfig}
       />

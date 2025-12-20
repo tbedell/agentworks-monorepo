@@ -8,7 +8,7 @@ const INSTRUCTIONS_END = '<!-- INSTRUCTIONS:END -->';
 export interface ContextEntry {
   timestamp: Date;
   agentName: string;
-  type: 'log' | 'tool_call' | 'tool_result' | 'completion' | 'error' | 'status' | 'human_message' | 'agent_message';
+  type: 'log' | 'tool_call' | 'tool_result' | 'completion' | 'error' | 'status' | 'human_message' | 'agent_message' | 'approval';
   content: string;
   metadata?: Record<string, any>;
 }

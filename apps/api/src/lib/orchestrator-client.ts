@@ -13,6 +13,10 @@ export interface ExecutionRequest {
   userId: string;
   context?: Record<string, any>;
   mode?: 'standard' | 'conversation'; // conversation mode reads context file for chat history
+  // BYOA provider selection overrides
+  provider?: string;
+  model?: string;
+  tenantId?: string;
 }
 
 export interface ExecutionResponse {

@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Terminal as TerminalIcon, Plus, X, Maximize2, Minimize2 } from 'lucide-react';
 import XTerminal from '../components/terminal/XTerminal';
 import type { TerminalStatus } from '../components/terminal/types';
@@ -11,11 +12,23 @@ interface TerminalTab {
   status: TerminalStatus;
 }
 
+// Wrapper component to force remount on navigation
 export default function TerminalPage() {
-  const { currentProjectId } = useWorkspaceStore();
+  const location = useLocation();
+  // Key forces remount when navigating to this page, ensuring fresh data load
+  return <TerminalContent key={location.key} />;
+}
+
+function TerminalContent() {
+  const { currentProjectId, currentWorkspaceId, projects } = useWorkspaceStore();
   const [tabs, setTabs] = useState<TerminalTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Get current project data including localPath
+  const currentProject = currentWorkspaceId && currentProjectId
+    ? projects[currentWorkspaceId]?.find(p => p.id === currentProjectId)
+    : null;
 
   const createNewTab = useCallback(async () => {
     if (!currentProjectId) {
@@ -28,13 +41,17 @@ export default function TerminalPage() {
       const hostname = window.location.hostname;
       const gatewayUrl = `http://${hostname}:8005`;
 
-      // Create a new terminal session
+      // Create a new terminal session with project's localPath as cwd
       const response = await fetch(`${gatewayUrl}/api/terminal/sessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId: currentProjectId,
           userId: 'current-user', // TODO: get from auth store
+          // Pass the project's local path so terminal opens in the right directory
+          cwd: currentProject?.localPath || undefined,
+          projectName: currentProject?.name || undefined,
+          workspaceId: currentWorkspaceId || undefined,
         }),
       });
 
@@ -57,7 +74,7 @@ export default function TerminalPage() {
       console.error('Failed to create terminal session:', error);
       alert('Failed to create terminal session. Make sure the terminal gateway is running.');
     }
-  }, [currentProjectId, tabs.length]);
+  }, [currentProjectId, currentProject, currentWorkspaceId, tabs.length]);
 
   const closeTab = useCallback((tabId: string) => {
     setTabs((prev) => {

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
+import { useWorkspaceStore } from './workspace';
 
 interface User {
   id: string;
@@ -22,25 +23,17 @@ interface TenantInfo {
   slug: string;
 }
 
-interface TourState {
-  required: boolean;
-  completed: boolean;
-  step: number;
-}
-
 interface AuthState {
   user: User | null;
   tenant: TenantInfo | null;
   preferences: UserPreferences | null;
   activeSessions: number;
-  tour: TourState;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string, companyName?: string) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
-  restartTour: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -48,7 +41,6 @@ export const useAuthStore = create<AuthState>((set) => ({
   tenant: null,
   preferences: null,
   activeSessions: 0,
-  tour: { required: false, completed: true, step: 0 },
   isLoading: true,
   error: null,
 
@@ -58,13 +50,10 @@ export const useAuthStore = create<AuthState>((set) => ({
       const response = await api.auth.login(email, password);
       set({
         user: response.user,
-        tour: {
-          required: response.tourRequired || false,
-          completed: !response.tourRequired,
-          step: response.tourStep || 0,
-        },
         isLoading: false
       });
+      // Load workspaces after successful login
+      useWorkspaceStore.getState().loadWorkspaces();
       // Fetch full user data including preferences and sessions
       useAuthStore.getState().checkAuth();
     } catch (err: any) {
@@ -77,15 +66,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await api.auth.register(email, password, name, companyName);
-      set({ 
-        user: response.user, 
+      set({
+        user: response.user,
         tenant: response.tenant,
-        tour: {
-          required: response.tourRequired || true,
-          completed: false,
-          step: 0,
-        },
-        isLoading: false 
+        isLoading: false
       });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -102,20 +86,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         tenant: null,
         preferences: null,
         activeSessions: 0,
-        tour: { required: false, completed: true, step: 0 },
         isLoading: false
       });
     } catch (err) {
       set({ isLoading: false });
-    }
-  },
-
-  restartTour: async () => {
-    try {
-      await api.auth.restartTour();
-      set({ tour: { required: true, completed: false, step: 0 } });
-    } catch (err) {
-      console.error('Failed to restart tour:', err);
     }
   },
 
@@ -128,13 +102,10 @@ export const useAuthStore = create<AuthState>((set) => ({
         tenant: response.tenant || null,
         preferences: response.preferences || null,
         activeSessions: response.activeSessions || 0,
-        tour: {
-          required: response.tourRequired || false,
-          completed: !response.tourRequired,
-          step: response.tourStep || 0,
-        },
         isLoading: false
       });
+      // Load workspaces after successful authentication
+      useWorkspaceStore.getState().loadWorkspaces();
     } catch {
       set({ user: null, tenant: null, preferences: null, activeSessions: 0, isLoading: false });
     }

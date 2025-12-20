@@ -123,7 +123,7 @@ const shutdown = async (signal: string) => {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
-const port = parseInt(process.env.PORT || '8006', 10);
+const port = parseInt(process.env.DEV_ENV_MANAGER_PORT || '8006', 10);
 const host = process.env.HOST || '0.0.0.0';
 
 try {

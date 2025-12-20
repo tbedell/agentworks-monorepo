@@ -505,6 +505,146 @@ export default function KanbanBoard() {
     }
   }, [closeCard]);
 
+  // Handler for approving cards from floating windows
+  const handleApprove = useCallback(async (cardId: string, data: { notes?: string; advance?: boolean }) => {
+    try {
+      const result = await api.cards.approve(cardId, data);
+
+      // Update local state
+      if (result.advanced && result.nextLane) {
+        // Move card to next lane
+        setLanes(prev => {
+          const sourceCard = prev.flatMap(l => l.cards).find(c => c.id === cardId);
+          if (!sourceCard) return prev;
+
+          const sourceLaneId = sourceCard.laneId;
+          const destLaneId = `lane-${result.nextLane.position}`;
+
+          return prev.map(lane => {
+            if (lane.id === sourceLaneId) {
+              // Remove from source lane
+              return { ...lane, cards: lane.cards.filter(c => c.id !== cardId) };
+            }
+            if (lane.id === destLaneId) {
+              // Add to destination lane with updated status
+              const updatedCard = {
+                ...sourceCard,
+                laneId: destLaneId,
+                reviewStatus: null,
+                approvedAt: new Date().toISOString(),
+              };
+              return { ...lane, cards: [...lane.cards, updatedCard] };
+            }
+            return lane;
+          });
+        });
+      } else {
+        // Just update card status in current lane
+        setLanes(prev => prev.map(lane => ({
+          ...lane,
+          cards: lane.cards.map(card =>
+            card.id === cardId
+              ? { ...card, reviewStatus: 'approved', approvedAt: new Date().toISOString() }
+              : card
+          ),
+        })));
+      }
+
+      // Close floating window
+      closeCard(cardId);
+    } catch (error) {
+      console.error('Failed to approve card:', error);
+    }
+  }, [closeCard]);
+
+  // Handler for rejecting cards from floating windows
+  const handleReject = useCallback(async (cardId: string, data: { notes?: string; returnToPrevious?: boolean }) => {
+    try {
+      const result = await api.cards.reject(cardId, data);
+
+      // Update local state
+      if (result.returnedToPrevious && result.previousLane) {
+        // Move card back to previous lane
+        setLanes(prev => {
+          const sourceCard = prev.flatMap(l => l.cards).find(c => c.id === cardId);
+          if (!sourceCard) return prev;
+
+          const sourceLaneId = sourceCard.laneId;
+          const destLaneId = `lane-${result.previousLane.position}`;
+
+          return prev.map(lane => {
+            if (lane.id === sourceLaneId) {
+              return { ...lane, cards: lane.cards.filter(c => c.id !== cardId) };
+            }
+            if (lane.id === destLaneId) {
+              const updatedCard = {
+                ...sourceCard,
+                laneId: destLaneId,
+                reviewStatus: 'needs_revision',
+                rejectedAt: new Date().toISOString(),
+              };
+              return { ...lane, cards: [...lane.cards, updatedCard] };
+            }
+            return lane;
+          });
+        });
+      } else {
+        // Just update card status
+        setLanes(prev => prev.map(lane => ({
+          ...lane,
+          cards: lane.cards.map(card =>
+            card.id === cardId
+              ? { ...card, reviewStatus: 'rejected', rejectedAt: new Date().toISOString() }
+              : card
+          ),
+        })));
+      }
+
+      closeCard(cardId);
+    } catch (error) {
+      console.error('Failed to reject card:', error);
+    }
+  }, [closeCard]);
+
+  // Handler for marking cards as complete from floating windows
+  const handleMarkComplete = useCallback(async (cardId: string) => {
+    try {
+      await api.cards.complete(cardId);
+
+      // Move card to completed lane (lane 6 in the new 7-lane system)
+      setLanes(prev => {
+        const sourceCard = prev.flatMap(l => l.cards).find(c => c.id === cardId);
+        if (!sourceCard) return prev;
+
+        const sourceLaneId = sourceCard.laneId;
+        const destLaneId = 'lane-6'; // Complete lane
+
+        return prev.map(lane => {
+          if (lane.id === sourceLaneId) {
+            return { ...lane, cards: lane.cards.filter(c => c.id !== cardId) };
+          }
+          if (lane.id === destLaneId) {
+            const updatedCard: KanbanCardType = {
+              ...sourceCard,
+              laneId: destLaneId,
+              status: 'Done' as const,
+              dates: {
+                ...sourceCard.dates,
+                completedDate: new Date().toISOString(),
+              },
+            };
+            return { ...lane, cards: [...lane.cards, updatedCard] };
+          }
+          return lane;
+        });
+      });
+
+      closeCard(cardId);
+    } catch (error) {
+      console.error('Failed to complete card:', error);
+    }
+  }, [closeCard]);
+
   const handleCloseModal = useCallback(() => {
     setSelectedCard(null);
   }, []);
@@ -649,6 +789,25 @@ export default function KanbanBoard() {
     );
   }
 
+  // Show a friendly message when no project is selected
+  if (!currentProjectId) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center bg-slate-50 p-8">
+        <div className="text-center max-w-md">
+          <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-2">No Project Selected</h2>
+          <p className="text-slate-600 mb-6">
+            Select a project from the dropdown in the header to view its Kanban board, or create a new project to get started.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col bg-slate-50">
       <BoardHeader
@@ -738,6 +897,9 @@ export default function KanbanBoard() {
       <FloatingWindowsLayer
         onRunAgent={handleFloatingRunAgent}
         onReviewContext={handleReviewContext}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onMarkComplete={handleMarkComplete}
         onDelete={handleDeleteCard}
         agentLogs={agentLogs}
       />

@@ -343,6 +343,145 @@ export const gitRoutes: FastifyPluginAsync = async (app) => {
     };
   });
 
+  // Direct commit (skips approval if user has permission)
+  app.post('/:projectId/git/commit', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId } = request.params as { projectId: string };
+    const { message, files } = request.body as { message: string; files?: string[] };
+
+    if (!message) {
+      return reply.status(400).send({ error: 'Commit message is required' });
+    }
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    const git = await gitControlService.getGitForProject(projectId);
+    if (!git) {
+      return reply.status(400).send({ error: 'Project has no git repository configured' });
+    }
+
+    // Check if approval is required
+    const config = access.project.gitConfig;
+    if (config?.requireApproval && access.membership.role !== 'owner') {
+      // Redirect to approval flow
+      const requestResult = await gitControlService.requestOperation(
+        'commit',
+        projectId,
+        'human',
+        { message, requestedByUserId: user.id }
+      );
+      return {
+        requiresApproval: true,
+        requestId: requestResult.id,
+        message: 'Commit requires approval. Request created.',
+      };
+    }
+
+    // Direct commit
+    await git.commit(message, files);
+    return { success: true, message: 'Changes committed successfully' };
+  });
+
+  // Direct push (skips approval if user has permission)
+  app.post('/:projectId/git/push', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId } = request.params as { projectId: string };
+    const { remote, branch, force } = request.body as { remote?: string; branch?: string; force?: boolean };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    const git = await gitControlService.getGitForProject(projectId);
+    if (!git) {
+      return reply.status(400).send({ error: 'Project has no git repository configured' });
+    }
+
+    // Check if approval is required
+    const config = access.project.gitConfig;
+    if (config?.requireApproval && access.membership.role !== 'owner') {
+      const requestResult = await gitControlService.requestOperation(
+        'push',
+        projectId,
+        'human',
+        { branch, requestedByUserId: user.id }
+      );
+      return {
+        requiresApproval: true,
+        requestId: requestResult.id,
+        message: 'Push requires approval. Request created.',
+      };
+    }
+
+    // Direct push
+    await git.push(remote || 'origin', branch, force);
+    return { success: true, message: 'Changes pushed successfully' };
+  });
+
+  // Pull from remote
+  app.post('/:projectId/git/pull', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId } = request.params as { projectId: string };
+    const { remote, branch, rebase } = request.body as { remote?: string; branch?: string; rebase?: boolean };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    const git = await gitControlService.getGitForProject(projectId);
+    if (!git) {
+      return reply.status(400).send({ error: 'Project has no git repository configured' });
+    }
+
+    await git.pull(remote || 'origin', branch, rebase);
+    return { success: true, message: 'Changes pulled successfully' };
+  });
+
+  // Stage files
+  app.post('/:projectId/git/stage', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId } = request.params as { projectId: string };
+    const { files } = request.body as { files?: string[] };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    const git = await gitControlService.getGitForProject(projectId);
+    if (!git) {
+      return reply.status(400).send({ error: 'Project has no git repository configured' });
+    }
+
+    await git.stage(files || ['.']);
+    return { success: true, message: 'Files staged successfully' };
+  });
+
+  // Unstage files
+  app.post('/:projectId/git/unstage', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId } = request.params as { projectId: string };
+    const { files } = request.body as { files?: string[] };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    const git = await gitControlService.getGitForProject(projectId);
+    if (!git) {
+      return reply.status(400).send({ error: 'Project has no git repository configured' });
+    }
+
+    await git.unstage(files || []);
+    return { success: true, message: 'Files unstaged successfully' };
+  });
+
   // Initialize git repository
   app.post('/:projectId/git/init', async (request, reply) => {
     const user = (request as any).user;

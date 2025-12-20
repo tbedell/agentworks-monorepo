@@ -1,13 +1,9 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './stores/auth';
 import Layout from './components/layout/Layout';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { CoPilotProvider } from './contexts/CoPilotContext';
-import { TourProvider } from './contexts/TourContext';
-import CoPilotDrawer from './components/copilot/CoPilotDrawer';
-import InteractiveTour from './components/tour/InteractiveTour';
-import { TourChecklist } from './components/tour/TourChecklist';
 import LoginPage from './pages/Login';
 import RegisterPage from './pages/Register';
 import PlanningPage from './pages/Planning';
@@ -18,22 +14,33 @@ import WorkflowsPage from './pages/Workflows';
 import AgentsPage from './pages/Agents';
 import TerminalPage from './pages/Terminal';
 import UsagePage from './pages/Usage';
+import TeamSessionPage from './pages/TeamSession';
 
-function TourInitializer() {
-  // Tour no longer auto-starts - it only starts when user clicks "Start Tour" in SecondaryNavBar
-  return null;
+// Wrapper component to provide location-keyed error boundary
+function RouteContent() {
+  const location = useLocation();
+
+  return (
+    <ErrorBoundary key={location.pathname}>
+      <Routes>
+        <Route path="/" element={<Navigate to="/planning" replace />} />
+        <Route path="/planning" element={<PlanningPage />} />
+        <Route path="/kanban" element={<KanbanPage />} />
+        <Route path="/ui-builder" element={<UIBuilderPage />} />
+        <Route path="/db-builder" element={<DBBuilderPage />} />
+        <Route path="/workflows" element={<WorkflowsPage />} />
+        <Route path="/agents" element={<AgentsPage />} />
+        <Route path="/terminal" element={<TerminalPage />} />
+        <Route path="/usage" element={<UsagePage />} />
+        <Route path="/team-session" element={<TeamSessionPage />} />
+        <Route path="/team-session/:sessionId" element={<TeamSessionPage />} />
+      </Routes>
+    </ErrorBoundary>
+  );
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
-
-  const isDevMode = (import.meta as any)?.env?.VITE_DEV_MODE === 'true' || 
-                    (import.meta as any)?.env?.DEV === true ||
-                    window.location.hostname === 'localhost';
-
-  if (isDevMode) {
-    return <>{children}</>;
-  }
 
   if (isLoading) {
     return <LoadingSpinner size="xl" message="Loading..." className="min-h-screen" />;
@@ -57,27 +64,9 @@ export default function App() {
           element={
             <ProtectedRoute>
               <CoPilotProvider>
-                <TourProvider>
-                  <TourInitializer />
-                  <Layout>
-                    <ErrorBoundary>
-                      <Routes>
-                        <Route path="/" element={<Navigate to="/planning" replace />} />
-                        <Route path="/planning" element={<PlanningPage />} />
-                        <Route path="/kanban" element={<KanbanPage />} />
-                        <Route path="/ui-builder" element={<UIBuilderPage />} />
-                        <Route path="/db-builder" element={<DBBuilderPage />} />
-                        <Route path="/workflows" element={<WorkflowsPage />} />
-                        <Route path="/agents" element={<AgentsPage />} />
-                        <Route path="/terminal" element={<TerminalPage />} />
-                        <Route path="/usage" element={<UsagePage />} />
-                      </Routes>
-                    </ErrorBoundary>
-                  </Layout>
-                  <CoPilotDrawer />
-                  <InteractiveTour />
-                  <TourChecklist />
-                </TourProvider>
+                <Layout>
+                  <RouteContent />
+                </Layout>
               </CoPilotProvider>
             </ProtectedRoute>
           }

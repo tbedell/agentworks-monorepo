@@ -6,6 +6,7 @@ import { createLogger, createHealthResponse } from '@agentworks/shared';
 import { agentRoutes } from './routes/agents.js';
 import { executionRoutes } from './routes/execution.js';
 import { runRoutes } from './routes/runs.js';
+import { terminalCommandRoutes } from './routes/terminal-commands.js';
 import { initializeRedis } from './lib/redis.js';
 import { initializeAgentRegistry } from './lib/agent-registry.js';
 import { initializeExecutor } from './lib/executor.js';
@@ -96,6 +97,7 @@ app.get('/health', async () => {
 await app.register(agentRoutes, { prefix: '/agents' });
 await app.register(executionRoutes, { prefix: '/execution' });
 await app.register(runRoutes, { prefix: '/runs' });
+await app.register(terminalCommandRoutes, { prefix: '/terminal-commands' });
 
 // Global error handler
 app.setErrorHandler(async (error, request, reply) => {

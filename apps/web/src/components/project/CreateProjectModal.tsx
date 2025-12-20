@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, FolderPlus, Loader2, Sparkles, Folder, HardDrive, FolderOpen } from 'lucide-react';
+import { X, FolderPlus, Loader2, Sparkles, Folder, HardDrive, FolderOpen, Github, Download, Plus } from 'lucide-react';
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useCoPilot } from '../../contexts/CoPilotContext';
 import { api } from '../../lib/api';
 import FolderPicker from '../common/FolderPicker';
+import { useGitHub, GitHubRepo } from '../../hooks/useGitHub';
+import GitHubConnect from '../github/GitHubConnect';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const navigate = useNavigate();
   const { currentWorkspaceId, createProject, setCurrentProject } = useWorkspaceStore();
   const { startNewProjectFlow } = useCoPilot();
+  const { status: githubStatus, fetchRepos } = useGitHub();
+
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,6 +44,15 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [tempBasePath, setTempBasePath] = useState(getDefaultBasePath());
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(true);
+
+  // Import from GitHub state
+  const [importMode, setImportMode] = useState<'new' | 'github'>('new');
+  const [githubRepos, setGithubRepos] = useState<GitHubRepo[]>([]);
+  const [filteredRepos, setFilteredRepos] = useState<GitHubRepo[]>([]);
+  const [repoSearch, setRepoSearch] = useState('');
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<GitHubRepo | null>(null);
+  const [importStep, setImportStep] = useState<'select' | 'configure'>('select');
 
   // Load user preferences to check for projectsBasePath
   useEffect(() => {
@@ -120,9 +133,89 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
     }
   };
 
+  // Load GitHub repos when switching to import mode
+  const loadGitHubRepos = useCallback(async () => {
+    if (!githubStatus?.connected) return;
+
+    try {
+      setIsLoadingRepos(true);
+      setError(null);
+      const repos = await fetchRepos();
+      setGithubRepos(repos);
+      setFilteredRepos(repos);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load GitHub repositories');
+    } finally {
+      setIsLoadingRepos(false);
+    }
+  }, [githubStatus?.connected, fetchRepos]);
+
+  // Filter repos when search changes
+  useEffect(() => {
+    if (!repoSearch.trim()) {
+      setFilteredRepos(githubRepos);
+      return;
+    }
+    const searchLower = repoSearch.toLowerCase();
+    setFilteredRepos(
+      githubRepos.filter(
+        (repo) =>
+          repo.name.toLowerCase().includes(searchLower) ||
+          repo.full_name.toLowerCase().includes(searchLower) ||
+          repo.description?.toLowerCase().includes(searchLower)
+      )
+    );
+  }, [repoSearch, githubRepos]);
+
+  // Load repos when switching to GitHub import mode
+  useEffect(() => {
+    if (importMode === 'github' && githubStatus?.connected && githubRepos.length === 0) {
+      loadGitHubRepos();
+    }
+  }, [importMode, githubStatus?.connected, githubRepos.length, loadGitHubRepos]);
+
+  // Handle repo selection
+  const handleRepoSelect = (repo: GitHubRepo) => {
+    setSelectedRepo(repo);
+    setName(repo.name);
+    setDescription(repo.description || '');
+    setImportStep('configure');
+  };
+
+  // Handle back to repo selection
+  const handleBackToRepoSelect = () => {
+    setSelectedRepo(null);
+    setImportStep('select');
+  };
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setImportMode('new');
+      setSelectedRepo(null);
+      setImportStep('select');
+      setRepoSearch('');
+      setName('');
+      setDescription('');
+      setError(null);
+    }
+  }, [isOpen]);
+
+  // Format date helper
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return `${Math.floor(diffDays / 30)} months ago`;
+  };
+
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault();
     if (!name.trim() || !currentWorkspaceId || !projectsBasePath) return;
 
@@ -134,21 +227,45 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       const slug = generateSlug(name.trim());
       const localPath = `${projectsBasePath}/${slug}`;
 
-      const project = await createProject({
-        workspaceId: currentWorkspaceId,
-        name: name.trim(),
-        description: description.trim() || undefined,
-        localPath,
-      });
+      let project;
+
+      if (importMode === 'github' && selectedRepo) {
+        // Import from GitHub - use the import endpoint
+        const [repoOwner, repoName] = selectedRepo.full_name.split('/');
+        project = await api.projects.importFromGitHub({
+          workspaceId: currentWorkspaceId,
+          name: name.trim(),
+          description: description.trim() || undefined,
+          localPath,
+          repoOwner,
+          repoName,
+          repoFullName: selectedRepo.full_name,
+          defaultBranch: selectedRepo.default_branch,
+        });
+      } else {
+        // Create new project
+        project = await createProject({
+          workspaceId: currentWorkspaceId,
+          name: name.trim(),
+          description: description.trim() || undefined,
+          localPath,
+        });
+      }
+
       setCurrentProject(project.id);
       setName('');
       setDescription('');
+      setSelectedRepo(null);
+      setImportMode('new');
+      setImportStep('select');
       onClose();
 
       navigate('/planning');
-      startNewProjectFlow();
+      if (importMode !== 'github') {
+        startNewProjectFlow();
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to create project');
+      setError(err.message || (importMode === 'github' ? 'Failed to import repository' : 'Failed to create project'));
     } finally {
       setIsLoading(false);
     }
@@ -165,13 +282,22 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+        {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FolderPlus className="w-5 h-5 text-blue-600" />
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+              importMode === 'github' ? 'bg-slate-900' : 'bg-blue-100'
+            }`}>
+              {importMode === 'github' ? (
+                <Github className="w-5 h-5 text-white" />
+              ) : (
+                <FolderPlus className="w-5 h-5 text-blue-600" />
+              )}
             </div>
-            <h2 className="text-lg font-semibold text-slate-900">Create Project</h2>
+            <h2 className="text-lg font-semibold text-slate-900">
+              {importMode === 'github' ? 'Import from GitHub' : 'Create Project'}
+            </h2>
           </div>
           <button
             onClick={onClose}
@@ -180,6 +306,34 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Mode Tabs - only show when not in folder setup */}
+        {!showFolderSetup && !isLoadingPrefs && (
+          <div className="flex border-b border-slate-200">
+            <button
+              onClick={() => { setImportMode('new'); setSelectedRepo(null); setImportStep('select'); }}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                importMode === 'new'
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50/50'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              New Project
+            </button>
+            <button
+              onClick={() => setImportMode('github')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                importMode === 'github'
+                  ? 'text-slate-900 border-b-2 border-slate-900 bg-slate-50'
+                  : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              <Github className="w-4 h-4" />
+              Import from GitHub
+            </button>
+          </div>
+        )}
 
         <div className="p-6">
           {error && (
@@ -266,8 +420,213 @@ export default function CreateProjectModal({ isOpen, onClose }: CreateProjectMod
                 title="Select Projects Folder"
               />
             </div>
+          ) : importMode === 'github' ? (
+            /* GitHub Import Flow */
+            <div>
+              {/* GitHub not connected - show connect button */}
+              {!githubStatus?.connected ? (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <Github className="w-8 h-8 text-slate-700 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-medium text-slate-900">Connect to GitHub</h3>
+                      <p className="text-sm text-slate-600">
+                        Connect your GitHub account to import repositories into AgentWorks.
+                      </p>
+                    </div>
+                  </div>
+                  <GitHubConnect onConnected={loadGitHubRepos} />
+                </div>
+              ) : importStep === 'select' ? (
+                /* Step 1: Select Repository */
+                <div className="space-y-4">
+                  {/* Search input */}
+                  <div>
+                    <input
+                      type="text"
+                      value={repoSearch}
+                      onChange={(e) => setRepoSearch(e.target.value)}
+                      placeholder="Search repositories..."
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Repository list */}
+                  <div className="max-h-[320px] overflow-y-auto border border-slate-200 rounded-lg">
+                    {isLoadingRepos ? (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin text-slate-600" />
+                        <span className="ml-2 text-slate-600">Loading repositories...</span>
+                      </div>
+                    ) : filteredRepos.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-8 text-slate-500">
+                        <Github className="w-10 h-10 mb-2 opacity-50" />
+                        <p className="text-sm">
+                          {repoSearch ? 'No repositories match your search' : 'No repositories found'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100">
+                        {filteredRepos.map((repo) => (
+                          <button
+                            key={repo.id}
+                            type="button"
+                            onClick={() => handleRepoSelect(repo)}
+                            className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors focus:outline-none focus:bg-slate-50"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium text-slate-900 truncate">{repo.name}</span>
+                                  {repo.private && (
+                                    <span className="px-1.5 py-0.5 text-xs bg-slate-100 text-slate-600 rounded">Private</span>
+                                  )}
+                                </div>
+                                {repo.description && (
+                                  <p className="text-sm text-slate-500 truncate mt-0.5">{repo.description}</p>
+                                )}
+                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                                  {repo.language && <span>{repo.language}</span>}
+                                  <span>Updated {formatDate(repo.updated_at)}</span>
+                                </div>
+                              </div>
+                              <Download className="w-4 h-4 text-slate-400 flex-shrink-0 mt-1" />
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer with count */}
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span>{filteredRepos.length} repositories</span>
+                    <button
+                      type="button"
+                      onClick={loadGitHubRepos}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* Step 2: Configure Project */
+                <div className="space-y-4">
+                  {/* Selected repo info */}
+                  {selectedRepo && (
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <Github className="w-5 h-5 text-slate-700" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-slate-900 truncate">{selectedRepo.full_name}</span>
+                          {selectedRepo.private && (
+                            <span className="px-1.5 py-0.5 text-xs bg-slate-100 text-slate-600 rounded">Private</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          {selectedRepo.default_branch} • {selectedRepo.language || 'Unknown language'}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleBackToRepoSelect}
+                        className="text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Show current projects path */}
+                  {projectsBasePath && (
+                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm text-slate-600">
+                          <Folder className="w-4 h-4" />
+                          <span className="font-mono text-xs truncate max-w-[280px]" title={projectsBasePath}>{projectsBasePath}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTempBasePath(projectsBasePath);
+                            setShowFolderSetup(true);
+                          }}
+                          className="text-xs text-blue-600 hover:text-blue-700 whitespace-nowrap ml-2"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Project name */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Project Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="my-project"
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+                    />
+                    {name && projectsBasePath && (
+                      <p className="mt-1 text-xs text-slate-500">
+                        Clone to: <span className="font-mono">{projectsBasePath}/{generateSlug(name)}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Project description..."
+                      rows={2}
+                      className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex items-center justify-end gap-3 mt-4">
+                    <button
+                      type="button"
+                      onClick={handleBackToRepoSelect}
+                      className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSubmit}
+                      disabled={!name.trim() || isLoading || !projectsBasePath}
+                      className="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Importing...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4" />
+                          Import Repository
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
-            /* Project creation form */
+            /* New Project creation form */
             <form onSubmit={handleSubmit}>
               {/* Show current projects path */}
               {projectsBasePath && (

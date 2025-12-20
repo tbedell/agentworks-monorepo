@@ -12,6 +12,7 @@
   "dependencies": {
     "@agentworks/agents": "workspace:*",
     "@agentworks/ai-gateway": "workspace:*",
+    "@agentworks/context-service": "workspace:*",
     "@agentworks/db": "workspace:*",
     "@agentworks/git-service": "workspace:*",
     "@agentworks/project-files": "workspace:*",
@@ -28,6 +29,7 @@
     "dotenv": "^17.2.3",
     "fastify": "^5.1.0",
     "lucia": "^3.2.2",
+    "simple-git": "^3.27.0",
     "stripe": "^20.0.0",
     "ws": "^8.18.0",
     "zod": "^3.23.8"

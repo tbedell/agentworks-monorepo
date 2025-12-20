@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Plus, Check, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Check, Trash2, Loader2, ArrowRight } from 'lucide-react';
 import { useWorkspaceStore } from '../../stores/workspace';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../lib/api';
+import { useFloatingCardsStore } from '../../stores/floatingCards';
 
 interface TodoItem {
   id: string;
@@ -11,13 +12,29 @@ interface TodoItem {
   category: string;
   agentSource?: string;
   createdAt: string;
+  cardId?: string;  // Links todo to a kanban card for navigation
 }
 
 export default function TodoTab() {
   const { currentProjectId } = useWorkspaceStore();
   const queryClient = useQueryClient();
+  const { openCard } = useFloatingCardsStore();
   const [newTodo, setNewTodo] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+
+  // Navigate to linked card when clicking a todo
+  const handleTodoClick = async (todo: TodoItem) => {
+    if (todo.cardId) {
+      try {
+        const card = await api.cards.get(todo.cardId);
+        if (card) {
+          openCard(card);
+        }
+      } catch (error) {
+        console.error('Failed to open card:', error);
+      }
+    }
+  };
 
   const { data: todos = [], isLoading } = useQuery({
     queryKey: ['todos', currentProjectId],
@@ -104,39 +121,51 @@ export default function TodoTab() {
           <p className="text-sm text-slate-500 text-center py-4">No tasks yet</p>
         ) : (
           todos.map((todo: TodoItem) => (
-            <div 
+            <div
               key={todo.id}
+              onClick={() => handleTodoClick(todo)}
               className={`group flex items-start gap-2 p-2 rounded-lg transition-colors ${
                 todo.completed ? 'bg-slate-50' : 'bg-white border border-slate-200 hover:border-slate-300'
-              }`}
+              } ${todo.cardId ? 'cursor-pointer hover:border-blue-400' : ''}`}
             >
               <button
-                onClick={() => toggleTodo(todo.id, todo.completed)}
+                onClick={(e) => { e.stopPropagation(); toggleTodo(todo.id, todo.completed); }}
                 disabled={updateMutation.isPending}
                 className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
-                  todo.completed 
-                    ? 'bg-green-500 border-green-500 text-white' 
+                  todo.completed
+                    ? 'bg-green-500 border-green-500 text-white'
                     : 'border-slate-300 hover:border-blue-500'
                 }`}
               >
                 {todo.completed && <Check className="h-3 w-3" />}
               </button>
-              
+
               <div className="flex-1 min-w-0">
                 <p className={`text-sm ${todo.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                   {todo.content}
                 </p>
-                {todo.agentSource && (
-                  <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded mt-1 inline-block">
-                    {todo.agentSource}
-                  </span>
-                )}
+                <div className="flex items-center gap-2 mt-1">
+                  {todo.agentSource && (
+                    <span className="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded inline-block">
+                      {todo.agentSource}
+                    </span>
+                  )}
+                  {todo.cardId && (
+                    <span className="text-xs text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded inline-block">
+                      Linked Card
+                    </span>
+                  )}
+                </div>
               </div>
 
+              {todo.cardId && (
+                <ArrowRight className="h-4 w-4 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5" />
+              )}
+
               <button
-                onClick={() => deleteTodo(todo.id)}
+                onClick={(e) => { e.stopPropagation(); deleteTodo(todo.id); }}
                 disabled={deleteMutation.isPending}
-                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-all"
+                className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 transition-all flex-shrink-0"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>

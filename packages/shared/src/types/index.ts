@@ -164,6 +164,10 @@ export interface AgentExecutionRequest {
   projectId: string;
   userId: string;
   context?: Record<string, unknown>;
+  // BYOA provider selection overrides
+  provider?: string;
+  model?: string;
+  tenantId?: string;
 }
 
 export interface AgentExecutionResponse {

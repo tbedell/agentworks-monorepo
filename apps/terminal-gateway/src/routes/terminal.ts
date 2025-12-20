@@ -12,6 +12,14 @@ import {
   getSessionsByUser,
   type StoredSession,
 } from '../lib/session-store.js';
+import { ensureProjectClaudeMd } from '../lib/claude-md-generator.js';
+import {
+  handleChat,
+  setAgentConfig,
+  getAgentConfig,
+  cleanupSession,
+  type AgentConfig,
+} from '../lib/ai-handler.js';
 
 const logger = createLogger('terminal-routes');
 
@@ -25,6 +33,11 @@ const createSessionSchema = z.object({
   cols: z.number().int().min(1).max(500).optional(),
   rows: z.number().int().min(1).max(200).optional(),
   cwd: z.string().optional(),
+  // Additional context for Claude CLI integration
+  workspaceId: z.string().optional(),
+  boardId: z.string().optional(),
+  projectName: z.string().optional(),
+  metadata: z.record(z.string()).optional(),
 });
 
 const resizeSchema = z.object({
@@ -32,13 +45,21 @@ const resizeSchema = z.object({
   rows: z.number().int().min(1).max(200),
 });
 
-// Message types
+// Message types - Extended for AI chat mode
 interface TerminalMessage {
-  type: 'input' | 'output' | 'resize' | 'error' | 'ping' | 'pong';
+  type: 'input' | 'output' | 'resize' | 'error' | 'ping' | 'pong' | 'ai_chat' | 'ai_response' | 'agent_select' | 'context_link' | 'ai_toggle';
   data?: string;
   cols?: number;
   rows?: number;
   timestamp: number;
+  // AI chat specific fields
+  message?: string;
+  agentName?: string;
+  provider?: string;
+  model?: string;
+  cardId?: string;
+  enabled?: boolean;
+  done?: boolean;
 }
 
 export async function terminalRoutes(app: FastifyInstance) {
@@ -50,6 +71,19 @@ export async function terminalRoutes(app: FastifyInstance) {
       const body = createSessionSchema.parse(request.body);
       const sessionId = `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+      // Build environment variables for Claude CLI integration
+      const envVars: Record<string, string> = {};
+      if (body.workspaceId) envVars.AGENTWORKS_WORKSPACE_ID = body.workspaceId;
+      if (body.boardId) envVars.AGENTWORKS_BOARD_ID = body.boardId;
+      if (body.projectName) envVars.AGENTWORKS_PROJECT_NAME = body.projectName;
+      if (body.cwd) envVars.AGENTWORKS_DOCS_PATH = `${body.cwd}/docs`;
+      // Pass any custom metadata as env vars
+      if (body.metadata) {
+        Object.entries(body.metadata).forEach(([key, value]) => {
+          envVars[`AGENTWORKS_META_${key.toUpperCase()}`] = value;
+        });
+      }
+
       // Create PTY session
       const ptySession = ptyManager.createSession(
         sessionId,
@@ -59,6 +93,7 @@ export async function terminalRoutes(app: FastifyInstance) {
           cols: body.cols,
           rows: body.rows,
           cwd: body.cwd,
+          env: envVars,
         }
       );
 
@@ -77,6 +112,19 @@ export async function terminalRoutes(app: FastifyInstance) {
       };
 
       await saveSession(storedSession);
+
+      // Generate per-project CLAUDE.md if cwd is provided
+      if (body.cwd) {
+        ensureProjectClaudeMd({
+          projectId: body.projectId,
+          projectName: body.projectName || body.projectId,
+          projectPath: body.cwd,
+          workspaceId: body.workspaceId,
+          boardId: body.boardId,
+        }).catch((err) => {
+          logger.error('Failed to generate project CLAUDE.md', { error: err });
+        });
+      }
 
       logger.info('Terminal session created', { sessionId, projectId: body.projectId });
 
@@ -211,7 +259,7 @@ export async function terminalRoutes(app: FastifyInstance) {
   }>(
     '/ws/terminal/:sessionId',
     { websocket: true },
-    (socket: WebSocket, request: FastifyRequest) => {
+    async (socket: WebSocket, request: FastifyRequest) => {
       const { sessionId } = request.params as { sessionId: string };
       const { projectId } = request.query as { projectId?: string };
 
@@ -222,11 +270,29 @@ export async function terminalRoutes(app: FastifyInstance) {
 
       if (!ptySession && projectId) {
         // Create a new session if it doesn't exist
+        // Try to fetch project localPath from API for better UX
+        let projectCwd: string | undefined;
+        try {
+          const apiUrl = process.env.API_URL || 'http://localhost:3010';
+          const projectResponse = await fetch(`${apiUrl}/api/projects/${projectId}`, {
+            headers: {
+              'Authorization': `Bearer ${process.env.INTERNAL_SERVICE_TOKEN || 'internal-service-token-dev'}`,
+            },
+          });
+          if (projectResponse.ok) {
+            const projectData = await projectResponse.json() as { localPath?: string };
+            projectCwd = projectData.localPath || undefined;
+            logger.info('Fetched project localPath for terminal', { projectId, localPath: projectCwd });
+          }
+        } catch (fetchErr) {
+          logger.warn('Could not fetch project localPath, using default HOME', { projectId, error: fetchErr });
+        }
+
         ptySession = ptyManager.createSession(
           sessionId,
           projectId,
           'anonymous', // In production, extract from auth
-          { cols: 80, rows: 24 }
+          { cols: 80, rows: 24, cwd: projectCwd }
         );
 
         // Store session
@@ -317,6 +383,138 @@ export async function terminalRoutes(app: FastifyInstance) {
               );
               break;
 
+            case 'ai_chat':
+              // Handle AI chat message - stream response back
+              if (message.message) {
+                const config: Partial<AgentConfig> = {};
+                if (message.agentName) config.agentName = message.agentName;
+                if (message.provider) config.provider = message.provider;
+                if (message.model) config.model = message.model;
+
+                // Stream AI response
+                (async () => {
+                  try {
+                    for await (const chunk of handleChat(sessionId, message.message!, config)) {
+                      if (socket.readyState === socket.OPEN) {
+                        const response: TerminalMessage = {
+                          type: 'ai_response',
+                          data: chunk,
+                          done: false,
+                          timestamp: Date.now(),
+                        };
+                        socket.send(JSON.stringify(response));
+                      }
+                    }
+                    // Send completion message
+                    if (socket.readyState === socket.OPEN) {
+                      const doneMessage: TerminalMessage = {
+                        type: 'ai_response',
+                        data: '',
+                        done: true,
+                        timestamp: Date.now(),
+                      };
+                      socket.send(JSON.stringify(doneMessage));
+                    }
+                  } catch (err) {
+                    logger.error('AI chat streaming error', { sessionId, error: err });
+                    if (socket.readyState === socket.OPEN) {
+                      const errorMessage: TerminalMessage = {
+                        type: 'error',
+                        data: `AI chat error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+                        timestamp: Date.now(),
+                      };
+                      socket.send(JSON.stringify(errorMessage));
+                    }
+                  }
+                })();
+              }
+              break;
+
+            case 'agent_select':
+              // Update agent configuration for this session
+              if (message.agentName) {
+                // Default provider/model mappings based on agent
+                const agentDefaults: Record<string, { provider: string; model: string }> = {
+                  'ceo_copilot': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'strategy': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'storyboard_ux': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'prd': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'mvp_scope': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'research': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'architect': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'planner': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'code_standards': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'dev_backend': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'dev_frontend': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'devops': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'qa': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'troubleshooter': { provider: 'google', model: 'gemini-2.0-flash' },
+                  'docs': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'refactor': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                  'claude_code_agent': { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+                };
+
+                const defaults = agentDefaults[message.agentName] || { provider: 'anthropic', model: 'claude-sonnet-4-20250514' };
+                const provider = message.provider || defaults.provider;
+                const model = message.model || defaults.model;
+
+                setAgentConfig(sessionId, {
+                  agentName: message.agentName,
+                  provider,
+                  model,
+                });
+
+                // Also persist to Redis session
+                updateSession(sessionId, {
+                  agentName: message.agentName,
+                  provider,
+                  model,
+                  lastActivityAt: new Date().toISOString(),
+                }).catch(() => {});
+
+                // Send confirmation back to client
+                if (socket.readyState === socket.OPEN) {
+                  const response: TerminalMessage = {
+                    type: 'agent_select',
+                    agentName: message.agentName,
+                    provider,
+                    model,
+                    timestamp: Date.now(),
+                  };
+                  socket.send(JSON.stringify(response));
+                }
+
+                logger.info('Agent config updated for session', {
+                  sessionId,
+                  agentName: message.agentName,
+                  provider,
+                  model,
+                });
+              }
+              break;
+
+            case 'context_link':
+              // Link terminal session to a card for context sharing
+              if (message.cardId) {
+                updateSession(sessionId, {
+                  linkedCardId: message.cardId,
+                  lastActivityAt: new Date().toISOString(),
+                }).catch(() => {});
+                logger.info('Terminal linked to card', { sessionId, cardId: message.cardId });
+              }
+              break;
+
+            case 'ai_toggle':
+              // Toggle AI chat mode on/off
+              if (typeof message.enabled === 'boolean') {
+                updateSession(sessionId, {
+                  aiChatEnabled: message.enabled,
+                  lastActivityAt: new Date().toISOString(),
+                }).catch(() => {});
+                logger.info('AI chat mode toggled', { sessionId, enabled: message.enabled });
+              }
+              break;
+
             default:
               logger.debug('Unknown message type', { type: message.type });
           }
@@ -330,6 +528,9 @@ export async function terminalRoutes(app: FastifyInstance) {
         logger.info('WebSocket disconnected', { sessionId });
         unsubscribeData();
         unsubscribeExit();
+
+        // Cleanup AI session data
+        cleanupSession(sessionId);
 
         // Update session status
         updateSession(sessionId, {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { User, Settings, Key, Camera, Check, X, Map, Loader2, Trash2 } from 'lucide-react';
+import { User, Settings, Key, Camera, Check, X, Loader2, Trash2 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth';
 import { api } from '../../lib/api';
 import clsx from 'clsx';
@@ -24,7 +24,7 @@ interface PreferencesData {
 }
 
 export default function UserProfile({ isOpen, onClose }: UserProfileProps) {
-  const { user, logout, restartTour } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'security'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -280,16 +280,6 @@ export default function UserProfile({ isOpen, onClose }: UserProfileProps) {
               ))}
             </nav>
             <div className="mt-6 pt-6 border-t border-slate-200 space-y-1">
-              <button
-                onClick={() => {
-                  restartTour();
-                  onClose();
-                }}
-                className="w-full flex items-center gap-3 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg font-medium"
-              >
-                <Map className="h-4 w-4" />
-                Take the Tour
-              </button>
               <button
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg font-medium"

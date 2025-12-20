@@ -81,11 +81,96 @@ export const DEFAULT_TERMINAL_CONFIG: TerminalConfig = {
 };
 
 export interface TerminalMessage {
-  type: 'input' | 'output' | 'resize' | 'ping' | 'pong' | 'error';
+  type: 'input' | 'output' | 'resize' | 'ping' | 'pong' | 'error' | 'kanban' | 'agent_status' | 'ai_chat' | 'ai_response' | 'agent_select' | 'context_link' | 'ai_toggle';
   data?: string;
   cols?: number;
   rows?: number;
   timestamp?: number;
+  // Kanban notification data
+  kanban?: KanbanNotification;
+  // Agent status data
+  agent?: AgentStatusNotification;
+  // AI Chat specific fields
+  message?: string;
+  agentName?: string;
+  provider?: string;
+  model?: string;
+  cardId?: string;
+  enabled?: boolean;
+  done?: boolean;
+}
+
+/**
+ * AI Agent configuration for terminal chat mode
+ */
+export interface TerminalAgentConfig {
+  agentName: string;
+  provider: string;
+  model: string;
+}
+
+/**
+ * Available agents for terminal selection
+ * Matches the agent registry in agent-orchestrator
+ */
+export const TERMINAL_AGENTS = [
+  // Executive & Strategy (Lane 0)
+  { name: 'ceo_copilot', label: 'CEO CoPilot', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'strategy', label: 'Strategy', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+
+  // Product & Design (Lane 0-1)
+  { name: 'storyboard_ux', label: 'UX Design', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'prd', label: 'PRD', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'mvp_scope', label: 'MVP Scope', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+
+  // Research & Planning (Lane 2-4)
+  { name: 'research', label: 'Research', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'architect', label: 'Architect', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'planner', label: 'Planner', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+
+  // Development (Lane 1-4)
+  { name: 'code_standards', label: 'Code Standards', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'dev_backend', label: 'Backend Dev', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'dev_frontend', label: 'Frontend Dev', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'devops', label: 'DevOps', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+
+  // Quality & Testing (Lane 4)
+  { name: 'qa', label: 'QA', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'troubleshooter', label: 'Troubleshooter', provider: 'google', model: 'gemini-2.0-flash' },
+
+  // Documentation & Optimization (Lane 4-6)
+  { name: 'docs', label: 'Documentation', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  { name: 'refactor', label: 'Refactor', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+
+  // Full-featured Code Agent
+  { name: 'claude_code_agent', label: 'Claude Code', provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+] as const;
+
+/**
+ * Kanban notification sent to terminal when card status changes
+ */
+export interface KanbanNotification {
+  type: 'card_created' | 'card_moved' | 'card_status_changed' | 'card_assigned' | 'card_comment';
+  cardId: string;
+  cardTitle: string;
+  fromLane?: string;
+  toLane?: string;
+  status?: string;
+  agent?: string;
+  comment?: string;
+}
+
+/**
+ * Agent status notification for terminal feedback
+ */
+export interface AgentStatusNotification {
+  type: 'started' | 'completed' | 'failed' | 'tool_use';
+  runId: string;
+  agentId: string;
+  cardId: string;
+  message?: string;
+  tool?: string;
+  progress?: number;
 }
 
 export interface TerminalConnectionOptions {

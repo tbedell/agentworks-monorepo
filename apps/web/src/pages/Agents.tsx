@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Bot,
@@ -8,13 +9,20 @@ import {
   Trash2,
   Star,
   AlertCircle,
+  CheckCircle,
   ChevronDown,
   ChevronUp,
   Sliders,
+  MessageSquare,
+  Search,
+  Filter,
 } from 'lucide-react';
-import { PROVIDERS, PROVIDER_MODELS } from '@agentworks/shared';
+import { PROVIDERS, PROVIDER_MODELS, DEFAULT_AGENT_TEMPERATURE, getMaxTokensForModel } from '@agentworks/shared';
 import { api } from '../lib/api';
 import { useWorkspaceStore } from '../stores/workspace';
+import { AgentCoPilotPanel } from '../components/agents/copilot';
+import type { AgentContext, AgentFilter, AgentRecommendation, AgentPreset } from '../components/agents/copilot';
+import clsx from 'clsx';
 
 interface BYOAProvider {
   id: string;
@@ -123,13 +131,24 @@ async function updateAgentSettings(agentName: string, settings: { temperature?: 
   });
 }
 
+// Wrapper component to force remount on navigation
 export default function AgentsPage() {
+  const location = useLocation();
+  // Key forces remount when navigating to this page, ensuring fresh data load
+  return <AgentsContent key={location.key} />;
+}
+
+function AgentsContent() {
   const { currentProjectId } = useWorkspaceStore();
   const queryClient = useQueryClient();
   const [showGlobalSettings, setShowGlobalSettings] = useState(false);
   const [apiKeyInput, setApiKeyInput] = useState<Record<string, string>>({});
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
   const [agentSettings, setAgentSettings] = useState<Record<string, { temperature: number; maxTokens: number; systemPrompt: string }>>({});
+  const [showCoPilot, setShowCoPilot] = useState(false);
+  const [agentFilter, setAgentFilter] = useState<AgentFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [recommendedAgents, setRecommendedAgents] = useState<string[]>([]);
 
   const { data: serverAgents, isLoading } = useQuery({
     queryKey: ['agents'],
@@ -218,9 +237,10 @@ export default function AgentsPage() {
     if (agentSettings[agent.name]) {
       return agentSettings[agent.name];
     }
+    const agentModel = agent.defaultModel || 'claude-sonnet-4-20250514';
     return {
-      temperature: agent.temperature ?? 0.7,
-      maxTokens: agent.maxTokens ?? 4096,
+      temperature: agent.temperature ?? DEFAULT_AGENT_TEMPERATURE,
+      maxTokens: agent.maxTokens ?? getMaxTokensForModel(agentModel),
       systemPrompt: agent.systemPrompt ?? '',
     };
   };
@@ -231,11 +251,12 @@ export default function AgentsPage() {
     } else {
       setExpandedAgent(agentName);
       if (!agentSettings[agentName]) {
+        const agentModel = agent.defaultModel || 'claude-sonnet-4-20250514';
         setAgentSettings(prev => ({
           ...prev,
           [agentName]: {
-            temperature: agent.temperature ?? 0.7,
-            maxTokens: agent.maxTokens ?? 4096,
+            temperature: agent.temperature ?? DEFAULT_AGENT_TEMPERATURE,
+            maxTokens: agent.maxTokens ?? getMaxTokensForModel(agentModel),
             systemPrompt: agent.systemPrompt ?? '',
           }
         }));
@@ -295,6 +316,109 @@ export default function AgentsPage() {
 
   const hasActiveCredentials = credentials.some((c) => c.status === 'active');
 
+  // Filter agents based on search and filter
+  const filteredAgents = useMemo(() => {
+    return agents.filter((agent: any) => {
+      const status = getAgentStatus(agent);
+
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = agent.name.toLowerCase().includes(query);
+        const matchesDisplay = agent.displayName?.toLowerCase().includes(query);
+        const matchesDesc = agent.description?.toLowerCase().includes(query);
+        if (!matchesName && !matchesDisplay && !matchesDesc) return false;
+      }
+
+      // Status filter
+      switch (agentFilter) {
+        case 'active':
+          return status === 'active';
+        case 'byoa':
+          return status === 'byoa';
+        case 'inactive':
+          return status === 'inactive';
+        case 'recommended':
+          return recommendedAgents.includes(agent.name);
+        default:
+          return true;
+      }
+    });
+  }, [agents, searchQuery, agentFilter, recommendedAgents, getAgentStatus]);
+
+  // Build agent context for CoPilot
+  const agentContext: AgentContext = useMemo(() => ({
+    agents: agents.map((agent: any) => ({
+      name: agent.name,
+      displayName: agent.displayName,
+      description: agent.description,
+      status: getAgentStatus(agent),
+      provider: getConfigForAgent(agent.name)?.provider || agent.defaultProvider,
+      model: getConfigForAgent(agent.name)?.model || agent.defaultModel,
+      temperature: getAgentSettings(agent).temperature,
+      maxTokens: getAgentSettings(agent).maxTokens,
+      lanes: agent.allowedLanes,
+    })),
+    projectType: undefined, // Could be enhanced to get from project
+    credentials: credentials.map((c) => ({
+      provider: c.provider,
+      status: c.status,
+      assignedAgents: c.assignedAgents,
+    })),
+  }), [agents, credentials, getAgentStatus, getConfigForAgent, getAgentSettings]);
+
+  // Handle CoPilot actions
+  const handleApplyRecommendation = useCallback((recommendation: AgentRecommendation) => {
+    if (recommendation.suggestedSettings && currentProjectId) {
+      updateConfig.mutate({
+        agentName: recommendation.agentName,
+        provider: recommendation.suggestedSettings.provider || 'anthropic',
+        model: recommendation.suggestedSettings.model || 'claude-sonnet-4-20250514',
+      });
+    }
+    // Add to recommended agents for visual highlighting
+    setRecommendedAgents((prev) => [...new Set([...prev, recommendation.agentName])]);
+  }, [currentProjectId, updateConfig]);
+
+  const handleApplyPreset = useCallback((preset: AgentPreset) => {
+    if (!currentProjectId) return;
+
+    // Build bulk config from preset
+    const configurations = preset.agents
+      .filter((a) => a.enabled && a.provider && a.model)
+      .map((a) => ({
+        agentName: a.name,
+        provider: a.provider,
+        model: a.model,
+        temperature: a.temperature,
+      }));
+
+    // Apply bulk configuration
+    api.copilot.bulkConfigureAgents({
+      projectId: currentProjectId,
+      configurations,
+    }).then(() => {
+      queryClient.invalidateQueries({ queryKey: ['agentConfigs', currentProjectId] });
+    });
+  }, [currentProjectId, queryClient]);
+
+  const handleConfigureAgent = useCallback((agentName: string, settings: Record<string, unknown>) => {
+    if (!currentProjectId) return;
+
+    updateConfig.mutate({
+      agentName,
+      provider: (settings.provider as string) || 'anthropic',
+      model: (settings.model as string) || 'claude-sonnet-4-20250514',
+    });
+  }, [currentProjectId, updateConfig]);
+
+  const FILTER_TABS: { id: AgentFilter; label: string; count?: number }[] = [
+    { id: 'all', label: 'All', count: agents.length },
+    { id: 'active', label: 'Active', count: agents.filter((a: any) => getAgentStatus(a) === 'active').length },
+    { id: 'byoa', label: 'BYOA', count: agents.filter((a: any) => getAgentStatus(a) === 'byoa').length },
+    { id: 'inactive', label: 'Inactive', count: agents.filter((a: any) => getAgentStatus(a) === 'inactive').length },
+  ];
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -315,7 +439,19 @@ export default function AgentsPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
+              onClick={() => setShowCoPilot(!showCoPilot)}
+              className={clsx(
+                'flex items-center gap-2 px-4 py-2 border rounded-lg text-sm transition-colors',
+                showCoPilot
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-slate-200 hover:bg-slate-50'
+              )}
+            >
+              <MessageSquare className="h-4 w-4" />
+              CoPilot
+            </button>
+            <button
               onClick={() => setShowGlobalSettings(true)}
               className={`flex items-center gap-2 px-4 py-2 border rounded-lg text-sm hover:bg-slate-50 ${
                 hasActiveCredentials ? 'border-purple-300 text-purple-700 bg-purple-50' : 'border-slate-200'
@@ -334,28 +470,105 @@ export default function AgentsPage() {
           </div>
         </div>
 
+        {/* Filter Tabs and Search */}
+        <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+            {FILTER_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setAgentFilter(tab.id)}
+                className={clsx(
+                  'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                  agentFilter === tab.id
+                    ? 'bg-white text-slate-900 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                )}
+              >
+                {tab.label}
+                {tab.count !== undefined && (
+                  <span className="ml-1.5 text-xs text-slate-400">({tab.count})</span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search agents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
+            />
+          </div>
+        </div>
+
         {!currentProjectId && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-amber-800 text-sm">
-              Select a project to configure agent providers. Default settings shown below.
-            </p>
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-amber-800 font-medium">No Project Selected</p>
+                <p className="text-amber-700 text-sm mt-1">
+                  You can browse and explore provider/model options below.
+                  To save configurations, select a project from the sidebar.
+                </p>
+                {hasActiveCredentials && (
+                  <p className="text-amber-700 text-sm mt-1">
+                    BYOA credentials can be assigned to agents without selecting a project.
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {agents.map((agent: any) => {
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Agent Grid */}
+        <div className={clsx(
+          'flex-1 overflow-auto p-6 transition-all duration-300',
+          showCoPilot ? 'pr-0' : ''
+        )}>
+          {filteredAgents.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center">
+              <Filter className="h-12 w-12 text-slate-300 mb-4" />
+              <h3 className="text-lg font-medium text-slate-900 mb-2">No agents found</h3>
+              <p className="text-slate-500 text-sm">
+                {searchQuery ? `No agents match "${searchQuery}"` : 'No agents match the selected filter'}
+              </p>
+              <button
+                onClick={() => { setSearchQuery(''); setAgentFilter('all'); }}
+                className="mt-4 text-sm text-blue-600 hover:text-blue-700"
+              >
+                Clear filters
+              </button>
+            </div>
+          ) : (
+            <div className={clsx(
+              'grid gap-6',
+              showCoPilot
+                ? 'grid-cols-1 lg:grid-cols-2'
+                : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'
+            )}>
+              {filteredAgents.map((agent: any) => {
             const config = getConfigForAgent(agent.name);
             const provider = config?.provider || agent.defaultProvider;
             const model = config?.model || agent.defaultModel;
             const status = getAgentStatus(agent);
             const byoaProvider = getBYOAProviderForAgent(agent.name);
+            const isRecommended = recommendedAgents.includes(agent.name);
 
             return (
               <div
                 key={agent.name}
-                className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-lg transition-all duration-200"
+                className={clsx(
+                  'bg-white rounded-xl border p-6 hover:shadow-lg transition-all duration-200',
+                  isRecommended
+                    ? 'border-blue-400 ring-2 ring-blue-100'
+                    : 'border-slate-200'
+                )}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
@@ -395,31 +608,37 @@ export default function AgentsPage() {
                       value={byoaProvider || provider}
                       onChange={(e) => {
                         const value = e.target.value;
+
+                        // BYOA provider selected
                         if (value.startsWith('byoa_')) {
                           const byoaProv = value.replace('byoa_', '');
                           const currentAgents = credentials.find((c) => c.provider === byoaProv)?.assignedAgents || [];
                           if (!currentAgents.includes(agent.name)) {
                             updateAgentsMutation.mutate({ provider: byoaProv, agents: [...currentAgents, agent.name] });
                           }
-                        } else {
-                          if (byoaProvider) {
-                            const cred = credentials.find((c) => c.provider === byoaProvider);
-                            if (cred) {
-                              updateAgentsMutation.mutate({
-                                provider: byoaProvider,
-                                agents: cred.assignedAgents.filter((a) => a !== agent.name),
-                              });
-                            }
-                          }
-                          if (currentProjectId) {
-                            updateConfig.mutate({ agentName: agent.name, provider: value, model });
+                          return;
+                        }
+
+                        // Platform provider selected - remove from any BYOA assignment first
+                        if (byoaProvider) {
+                          const cred = credentials.find((c) => c.provider === byoaProvider);
+                          if (cred) {
+                            updateAgentsMutation.mutate({
+                              provider: byoaProvider,
+                              agents: cred.assignedAgents.filter((a) => a !== agent.name),
+                            });
                           }
                         }
+
+                        // Save to project config if project is selected
+                        if (currentProjectId) {
+                          updateConfig.mutate({ agentName: agent.name, provider: value, model });
+                        }
+                        // If no project, the selection is just for browsing - no save needed
                       }}
-                      disabled={!currentProjectId && !hasActiveCredentials}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
                     >
-                      <optgroup label="Platform Providers">
+                      <optgroup label="Platform Providers (AgentWorks Billing)">
                         {PROVIDERS.map((p) => (
                           <option key={p} value={p}>
                             {p.charAt(0).toUpperCase() + p.slice(1)}
@@ -427,12 +646,12 @@ export default function AgentsPage() {
                         ))}
                       </optgroup>
                       {credentials.filter((c) => c.status === 'active').length > 0 && (
-                        <optgroup label="Your BYOA Credentials">
+                        <optgroup label="Your API Keys (BYOA - Direct Billing)">
                           {credentials
                             .filter((c) => c.status === 'active')
                             .map((c) => (
                               <option key={`byoa_${c.provider}`} value={`byoa_${c.provider}`}>
-                                BYOA: {c.provider.replace('_', ' ')} {c.subscriptionTier ? `(${c.subscriptionTier})` : ''}
+                                {c.provider.charAt(0).toUpperCase() + c.provider.slice(1)} {c.subscriptionTier ? `(${c.subscriptionTier})` : ''}
                               </option>
                             ))}
                         </optgroup>
@@ -440,29 +659,54 @@ export default function AgentsPage() {
                     </select>
                   </div>
 
-                  {!byoaProvider && (
-                    <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Model</label>
-                      <select
-                        value={model}
-                        onChange={(e) =>
-                          currentProjectId &&
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Model</label>
+                    <select
+                      value={model}
+                      onChange={(e) => {
+                        if (currentProjectId) {
                           updateConfig.mutate({
                             agentName: agent.name,
-                            provider,
+                            provider: byoaProvider || provider,
                             model: e.target.value,
-                          })
+                          });
                         }
-                        disabled={!currentProjectId}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm disabled:bg-slate-50 disabled:text-slate-500"
-                      >
-                        <option value="">Select a model</option>
-                        {(PROVIDER_MODELS[provider] || []).map((m) => (
-                          <option key={m.id} value={m.id}>
-                            {m.name}
-                          </option>
-                        ))}
-                      </select>
+                        // If no project, the selection is just for browsing - no save needed
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                    >
+                      {(PROVIDER_MODELS[byoaProvider || provider] || []).length === 0 ? (
+                        <option value="">No models available</option>
+                      ) : (
+                        <>
+                          <option value="">Select a model</option>
+                          {(PROVIDER_MODELS[byoaProvider || provider] || []).map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Configuration status indicator */}
+                  {!currentProjectId && !byoaProvider && (
+                    <div className="text-xs text-amber-600 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      Select a project to save configuration
+                    </div>
+                  )}
+                  {currentProjectId && (
+                    <div className="text-xs text-green-600 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Changes will be saved to project
+                    </div>
+                  )}
+                  {!currentProjectId && byoaProvider && (
+                    <div className="text-xs text-purple-600 flex items-center gap-1">
+                      <CheckCircle className="h-3 w-3" />
+                      Using BYOA credentials
                     </div>
                   )}
                 </div>
@@ -551,7 +795,35 @@ export default function AgentsPage() {
               </div>
             );
           })}
+            </div>
+          )}
         </div>
+
+        {/* CoPilot Panel */}
+        {showCoPilot && (
+          <div className="w-96 border-l border-slate-200 bg-white flex flex-col shrink-0">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <div className="flex items-center gap-2">
+                <Bot className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold text-slate-900">Agent CoPilot</h3>
+              </div>
+              <button
+                onClick={() => setShowCoPilot(false)}
+                className="p-1 hover:bg-slate-100 rounded"
+              >
+                <X className="h-4 w-4 text-slate-500" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <AgentCoPilotPanel
+                agentContext={agentContext}
+                onApplyRecommendation={handleApplyRecommendation}
+                onApplyPreset={handleApplyPreset}
+                onConfigureAgent={handleConfigureAgent}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {showGlobalSettings && (

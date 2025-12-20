@@ -17,6 +17,10 @@ const executeAgentSchema = z.object({
   projectId: z.string().uuid(),
   userId: z.string(),
   context: z.record(z.any()).optional(),
+  // BYOA provider selection overrides
+  provider: z.string().optional(),
+  model: z.string().optional(),
+  tenantId: z.string().optional(),
 });
 
 const authenticateSchema = z.object({

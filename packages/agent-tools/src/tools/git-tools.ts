@@ -414,12 +414,229 @@ export const gitListBranchesTool: AgentTool = {
   },
 };
 
+export const gitCreatePRTool: AgentTool = {
+  name: 'create_pr',
+  description: 'Request to create a GitHub pull request. Pull requests created by agents require CoPilot/human approval.',
+  category: 'git',
+  requiresApproval: true,
+  parameters: [
+    {
+      name: 'title',
+      type: 'string',
+      description: 'The title of the pull request',
+      required: true,
+    },
+    {
+      name: 'body',
+      type: 'string',
+      description: 'The description/body of the pull request',
+      required: false,
+    },
+    {
+      name: 'head',
+      type: 'string',
+      description: 'The name of the branch where your changes are implemented. If not specified, uses the current branch.',
+      required: false,
+    },
+    {
+      name: 'base',
+      type: 'string',
+      description: 'The name of the branch you want the changes pulled into (default: main)',
+      required: false,
+      default: 'main',
+    },
+    {
+      name: 'draft',
+      type: 'boolean',
+      description: 'Whether to create the pull request as a draft',
+      required: false,
+      default: false,
+    },
+  ],
+  execute: async (args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> => {
+    const title = args.title as string;
+    const body = args.body as string | undefined;
+    const head = args.head as string | undefined;
+    const base = (args.base as string) || 'main';
+    const draft = (args.draft as boolean) || false;
+
+    if (!title) {
+      return { success: false, error: 'Pull request title is required' };
+    }
+
+    try {
+      const request = await gitControlService.requestOperation(
+        'create_pr',
+        context.projectId,
+        'agent',
+        { title, body, head, base, draft },
+        context.agentName
+      );
+
+      logger.info('Pull request creation requested', {
+        projectId: context.projectId,
+        requestId: request.id,
+        status: request.status,
+        agent: context.agentName,
+        title,
+        head,
+        base,
+      });
+
+      return {
+        success: true,
+        data: {
+          requestId: request.id,
+          status: request.status,
+          operation: 'create_pr',
+          message: request.status === 'pending'
+            ? 'Pull request creation request submitted for approval'
+            : request.status === 'executed'
+              ? 'Pull request created successfully'
+              : `Pull request creation ${request.status}`,
+          result: request.executionResult,
+        },
+      };
+    } catch (error) {
+      logger.error('Failed to request pull request creation', {
+        projectId: context.projectId,
+        title,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to request pull request creation',
+      };
+    }
+  },
+};
+
+export const gitCheckoutTool: AgentTool = {
+  name: 'git_checkout',
+  description: 'Switch to a different branch.',
+  category: 'git',
+  parameters: [
+    {
+      name: 'branch',
+      type: 'string',
+      description: 'The name of the branch to switch to',
+      required: true,
+    },
+  ],
+  execute: async (args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> => {
+    const branch = args.branch as string;
+
+    if (!branch) {
+      return { success: false, error: 'Branch name is required' };
+    }
+
+    try {
+      const git = await gitControlService.getGitForProject(context.projectId);
+      if (!git) {
+        return {
+          success: false,
+          error: 'Git is not configured for this project',
+        };
+      }
+
+      await git.checkout(branch);
+
+      logger.info('Branch checked out', {
+        projectId: context.projectId,
+        branch,
+        agent: context.agentName,
+      });
+
+      return {
+        success: true,
+        data: {
+          branch,
+          message: `Successfully switched to branch ${branch}`,
+        },
+      };
+    } catch (error) {
+      logger.error('Failed to checkout branch', {
+        projectId: context.projectId,
+        branch,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to checkout branch',
+      };
+    }
+  },
+};
+
+export const gitPullTool: AgentTool = {
+  name: 'git_pull',
+  description: 'Pull changes from the remote repository.',
+  category: 'git',
+  parameters: [
+    {
+      name: 'branch',
+      type: 'string',
+      description: 'The branch to pull. If not specified, pulls the current branch.',
+      required: false,
+    },
+  ],
+  execute: async (args: Record<string, unknown>, context: ToolContext): Promise<ToolResult> => {
+    const branch = args.branch as string | undefined;
+
+    try {
+      const request = await gitControlService.requestOperation(
+        'pull',
+        context.projectId,
+        'agent',
+        { branch },
+        context.agentName
+      );
+
+      logger.info('Pull requested', {
+        projectId: context.projectId,
+        requestId: request.id,
+        status: request.status,
+        agent: context.agentName,
+      });
+
+      return {
+        success: true,
+        data: {
+          requestId: request.id,
+          status: request.status,
+          operation: 'pull',
+          message: request.status === 'pending'
+            ? 'Pull request submitted for approval'
+            : request.status === 'executed'
+              ? 'Pull completed successfully'
+              : `Pull ${request.status}`,
+        },
+      };
+    } catch (error) {
+      logger.error('Failed to request pull', {
+        projectId: context.projectId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to request pull',
+      };
+    }
+  },
+};
+
 export const gitTools = [
   gitStatusTool,
   gitDiffTool,
   gitLogTool,
   gitCommitTool,
   gitPushTool,
+  gitPullTool,
   gitCreateBranchTool,
   gitListBranchesTool,
+  gitCheckoutTool,
+  gitCreatePRTool,
 ];

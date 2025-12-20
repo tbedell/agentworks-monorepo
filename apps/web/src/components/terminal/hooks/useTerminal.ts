@@ -7,6 +7,9 @@ import type {
   TerminalConfig,
   TerminalMessage,
   UseTerminalOptions,
+  KanbanNotification,
+  AgentStatusNotification,
+  TerminalAgentConfig,
 } from '../types';
 import { DEFAULT_TERMINAL_CONFIG } from '../types';
 
@@ -30,6 +33,14 @@ interface UseTerminalReturn {
   clear: () => void;
   focus: () => void;
   fit: () => void;
+  // AI Chat mode
+  aiChatEnabled: boolean;
+  setAiChatEnabled: (enabled: boolean) => void;
+  agentConfig: TerminalAgentConfig | null;
+  setAgentConfig: (config: TerminalAgentConfig) => void;
+  sendAiChat: (message: string) => void;
+  linkToCard: (cardId: string) => void;
+  isAiStreaming: boolean;
 }
 
 export function useTerminal(options: UseTerminalOptions = {}): UseTerminalReturn {
@@ -71,6 +82,9 @@ export function useTerminal(options: UseTerminalOptions = {}): UseTerminalReturn
   const lastSentDimensionsRef = useRef<{ cols: number; rows: number } | null>(null);
 
   const [status, setStatus] = useState<TerminalStatus>('disconnected');
+  const [aiChatEnabled, setAiChatEnabledState] = useState(false);
+  const [agentConfig, setAgentConfigState] = useState<TerminalAgentConfig | null>(null);
+  const [isAiStreaming, setIsAiStreaming] = useState(false);
 
   const initTerminal = useCallback(() => {
     if (!terminalRef.current || terminalInstanceRef.current) return;
@@ -193,6 +207,23 @@ export function useTerminal(options: UseTerminalOptions = {}): UseTerminalReturn
           } else if (message.type === 'error') {
             console.error('Terminal error:', message.data);
             onError?.(new Error(message.data || 'Unknown terminal error'));
+          } else if (message.type === 'kanban' && message.kanban) {
+            // Format Kanban notification for terminal display
+            const notification = formatKanbanNotification(message.kanban);
+            terminalInstanceRef.current?.write(notification);
+          } else if (message.type === 'agent_status' && message.agent) {
+            // Format agent status notification for terminal display
+            const notification = formatAgentNotification(message.agent);
+            terminalInstanceRef.current?.write(notification);
+          } else if (message.type === 'ai_response') {
+            // Handle streaming AI response
+            if (message.data) {
+              terminalInstanceRef.current?.write(message.data);
+            }
+            if (message.done) {
+              setIsAiStreaming(false);
+              terminalInstanceRef.current?.write('\r\n');
+            }
           }
         } catch {
           // Raw data, write directly
@@ -268,6 +299,63 @@ export function useTerminal(options: UseTerminalOptions = {}): UseTerminalReturn
     fitAddonRef.current?.fit();
   }, []);
 
+  // AI Chat mode functions
+  const setAiChatEnabled = useCallback((enabled: boolean) => {
+    setAiChatEnabledState(enabled);
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      const message: TerminalMessage = {
+        type: 'ai_toggle',
+        enabled,
+        timestamp: Date.now(),
+      };
+      websocketRef.current.send(JSON.stringify(message));
+    }
+  }, []);
+
+  const setAgentConfig = useCallback((config: TerminalAgentConfig) => {
+    setAgentConfigState(config);
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      const message: TerminalMessage = {
+        type: 'agent_select',
+        agentName: config.agentName,
+        provider: config.provider,
+        model: config.model,
+        timestamp: Date.now(),
+      };
+      websocketRef.current.send(JSON.stringify(message));
+    }
+  }, []);
+
+  const sendAiChat = useCallback((chatMessage: string) => {
+    if (websocketRef.current?.readyState === WebSocket.OPEN && agentConfig) {
+      setIsAiStreaming(true);
+      // Echo user message
+      terminalInstanceRef.current?.write(`\r\n${ANSI.bold}${ANSI.cyan}You:${ANSI.reset} ${chatMessage}\r\n`);
+      terminalInstanceRef.current?.write(`${ANSI.bold}${ANSI.magenta}${agentConfig.agentName}:${ANSI.reset} `);
+
+      const message: TerminalMessage = {
+        type: 'ai_chat',
+        message: chatMessage,
+        agentName: agentConfig.agentName,
+        provider: agentConfig.provider,
+        model: agentConfig.model,
+        timestamp: Date.now(),
+      };
+      websocketRef.current.send(JSON.stringify(message));
+    }
+  }, [agentConfig]);
+
+  const linkToCard = useCallback((cardId: string) => {
+    if (websocketRef.current?.readyState === WebSocket.OPEN) {
+      const message: TerminalMessage = {
+        type: 'context_link',
+        cardId,
+        timestamp: Date.now(),
+      };
+      websocketRef.current.send(JSON.stringify(message));
+    }
+  }, []);
+
   // Initialize terminal on mount
   useEffect(() => {
     const terminal = initTerminal();
@@ -303,5 +391,71 @@ export function useTerminal(options: UseTerminalOptions = {}): UseTerminalReturn
     clear,
     focus,
     fit,
+    // AI Chat mode
+    aiChatEnabled,
+    setAiChatEnabled,
+    agentConfig,
+    setAgentConfig,
+    sendAiChat,
+    linkToCard,
+    isAiStreaming,
   };
+}
+
+// ANSI color codes for terminal formatting
+const ANSI = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  red: '\x1b[31m',
+};
+
+/**
+ * Format Kanban notification for terminal display
+ */
+function formatKanbanNotification(notification: KanbanNotification): string {
+  const prefix = `${ANSI.bold}${ANSI.cyan}[Kanban]${ANSI.reset}`;
+  const cardTitle = notification.cardTitle.length > 40
+    ? notification.cardTitle.slice(0, 37) + '...'
+    : notification.cardTitle;
+
+  switch (notification.type) {
+    case 'card_created':
+      return `\r\n${prefix} ${ANSI.green}Card created:${ANSI.reset} "${cardTitle}"${notification.toLane ? ` in ${notification.toLane}` : ''}\r\n`;
+    case 'card_moved':
+      return `\r\n${prefix} ${ANSI.blue}Card moved:${ANSI.reset} "${cardTitle}" ${notification.fromLane} -> ${notification.toLane}\r\n`;
+    case 'card_status_changed':
+      return `\r\n${prefix} ${ANSI.yellow}Status changed:${ANSI.reset} "${cardTitle}" -> ${notification.status}\r\n`;
+    case 'card_assigned':
+      return `\r\n${prefix} ${ANSI.magenta}Assigned:${ANSI.reset} "${cardTitle}" to ${notification.agent}\r\n`;
+    case 'card_comment':
+      return `\r\n${prefix} ${ANSI.dim}Comment on "${cardTitle}":${ANSI.reset} ${notification.comment?.slice(0, 80)}\r\n`;
+    default:
+      return `\r\n${prefix} ${notification.type}: "${cardTitle}"\r\n`;
+  }
+}
+
+/**
+ * Format agent status notification for terminal display
+ */
+function formatAgentNotification(notification: AgentStatusNotification): string {
+  const prefix = `${ANSI.bold}${ANSI.magenta}[Agent:${notification.agentId}]${ANSI.reset}`;
+
+  switch (notification.type) {
+    case 'started':
+      return `\r\n${prefix} ${ANSI.green}Started${ANSI.reset} execution${notification.message ? `: ${notification.message}` : ''}\r\n`;
+    case 'completed':
+      return `\r\n${prefix} ${ANSI.green}Completed${ANSI.reset}${notification.message ? `: ${notification.message}` : ''}\r\n`;
+    case 'failed':
+      return `\r\n${prefix} ${ANSI.red}Failed${ANSI.reset}${notification.message ? `: ${notification.message}` : ''}\r\n`;
+    case 'tool_use':
+      return `\r\n${prefix} ${ANSI.dim}Using tool:${ANSI.reset} ${notification.tool}${notification.progress !== undefined ? ` (${notification.progress}%)` : ''}\r\n`;
+    default:
+      return `\r\n${prefix} ${notification.type}${notification.message ? `: ${notification.message}` : ''}\r\n`;
+  }
 }

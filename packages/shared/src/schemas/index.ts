@@ -45,6 +45,11 @@ export const runAgentSchema = z.object({
   agentName: z.enum(AGENT_NAMES),
   provider: z.enum(PROVIDERS).optional(),
   model: z.string().optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().positive().optional(),
+  maxIterations: z.number().min(1).max(50).optional(),
+  tools: z.array(z.string()).optional(),
+  context: z.record(z.unknown()).optional(),
 });
 
 export const agentConfigSchema = z.object({

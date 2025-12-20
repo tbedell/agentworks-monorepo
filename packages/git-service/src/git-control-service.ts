@@ -2,6 +2,7 @@ import { prisma, Prisma } from '@agentworks/db';
 import { createLogger } from '@agentworks/shared';
 import { GitOperations, createGitOperations } from './git-operations.js';
 import { BranchManager, createBranchManager } from './branch-manager.js';
+import { createGitHubPullRequest, getCurrentBranchForProject } from './github-api.js';
 import {
   GitOperationRequest,
   GitOperationType,
@@ -212,7 +213,31 @@ export class GitControlService {
           break;
 
         case 'create_pr':
-          result = { message: 'PR creation requires GitHub API integration' };
+          // Get the head branch - use provided one or get current branch
+          let headBranch = details.head as string | undefined;
+          if (!headBranch) {
+            const currentBranch = await getCurrentBranchForProject(request.projectId);
+            if (!currentBranch) {
+              throw new Error('Could not determine current branch');
+            }
+            headBranch = currentBranch;
+          }
+
+          const prResult = await createGitHubPullRequest(request.projectId, {
+            title: details.title as string,
+            body: details.body as string | undefined,
+            head: headBranch,
+            base: details.base as string | undefined,
+            draft: details.draft as boolean | undefined,
+          });
+
+          result = {
+            prCreated: true,
+            prNumber: prResult.number,
+            prUrl: prResult.url,
+            prTitle: prResult.title,
+            prState: prResult.state,
+          };
           break;
 
         default:

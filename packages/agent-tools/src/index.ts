@@ -32,7 +32,7 @@ export {
 export { fileTools, readFileTool, writeFileTool, updateFileTool, listFilesTool, deleteFileTool } from './tools/file-tools.js';
 
 // Git tools
-export { gitTools, gitStatusTool, gitDiffTool, gitLogTool, gitCommitTool, gitPushTool, gitCreateBranchTool, gitListBranchesTool } from './tools/git-tools.js';
+export { gitTools, gitStatusTool, gitDiffTool, gitLogTool, gitCommitTool, gitPushTool, gitPullTool, gitCreateBranchTool, gitListBranchesTool, gitCheckoutTool, gitCreatePRTool } from './tools/git-tools.js';
 
 // Code tools
 export { codeTools, runTestsTool, runLinterTool, runTypeCheckTool, runBuildTool } from './tools/code-tools.js';
@@ -61,6 +61,17 @@ export {
   type ClaudeCodeToolContext,
 } from './tools/claude-code/index.js';
 
+// WordPress CMS tools
+export {
+  wordpressTools,
+  wpCliTool,
+  wpScaffoldThemeTool,
+  wpScaffoldPluginTool,
+  wpScaffoldBlockTool,
+  wpCheckStandardsTool,
+  wpDeployTool,
+} from './tools/wordpress-tools.js';
+
 // Register all default tools
 import { toolRegistry } from './registry.js';
 import { fileTools } from './tools/file-tools.js';
@@ -69,9 +80,10 @@ import { codeTools } from './tools/code-tools.js';
 import { styleTools } from './tools/style-tools.js';
 import { searchTools } from './tools/search-tools.js';
 import { claudeCodeTools } from './tools/claude-code/index.js';
+import { wordpressTools } from './tools/wordpress-tools.js';
 
 export function registerAllTools(): void {
-  [...fileTools, ...gitTools, ...codeTools, ...styleTools, ...searchTools].forEach((tool) => {
+  [...fileTools, ...gitTools, ...codeTools, ...styleTools, ...searchTools, ...wordpressTools].forEach((tool) => {
     toolRegistry.registerTool(tool);
   });
 }
@@ -98,4 +110,8 @@ export function registerSearchTools(): void {
 
 export function registerClaudeCodeTools(): void {
   claudeCodeTools.forEach((tool) => toolRegistry.registerTool(tool));
+}
+
+export function registerWordPressTools(): void {
+  wordpressTools.forEach((tool) => toolRegistry.registerTool(tool));
 }

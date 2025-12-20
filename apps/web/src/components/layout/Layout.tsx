@@ -10,15 +10,20 @@ import {
   DollarSign,
   User,
   LogOut,
-  PanelRight,
+  PanelLeft,
+  Users,
 } from 'lucide-react';
 import { useAuthStore } from '../../stores/auth';
-import { useWorkspaceStore } from '../../stores/workspace';
-import { useCoPilot } from '../../contexts/CoPilotContext';
 import UserProfile from '../user/UserProfile';
-import RightPanel from './RightPanel';
-import SecondaryNavBar from './SecondaryNavBar';
+import LeftPanel from './LeftPanel';
+import PlanningLeftPanel from './panels/PlanningLeftPanel';
+import KanbanLeftPanel from './panels/KanbanLeftPanel';
+import UIBuilderLeftPanel from './panels/UIBuilderLeftPanel';
+import DBBuilderLeftPanel from './panels/DBBuilderLeftPanel';
+import WorkflowsLeftPanel from './panels/WorkflowsLeftPanel';
 import ProjectSelector from '../project/ProjectSelector';
+import { UIAgentProvider } from '../../contexts/UIAgentContext';
+import { DBBuilderProvider } from '../../contexts/DBBuilderContext';
 
 const NAV_ITEMS = [
   { to: '/planning', icon: Lightbulb, label: 'Planning' },
@@ -27,35 +32,31 @@ const NAV_ITEMS = [
   { to: '/db-builder', icon: Database, label: 'DB Builder' },
   { to: '/workflows', icon: Zap, label: 'Workflows' },
   { to: '/agents', icon: Bot, label: 'Agents' },
+  { to: '/team-session', icon: Users, label: 'Team Session' },
   { to: '/usage', icon: DollarSign, label: 'Usage & Billing' },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuthStore();
-  const { currentWorkspaceId, currentProjectId, projects } = useWorkspaceStore();
-  const currentProject = currentWorkspaceId && currentProjectId
-    ? projects[currentWorkspaceId]?.find(p => p.id === currentProjectId)
-    : null;
   const navigate = useNavigate();
   const location = useLocation();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showUserProfile, setShowUserProfile] = useState(false);
-  const { toggleOpen: toggleCoPilot, isOpen: isCoPilotOpen } = useCoPilot();
 
-  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(() => {
-    const saved = localStorage.getItem('agentworks-right-panel-collapsed');
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(() => {
+    const saved = localStorage.getItem('agentworks-left-panel-collapsed');
     return saved ? JSON.parse(saved) : false;
   });
 
   useEffect(() => {
-    localStorage.setItem('agentworks-right-panel-collapsed', JSON.stringify(rightPanelCollapsed));
-  }, [rightPanelCollapsed]);
+    localStorage.setItem('agentworks-left-panel-collapsed', JSON.stringify(leftPanelCollapsed));
+  }, [leftPanelCollapsed]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === '\\') {
         e.preventDefault();
-        setRightPanelCollapsed((prev: boolean) => !prev);
+        setLeftPanelCollapsed((prev: boolean) => !prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -70,7 +71,20 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
       <header className="bg-white border-b border-slate-200 h-14 flex items-center px-6 shrink-0">
-        <div className="flex items-center gap-8">
+        <div className="flex items-center gap-4">
+          {/* Left Panel Toggle */}
+          <button
+            onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
+            className={`p-2 rounded-lg transition-colors ${
+              leftPanelCollapsed
+                ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+            }`}
+            title={`Toggle panel (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+\\)`}
+          >
+            <PanelLeft className="h-4 w-4" />
+          </button>
+
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center font-bold text-white text-sm">
               AW
@@ -78,7 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <span className="text-lg font-semibold text-slate-900">AgentWorks</span>
           </div>
 
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1 ml-4">
             {NAV_ITEMS.map((item) => {
               const isActive = location.pathname === item.to;
               return (
@@ -108,31 +122,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="hidden md:block">
             <ProjectSelector />
           </div>
-
-          <button
-            onClick={toggleCoPilot}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg hover:-translate-y-0.5 ${
-              isCoPilotOpen
-                ? 'bg-white text-blue-600 border-2 border-blue-600'
-                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700'
-            }`}
-            title="Toggle CoPilot (Cmd+Shift+C)"
-          >
-            <Bot className="h-4 w-4" />
-            <span>CoPilot</span>
-          </button>
-
-          <button
-            onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-            className={`p-2 rounded-lg transition-colors ${
-              rightPanelCollapsed
-                ? 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
-            }`}
-            title={`Toggle panel (${navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}+\\)`}
-          >
-            <PanelRight className="h-4 w-4" />
-          </button>
 
           <div className="relative">
             <button
@@ -181,20 +170,67 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <SecondaryNavBar currentProject={currentProject} />
-
       <div className="flex-1 flex overflow-hidden">
-        <main className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
-          <div className="flex-1 overflow-auto">
-            {children}
-          </div>
-        </main>
+        {/* Route-based Left Panel with appropriate context providers */}
+        {(() => {
+          const panelProps = {
+            collapsed: leftPanelCollapsed,
+            onToggle: () => setLeftPanelCollapsed(!leftPanelCollapsed),
+          };
 
-        <RightPanel
-          collapsed={rightPanelCollapsed}
-          onToggle={() => setRightPanelCollapsed(!rightPanelCollapsed)}
-          selectedCard={null}
-        />
+          const mainContent = (
+            <main className="flex-1 flex flex-col min-w-0 transition-all duration-300 ease-in-out">
+              <div className="flex-1 overflow-auto">
+                {children}
+              </div>
+            </main>
+          );
+
+          switch (location.pathname) {
+            case '/planning':
+              return (
+                <>
+                  <PlanningLeftPanel {...panelProps} />
+                  {mainContent}
+                </>
+              );
+            case '/kanban':
+              return (
+                <>
+                  <KanbanLeftPanel {...panelProps} />
+                  {mainContent}
+                </>
+              );
+            case '/ui-builder':
+              return (
+                <UIAgentProvider>
+                  <UIBuilderLeftPanel {...panelProps} />
+                  {mainContent}
+                </UIAgentProvider>
+              );
+            case '/db-builder':
+              return (
+                <DBBuilderProvider>
+                  <DBBuilderLeftPanel {...panelProps} />
+                  {mainContent}
+                </DBBuilderProvider>
+              );
+            case '/workflows':
+              return (
+                <>
+                  <WorkflowsLeftPanel {...panelProps} />
+                  {mainContent}
+                </>
+              );
+            default:
+              return (
+                <>
+                  <LeftPanel {...panelProps} />
+                  {mainContent}
+                </>
+              );
+          }
+        })()}
       </div>
 
       <UserProfile

@@ -94,23 +94,30 @@ const phaseConfig: Record<CoPilotPhase, {
   'blueprint-review': {
     title: 'Blueprint Review',
     icon: FileText,
-    prompt: "I've drafted your **Blueprint**. Let's review it together.\n\nThe Blueprint includes:\n- Vision & Problem Statement\n- Target Users & Value Proposition\n- Feature Requirements\n- Success Metrics\n- Technical Architecture\n\nReady to proceed to PRD?",
+    prompt: "I've generated the **Blueprint** document.\n\n📄 **View it in:** Planning → Project Documentation\n📋 **Review card created:** Check Lane 0 on your Kanban board\n\nThe Blueprint includes:\n- Vision & Problem Statement\n- Target Users & Value Proposition\n- Feature Requirements\n- Success Metrics\n- Technical Architecture\n\n**Please review the Blueprint and let me know:**\n- Say **\"approve\"** or **\"looks good\"** to proceed to PRD\n- Or describe any changes you'd like me to make",
     nextPhase: 'prd-review',
     color: 'text-blue-600 bg-blue-50',
   },
   'prd-review': {
     title: 'PRD Review',
     icon: FileText,
-    prompt: "The **Product Requirements Document** is ready.\n\nIt details:\n- User Stories & Acceptance Criteria\n- Feature Specifications\n- API Requirements\n- Data Model\n\nShall we define the MVP scope?",
+    prompt: "I've generated the **PRD** (Product Requirements Document).\n\n📄 **View it in:** Planning → Project Documentation\n📋 **Review card created:** Check Lane 0 on your Kanban board\n\nThe PRD details:\n- User Stories & Acceptance Criteria\n- Feature Specifications\n- API Requirements\n- Data Model\n\n**Please review the PRD and let me know:**\n- Say **\"approve\"** or **\"looks good\"** to proceed to MVP\n- Or describe any changes you'd like me to make",
     nextPhase: 'mvp-review',
     color: 'text-green-600 bg-green-50',
   },
   'mvp-review': {
     title: 'MVP Review',
     icon: Target,
-    prompt: "Your **MVP Definition** is complete!\n\nMVP includes:\n- Core features for launch\n- Agent Playbook (who builds what)\n- Priority matrix\n- Timeline estimate\n\nReady to start building?",
-    nextPhase: 'planning-complete',
+    prompt: "I've generated the **MVP Definition**.\n\n📄 **View it in:** Planning → Project Documentation\n📋 **Review card created:** Check Lane 0 on your Kanban board\n\nThe MVP includes:\n- Core features for launch\n- Priority matrix\n- Development tasks\n\n**Please review the MVP and let me know:**\n- Say **\"approve\"** or **\"looks good\"** to proceed to Agent Playbook\n- Or describe any changes you'd like me to make",
+    nextPhase: 'playbook-review',
     color: 'text-purple-600 bg-purple-50',
+  },
+  'playbook-review': {
+    title: 'Agent Playbook Review',
+    icon: Users,
+    prompt: "I've generated the **Agent Playbook**.\n\n📄 **View it in:** Planning → Project Documentation\n📋 **Review card created:** Check Lane 0 on your Kanban board\n\nThe Agent Playbook defines:\n- Which agents work on which tasks\n- Agent capabilities and responsibilities\n- Workflow and handoffs between agents\n- Automation rules\n\n**Please review the Agent Playbook and let me know:**\n- Say **\"approve\"** or **\"looks good\"** to start building\n- Or describe any changes you'd like me to make",
+    nextPhase: 'planning-complete',
+    color: 'text-indigo-600 bg-indigo-50',
   },
   'planning-complete': {
     title: 'Ready to Build',
@@ -198,9 +205,28 @@ const contextConfig: Record<string, {
 };
 
 const phaseOrder: CoPilotPhase[] = [
-  'welcome', 'vision', 'requirements', 'goals', 'roles', 
-  'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'planning-complete'
+  'welcome', 'vision', 'requirements', 'goals', 'roles',
+  'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'playbook-review', 'planning-complete'
 ];
+
+// Helper to detect if user input indicates approval
+const isApprovalMessage = (message: string): boolean => {
+  const approvalKeywords = [
+    'approve', 'approved', 'looks good', 'lgtm', 'yes', 'accept',
+    'move forward', 'proceed', 'go ahead', 'ship it', 'perfect',
+    'great', 'good to go', 'ready', 'confirm', 'confirmed'
+  ];
+  const lowerMessage = message.toLowerCase();
+  return approvalKeywords.some(keyword => lowerMessage.includes(keyword));
+};
+
+// Map review phases to document types
+const reviewPhaseToDocType: Record<string, 'blueprint' | 'prd' | 'mvp' | 'playbook'> = {
+  'blueprint-review': 'blueprint',
+  'prd-review': 'prd',
+  'mvp-review': 'mvp',
+  'playbook-review': 'playbook',
+};
 
 export default function CoPilotDrawer() {
   const { 
@@ -268,6 +294,99 @@ export default function CoPilotDrawer() {
     setIsLoading(true);
 
     if (isNewProject) {
+      // Check if we're in a review phase and user is approving
+      const isReviewPhase = currentPhase in reviewPhaseToDocType;
+      const userApproved = isApprovalMessage(userMessage.content);
+
+      if (isReviewPhase && userApproved && currentProjectId) {
+        // User approved the document - move card to complete and advance
+        const docType = reviewPhaseToDocType[currentPhase];
+        const nextPhase = phase.nextPhase;
+
+        try {
+          // Approve the review card (moves it to Complete lane)
+          await api.copilot.approveReviewCard({
+            projectId: currentProjectId,
+            documentType: docType,
+          });
+
+          // Show approval confirmation message
+          const docTypeName = docType.charAt(0).toUpperCase() + docType.slice(1);
+          let approvalMessage = `**${docTypeName} Approved!**\n\nThe review card has been moved to the Complete lane.`;
+
+          // If there's a next phase, generate the next document
+          if (nextPhase && nextPhase !== 'planning-complete') {
+            const nextDocType = reviewPhaseToDocType[nextPhase];
+            if (nextDocType) {
+              approvalMessage += `\n\nGenerating ${nextDocType.toUpperCase()}...`;
+              const assistantMsg: Message = {
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: approvalMessage,
+                timestamp: new Date(),
+              };
+              setMessages(prev => [...prev, assistantMsg]);
+
+              // Generate the next document
+              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: nextDocType });
+
+              // Advance to next review phase
+              setPhase(nextPhase);
+              updateProject(currentProjectId, { phase: nextPhase });
+
+              // Show next phase prompt
+              const nextConfig = phaseConfig[nextPhase];
+              const nextPhaseMsg: Message = {
+                id: (Date.now() + 1).toString(),
+                role: 'assistant',
+                content: nextConfig.prompt,
+                timestamp: new Date(),
+              };
+              setMessages(prev => [...prev, nextPhaseMsg]);
+            }
+          } else if (nextPhase === 'planning-complete') {
+            // All documents approved, generate cards and complete
+            approvalMessage += '\n\nAll documents approved! Generating development cards...';
+            const assistantMsg: Message = {
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: approvalMessage,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, assistantMsg]);
+
+            await api.copilot.generateCards(currentProjectId);
+
+            setPhase('planning-complete');
+            updateProject(currentProjectId, { phase: 'planning-complete' });
+
+            // Show completion message
+            const completeMsg: Message = {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: phaseConfig['planning-complete'].prompt,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, completeMsg]);
+
+            endNewProjectFlow();
+            navigate('/kanban');
+          }
+        } catch (error) {
+          console.error('Error approving document:', error);
+          const errorMsg: Message = {
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: 'I encountered an error approving the document. Please try again or check the console for details.',
+            timestamp: new Date(),
+          };
+          setMessages(prev => [...prev, errorMsg]);
+        } finally {
+          setIsLoading(false);
+        }
+        return;
+      }
+
       // Use AI API for real conversational responses during planning
       try {
         const response = await api.copilot.chat({
@@ -299,13 +418,30 @@ export default function CoPilotDrawer() {
               response: userMessage.content,
             });
 
-            // Generate documents at appropriate phases
+            // Generate ALL documents in PARALLEL when transitioning to blueprint-review
+            // This launches 4 agents simultaneously: Blueprint, PRD, MVP, Agent Playbook
             if (nextPhase === 'blueprint-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'blueprint' });
-            } else if (nextPhase === 'prd-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'prd' });
-            } else if (nextPhase === 'mvp-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'mvp' });
+              // Generate all 4 documents in parallel - creates review cards + todos automatically
+              await api.copilot.generateAll(currentProjectId);
+              // Show a message indicating documents are being generated
+              const generatingMessage: Message = {
+                id: (Date.now() + 2).toString(),
+                role: 'assistant',
+                content: `**Launching document generation agents in parallel...**
+
+I'm generating all 4 planning documents simultaneously:
+- **Blueprint** - High-level vision and architecture
+- **PRD** - Product Requirements Document
+- **MVP** - Minimum Viable Product scope
+- **Agent Playbook** - Agent execution plan
+
+Each document has a **review card** in the Review lane on the Kanban board.
+Check the **Todo** tab in the sidebar to see your review checklist.
+
+Click any card to review, chat about changes, or approve.`,
+                timestamp: new Date(),
+              };
+              setMessages(prev => [...prev, generatingMessage]);
             } else if (nextPhase === 'planning-complete') {
               await api.copilot.generateCards(currentProjectId);
             }
@@ -396,13 +532,30 @@ export default function CoPilotDrawer() {
               response: userMessage.content,
             });
 
-            // Generate documents at appropriate phases
+            // Generate ALL documents in PARALLEL when transitioning to blueprint-review
+            // This launches 4 agents simultaneously: Blueprint, PRD, MVP, Agent Playbook
             if (nextPhase === 'blueprint-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'blueprint' });
-            } else if (nextPhase === 'prd-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'prd' });
-            } else if (nextPhase === 'mvp-review') {
-              await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'mvp' });
+              // Generate all 4 documents in parallel - creates review cards + todos automatically
+              await api.copilot.generateAll(currentProjectId);
+              // Show a message indicating documents are being generated
+              const generatingMessage: Message = {
+                id: (Date.now() + 2).toString(),
+                role: 'assistant',
+                content: `**Launching document generation agents in parallel...**
+
+I'm generating all 4 planning documents simultaneously:
+- **Blueprint** - High-level vision and architecture
+- **PRD** - Product Requirements Document
+- **MVP** - Minimum Viable Product scope
+- **Agent Playbook** - Agent execution plan
+
+Each document has a **review card** in the Review lane on the Kanban board.
+Check the **Todo** tab in the sidebar to see your review checklist.
+
+Click any card to review, chat about changes, or approve.`,
+                timestamp: new Date(),
+              };
+              setMessages(prev => [...prev, generatingMessage]);
             } else if (nextPhase === 'planning-complete') {
               await api.copilot.generateCards(currentProjectId);
             }
@@ -476,6 +629,8 @@ export default function CoPilotDrawer() {
           await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'prd' });
         } else if (nextPhase === 'mvp-review') {
           await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'mvp' });
+        } else if (nextPhase === 'playbook-review') {
+          await api.copilot.generateDocument({ projectId: currentProjectId, documentType: 'playbook' });
         } else if (nextPhase === 'planning-complete') {
           await api.copilot.generateCards(currentProjectId);
         }
@@ -503,6 +658,52 @@ export default function CoPilotDrawer() {
       }
     } catch (error) {
       console.error('Error advancing phase:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Generate all documents directly (bypasses phase detection)
+  const handleGenerateAllDocuments = async () => {
+    if (!currentProjectId || isLoading) return;
+
+    setIsLoading(true);
+
+    try {
+      // Show generating message
+      const generatingMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `**Generating all planning documents...**\n\nI'm now creating:\n- Blueprint\n- PRD (Product Requirements Document)\n- MVP Scope\n- Agent Playbook\n\nThis may take a moment...`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, generatingMessage]);
+
+      // Call generateAll API endpoint
+      await api.copilot.generateAll(currentProjectId);
+
+      // Advance to blueprint-review phase
+      setPhase('blueprint-review');
+      updateProject(currentProjectId, { phase: 'blueprint-review' });
+
+      // Show success message
+      const successMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `**All documents generated successfully!**\n\nI've created review cards for each document in the **Review** lane:\n\n- **Blueprint** - High-level vision and architecture\n- **PRD** - Product Requirements Document\n- **MVP** - Minimum Viable Product scope\n- **Agent Playbook** - Agent execution plan\n\nEach document has a card in the Review lane on the Kanban board. Check the **Todo** tab in the sidebar to see your review checklist.\n\nPlease review the Blueprint below, or click any card to review and approve.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, successMessage]);
+
+    } catch (error) {
+      console.error('Error generating documents:', error);
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: `**Error generating documents**\n\nSomething went wrong while generating the documents. Please try again or use the "Next" button to advance phases individually.`,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
@@ -595,17 +796,31 @@ export default function CoPilotDrawer() {
               <phase.icon className={clsx('h-4 w-4', phase.color.split(' ')[0])} />
               <span className="text-sm font-medium text-slate-700">{phase.title}</span>
             </div>
-            {phase.nextPhase && (
-              <button
-                onClick={handleManualAdvance}
-                disabled={isLoading}
-                className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
-                title={`Skip to ${phaseConfig[phase.nextPhase].title}`}
-              >
-                Next
-                <ArrowRight className="h-3 w-3" />
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {/* Show Generate Documents button in early phases */}
+              {['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture'].includes(currentPhase) && (
+                <button
+                  onClick={handleGenerateAllDocuments}
+                  disabled={isLoading}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
+                  title="Generate Blueprint, PRD, MVP, and Playbook"
+                >
+                  <FileText className="h-3 w-3" />
+                  Generate Docs
+                </button>
+              )}
+              {phase.nextPhase && (
+                <button
+                  onClick={handleManualAdvance}
+                  disabled={isLoading}
+                  className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors disabled:opacity-50"
+                  title={`Skip to ${phaseConfig[phase.nextPhase].title}`}
+                >
+                  Next
+                  <ArrowRight className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

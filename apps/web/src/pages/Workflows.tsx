@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   ReactFlow,
   Controls,
@@ -17,28 +18,21 @@ import '@xyflow/react/dist/style.css';
 import {
   Zap,
   Play,
-  Clock,
-  Webhook,
-  Search,
-  GitBranch,
-  Timer,
   Bot,
-  Globe,
-  Bell,
-  FileEdit,
   Download,
   CheckCircle,
-  ChevronRight,
   Monitor,
   Camera,
   Save,
   AlertCircle,
   Loader2,
+  FolderPlus,
 } from 'lucide-react';
 import { captureSnapshot } from '../lib/snapshot';
 import { useWorkspaceStore } from '../stores/workspace';
 import { useCoPilot } from '../contexts/CoPilotContext';
 import WorkflowNodeComponent from '../components/workflow/WorkflowNode';
+import SaveWorkflowModal from '../components/workflow/SaveWorkflowModal';
 import { type WorkflowNodeData, type WorkflowNodeType } from '../components/workflow/types';
 import { api } from '../lib/api';
 
@@ -46,25 +40,13 @@ const nodeTypes = {
   workflow: WorkflowNodeComponent,
 } as const;
 
-interface WorkflowBlock {
-  type: WorkflowNodeType;
-  icon: typeof Zap;
+// Data format from left panel drop
+interface LeftPanelBlockData {
+  type: 'workflow';
+  nodeType: WorkflowNodeType;
   label: string;
-  category: 'trigger' | 'condition' | 'action';
+  description?: string;
 }
-
-const WORKFLOW_BLOCKS: WorkflowBlock[] = [
-  { type: 'trigger', icon: Zap, label: 'Event', category: 'trigger' },
-  { type: 'trigger', icon: Clock, label: 'Schedule', category: 'trigger' },
-  { type: 'trigger', icon: Webhook, label: 'Webhook', category: 'trigger' },
-  { type: 'condition', icon: Search, label: 'Filter', category: 'condition' },
-  { type: 'condition', icon: GitBranch, label: 'Branch', category: 'condition' },
-  { type: 'condition', icon: Timer, label: 'Delay', category: 'condition' },
-  { type: 'agent', icon: Bot, label: 'Run Agent', category: 'action' },
-  { type: 'api', icon: Globe, label: 'API Call', category: 'action' },
-  { type: 'notification', icon: Bell, label: 'Notify', category: 'action' },
-  { type: 'action', icon: FileEdit, label: 'Update Card', category: 'action' },
-];
 
 const INITIAL_NODES: Node[] = [];
 
@@ -72,16 +54,24 @@ const INITIAL_EDGES: Edge[] = [];
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
+// Wrapper component to force remount on navigation
 export default function WorkflowsPage() {
+  const location = useLocation();
+  // Key forces remount when navigating to this page, ensuring fresh data load
+  return <WorkflowsContent key={location.key} />;
+}
+
+function WorkflowsContent() {
   const [searchParams] = useSearchParams();
   const cardId = searchParams.get('cardId');
   const { currentProjectId } = useWorkspaceStore();
   const { openDrawer } = useCoPilot();
+  const queryClient = useQueryClient();
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES);
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES);
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [propertiesTab, setPropertiesTab] = useState<'properties' | 'settings' | 'history'>('properties');
+  const [showSaveModal, setShowSaveModal] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
@@ -89,6 +79,21 @@ export default function WorkflowsPage() {
   const flowContainerRef = useRef<HTMLDivElement>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoadRef = useRef(true);
+
+  // Listen for load-workflow-template events from left panel
+  useEffect(() => {
+    const handleLoadTemplate = (event: CustomEvent<{ nodes: Node[]; edges: Edge[]; name: string }>) => {
+      const { nodes: templateNodes, edges: templateEdges, name } = event.detail;
+      setNodes(templateNodes || []);
+      setEdges(templateEdges || []);
+      setWorkflowName(name);
+    };
+
+    window.addEventListener('load-workflow-template', handleLoadTemplate as EventListener);
+    return () => {
+      window.removeEventListener('load-workflow-template', handleLoadTemplate as EventListener);
+    };
+  }, [setNodes, setEdges]);
 
   // Load saved workflow on mount
   useEffect(() => {
@@ -184,11 +189,6 @@ export default function WorkflowsPage() {
     [setEdges]
   );
 
-  const onDragStart = useCallback((event: React.DragEvent, block: WorkflowBlock) => {
-    event.dataTransfer.setData('application/reactflow', JSON.stringify(block));
-    event.dataTransfer.effectAllowed = 'move';
-  }, []);
-
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -199,8 +199,8 @@ export default function WorkflowsPage() {
       event.preventDefault();
       const blockData = event.dataTransfer.getData('application/reactflow');
       if (!blockData) return;
-      
-      const block = JSON.parse(blockData) as WorkflowBlock;
+
+      const block = JSON.parse(blockData) as LeftPanelBlockData;
       const reactFlowBounds = event.currentTarget.getBoundingClientRect();
       const position = {
         x: event.clientX - reactFlowBounds.left - 90,
@@ -208,12 +208,13 @@ export default function WorkflowsPage() {
       };
 
       const newNode: Node = {
-        id: `${block.type}-${Date.now()}`,
+        id: `${block.nodeType}-${Date.now()}`,
         type: 'workflow',
         position,
         data: {
           label: block.label,
-          nodeType: block.type,
+          nodeType: block.nodeType,
+          description: block.description || '',
         },
       };
 
@@ -252,11 +253,23 @@ export default function WorkflowsPage() {
     }
   }, [setNodes, setEdges, selectedNode]);
 
-  const proOptions = useMemo(() => ({ hideAttribution: true }), []);
+  const handleSaveAsTemplate = useCallback(async (name: string, description: string) => {
+    if (!currentProjectId) {
+      throw new Error('No project selected');
+    }
 
-  const triggerBlocks = WORKFLOW_BLOCKS.filter(b => b.category === 'trigger');
-  const conditionBlocks = WORKFLOW_BLOCKS.filter(b => b.category === 'condition');
-  const actionBlocks = WORKFLOW_BLOCKS.filter(b => b.category === 'action');
+    await api.projects.saveWorkflowTemplate(currentProjectId, {
+      name,
+      description,
+      nodes,
+      edges,
+    });
+
+    // Invalidate the templates query to refresh the left panel
+    queryClient.invalidateQueries({ queryKey: ['workflow-templates', currentProjectId] });
+  }, [currentProjectId, nodes, edges, queryClient]);
+
+  const proOptions = useMemo(() => ({ hideAttribution: true }), []);
 
   const hasWorkflows = nodes.length > 0;
 
@@ -286,85 +299,27 @@ export default function WorkflowsPage() {
           </div>
         </div>
 
-        <div className="flex-1 flex">
-          {!sidebarCollapsed && (
-            <div className="w-48 bg-white border-r border-slate-200 flex flex-col overflow-y-auto">
-              <div className="p-4 border-b border-slate-200">
-                <h2 className="font-semibold text-slate-900 text-sm">Workflow Blocks</h2>
-              </div>
-              
-              <div className="p-3 space-y-4">
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Triggers</h3>
-                  <div className="space-y-1">
-                    {triggerBlocks.map((block, idx) => (
-                      <div
-                        key={`${block.label}-${idx}`}
-                        draggable
-                        onDragStart={(e) => onDragStart(e, block)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                      >
-                        <block.icon className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm text-slate-700">{block.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Conditions</h3>
-                  <div className="space-y-1">
-                    {conditionBlocks.map((block, idx) => (
-                      <div
-                        key={`${block.label}-${idx}`}
-                        draggable
-                        onDragStart={(e) => onDragStart(e, block)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                      >
-                        <block.icon className="h-4 w-4 text-yellow-600" />
-                        <span className="text-sm text-slate-700">{block.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Actions</h3>
-                  <div className="space-y-1">
-                    {actionBlocks.map((block, idx) => (
-                      <div
-                        key={`${block.label}-${idx}`}
-                        draggable
-                        onDragStart={(e) => onDragStart(e, block)}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                      >
-                        <block.icon className="h-4 w-4 text-green-600" />
-                        <span className="text-sm text-slate-700">{block.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+        <div
+          ref={flowContainerRef}
+          className="flex-1 flex items-center justify-center bg-amber-50/50 relative"
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+        >
+          <div className="text-center max-w-md">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
+              <Zap className="h-8 w-8 text-amber-600" />
             </div>
-          )}
-
-          <div className="flex-1 flex items-center justify-center bg-amber-50/50">
-            <div className="text-center max-w-md">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-                <Zap className="h-8 w-8 text-amber-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">No Workflows Yet</h3>
-              <p className="text-sm text-slate-600 mb-6">
-                Create automated workflows by dragging blocks from the sidebar, or use CoPilot to generate workflows based on your project requirements.
-              </p>
-              <button
-                onClick={openDrawer}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Bot className="h-4 w-4" />
-                Open CoPilot
-              </button>
-            </div>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">No Workflows Yet</h3>
+            <p className="text-sm text-slate-600 mb-6">
+              Drag blocks from the left panel to build workflows, or use CoPilot to generate workflows based on your project requirements.
+            </p>
+            <button
+              onClick={openDrawer}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Bot className="h-4 w-4" />
+              Open CoPilot
+            </button>
           </div>
         </div>
       </div>
@@ -417,6 +372,14 @@ export default function WorkflowsPage() {
             Save
           </button>
           <button
+            onClick={() => setShowSaveModal(true)}
+            disabled={nodes.length === 0}
+            className="flex items-center gap-2 px-3 py-1.5 border border-amber-300 bg-amber-50 rounded-lg text-sm hover:bg-amber-100 disabled:opacity-50 text-amber-700"
+          >
+            <FolderPlus className="h-4 w-4" />
+            Save as Template
+          </button>
+          <button
             onClick={handleTakeSnapshot}
             disabled={isCapturing}
             className="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm hover:bg-slate-50 disabled:opacity-50"
@@ -465,75 +428,6 @@ export default function WorkflowsPage() {
       </div>
 
       <div className="flex-1 flex overflow-hidden">
-        {!sidebarCollapsed && (
-          <div className="w-48 bg-white border-r border-slate-200 flex flex-col overflow-y-auto">
-            <div className="p-4 border-b border-slate-200">
-              <h2 className="font-semibold text-slate-900 text-sm">Workflow Blocks</h2>
-            </div>
-            
-            <div className="p-3 space-y-4">
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Triggers</h3>
-                <div className="space-y-1">
-                  {triggerBlocks.map((block, idx) => (
-                    <div
-                      key={`${block.label}-${idx}`}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, block)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                    >
-                      <block.icon className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm text-slate-700">{block.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Conditions</h3>
-                <div className="space-y-1">
-                  {conditionBlocks.map((block, idx) => (
-                    <div
-                      key={`${block.label}-${idx}`}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, block)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                    >
-                      <block.icon className="h-4 w-4 text-yellow-600" />
-                      <span className="text-sm text-slate-700">{block.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Actions</h3>
-                <div className="space-y-1">
-                  {actionBlocks.map((block, idx) => (
-                    <div
-                      key={`${block.label}-${idx}`}
-                      draggable
-                      onDragStart={(e) => onDragStart(e, block)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg cursor-grab hover:bg-slate-50 active:cursor-grabbing transition-colors"
-                    >
-                      <block.icon className="h-4 w-4 text-green-600" />
-                      <span className="text-sm text-slate-700">{block.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white border border-slate-200 rounded-r-lg p-1 shadow-sm hover:bg-slate-50"
-          style={{ left: sidebarCollapsed ? 0 : '192px' }}
-        >
-          <ChevronRight className={`h-4 w-4 text-slate-600 transition-transform ${sidebarCollapsed ? '' : 'rotate-180'}`} />
-        </button>
-
         <div ref={flowContainerRef} className="flex-1 relative bg-amber-50/50" onDragOver={onDragOver} onDrop={onDrop}>
           <ReactFlow
             nodes={nodes}
@@ -812,6 +706,15 @@ export default function WorkflowsPage() {
           </div>
         )}
       </div>
+
+      {/* Save as Template Modal */}
+      <SaveWorkflowModal
+        isOpen={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSaveAsTemplate}
+        nodes={nodes}
+        edges={edges}
+      />
     </div>
   );
 }

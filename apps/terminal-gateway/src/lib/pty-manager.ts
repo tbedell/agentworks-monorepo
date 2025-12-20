@@ -58,8 +58,11 @@ class PtyManager {
         ...env,
         TERM: 'xterm-256color',
         COLORTERM: 'truecolor',
+        // AgentWorks context for Claude CLI integration
         AGENTWORKS_SESSION_ID: sessionId,
         AGENTWORKS_PROJECT_ID: projectId,
+        AGENTWORKS_API_URL: process.env.AGENTWORKS_API_URL || 'http://localhost:3010',
+        AGENTWORKS_ORCHESTRATOR_URL: process.env.AGENTWORKS_ORCHESTRATOR_URL || 'http://localhost:8001',
       },
     });
 
@@ -77,6 +80,10 @@ class PtyManager {
     this.sessions.set(sessionId, session);
     this.dataHandlers.set(sessionId, new Set());
     this.exitHandlers.set(sessionId, new Set());
+
+    // Send CWD confirmation message to help users understand context
+    const cwdMessage = `\x1b[2m# Terminal started in: ${cwd}\x1b[0m\r\n`;
+    ptyProcess.write(`echo '${cwdMessage.replace(/'/g, "\\'")}'\r`);
 
     // Handle PTY data
     ptyProcess.onData((data) => {

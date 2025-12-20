@@ -66,7 +66,7 @@ export class AIGateway {
 
   async chat(
     messages: Message[],
-    options: LLMOptions & { provider?: LLMProviderName; workspaceId?: string; projectId?: string; agentId?: string } = {}
+    options: LLMOptions & { provider?: LLMProviderName; workspaceId?: string; tenantId?: string; projectId?: string; agentId?: string } = {}
   ): Promise<Omit<LLMResponse, 'usage'> & { usage: UsageRecord }> {
     const provider = options.provider ?? this.config.defaultLLM;
     const model = options.model ?? this.config.defaultLLMModel;
@@ -98,7 +98,7 @@ export class AIGateway {
 
   async *streamChat(
     messages: Message[],
-    options: LLMOptions & { provider?: LLMProviderName; workspaceId?: string; projectId?: string; agentId?: string } = {}
+    options: LLMOptions & { provider?: LLMProviderName; workspaceId?: string; tenantId?: string; projectId?: string; agentId?: string } = {}
   ): AsyncGenerator<StreamToken | { usage: UsageRecord }> {
     const provider = options.provider ?? this.config.defaultLLM;
     const model = options.model ?? this.config.defaultLLMModel;

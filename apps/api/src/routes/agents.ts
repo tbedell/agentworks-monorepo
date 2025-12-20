@@ -1,6 +1,12 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@agentworks/db';
-import { runAgentSchema, agentConfigSchema, AGENT_NAMES } from '@agentworks/shared';
+import {
+  runAgentSchema,
+  agentConfigSchema,
+  AGENT_NAMES,
+  getMaxTokensForModel,
+  DEFAULT_AGENT_TEMPERATURE,
+} from '@agentworks/shared';
 import { lucia } from '../lib/auth.js';
 import { getOrchestratorClient } from '../lib/orchestrator-client.js';
 
@@ -26,8 +32,11 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
     return agents;
   });
 
+  // GET /api/agents/:name - Get agent details with optional project-specific config
+  // Query params: ?projectId=<uuid> to get effective provider/model for a specific project
   app.get('/:name', async (request, reply) => {
     const { name } = request.params as { name: string };
+    const { projectId } = request.query as { projectId?: string };
 
     const agent = await prisma.agent.findUnique({
       where: { name },
@@ -37,7 +46,109 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(404).send({ error: 'Agent not found' });
     }
 
-    return agent;
+    // If projectId provided, look up project-specific config
+    let projectConfig = null;
+    if (projectId) {
+      projectConfig = await prisma.agentConfig.findUnique({
+        where: { projectId_agentId: { projectId, agentId: agent.id } },
+      });
+    }
+
+    // Calculate effective values
+    const effectiveProvider = projectConfig?.provider || agent.defaultProvider;
+    const effectiveModel = projectConfig?.model || agent.defaultModel;
+
+    return {
+      ...agent,
+      // Effective values considering project config override
+      effectiveProvider,
+      effectiveModel,
+      // Computed defaults from shared constants
+      defaultTemperature: DEFAULT_AGENT_TEMPERATURE,
+      defaultMaxTokens: getMaxTokensForModel(effectiveModel),
+      // Project-specific config if available
+      projectConfig: projectConfig
+        ? {
+            provider: projectConfig.provider,
+            model: projectConfig.model,
+          }
+        : null,
+    };
+  });
+
+  // PATCH /api/agents/:name/config - Update agent's default provider/model in database
+  // Requires projectId query param to update project-specific config
+  app.patch('/:name/config', async (request, reply) => {
+    const user = (request as any).user;
+    const { name } = request.params as { name: string };
+    const { projectId } = request.query as { projectId?: string };
+    const { provider, model, temperature, maxTokens } = request.body as {
+      provider?: string;
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    };
+
+    const agent = await prisma.agent.findUnique({
+      where: { name },
+    });
+
+    if (!agent) {
+      return reply.status(404).send({ error: 'Agent not found' });
+    }
+
+    // If projectId is provided, update project-specific config
+    if (projectId) {
+      const project = await prisma.project.findUnique({
+        where: { id: projectId },
+        include: { workspace: { include: { members: true } } },
+      });
+
+      if (!project) {
+        return reply.status(404).send({ error: 'Project not found' });
+      }
+
+      const membership = project.workspace.members.find((m) => m.userId === user.id);
+      if (!membership || membership.role === 'viewer') {
+        return reply.status(403).send({ error: 'Not authorized' });
+      }
+
+      // Upsert project-specific agent config
+      const updatedConfig = await prisma.agentConfig.upsert({
+        where: { projectId_agentId: { projectId, agentId: agent.id } },
+        update: {
+          ...(provider && { provider }),
+          ...(model && { model }),
+        },
+        create: {
+          projectId,
+          agentId: agent.id,
+          provider: provider || agent.defaultProvider,
+          model: model || agent.defaultModel,
+        },
+      });
+
+      const effectiveModel = updatedConfig.model;
+
+      return {
+        agent: {
+          ...agent,
+          effectiveProvider: updatedConfig.provider,
+          effectiveModel,
+          defaultTemperature: DEFAULT_AGENT_TEMPERATURE,
+          defaultMaxTokens: getMaxTokensForModel(effectiveModel),
+        },
+        projectConfig: {
+          provider: updatedConfig.provider,
+          model: updatedConfig.model,
+        },
+      };
+    }
+
+    // Without projectId, we can't update anything (agent defaults are in seed data)
+    return reply.status(400).send({
+      error: 'projectId query parameter is required to update agent config',
+    });
   });
 
   app.post('/run', async (request, reply) => {
@@ -94,7 +205,7 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
       include: { agent: true },
     });
 
-    // Forward execution to agent-orchestrator
+    // Forward execution to agent-orchestrator with BYOA provider/model overrides
     try {
       const orchestrator = getOrchestratorClient();
       const executionResult = await orchestrator.executeAgent({
@@ -103,6 +214,10 @@ export const agentRoutes: FastifyPluginAsync = async (app) => {
         workspaceId: card.board.project.workspace.id,
         projectId: card.board.project.id,
         userId: user.id,
+        // BYOA provider selection - pass overrides to orchestrator
+        provider,
+        model,
+        tenantId: card.board.project.workspace.tenantId ?? undefined,
       });
 
       // Update run status to running

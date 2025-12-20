@@ -1,12 +1,98 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@agentworks/db';
 import { z } from 'zod';
-import { createGateway } from '@agentworks/ai-gateway';
+import { createGateway, type LLMProviderName } from '@agentworks/ai-gateway';
 import { AGENT_EXECUTION_MODE } from '@agentworks/shared';
 import { lucia } from '../lib/auth.js';
 import { getOrchestratorClient } from '../lib/orchestrator-client.js';
 import { promises as fs } from 'fs';
 import path from 'path';
+import {
+  findOrCreateDocumentCard,
+  transitionCard,
+  logCardEvent,
+  DOCUMENT_TYPES,
+  DOCUMENT_TYPE_NAMES,
+  type DocumentType,
+} from '../lib/card-state-machine.js';
+import {
+  detectTechStackFromMessage,
+  detectProjectTechStack,
+  messageContainsWordPress,
+} from '../lib/tech-stack-detector.js';
+
+// Default agent configurations for fallback when project config is not set
+const DEFAULT_AGENT_CONFIGS: Record<string, { provider: LLMProviderName; model: string }> = {
+  ceo_copilot: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  strategy: { provider: 'openai', model: 'gpt-4o' },
+  storyboard_ux: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  prd: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  mvp_scope: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  research: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  architect: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  planner: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  devops: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  dev_backend: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  dev_frontend: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  qa: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  troubleshooter: { provider: 'google', model: 'gemini-2.0-flash' },
+  docs: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  refactor: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+  // CMS Agents
+  cms_wordpress: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' },
+};
+
+/**
+ * Get agent configuration for a specific project.
+ * Priority: Project-specific AgentConfig > Default agent configs
+ */
+async function getAgentProviderConfig(
+  projectId: string | undefined,
+  agentName: string
+): Promise<{ provider: LLMProviderName; model: string }> {
+  // Default fallback
+  const defaultConfig = DEFAULT_AGENT_CONFIGS[agentName] || {
+    provider: 'anthropic' as LLMProviderName,
+    model: 'claude-sonnet-4-20250514',
+  };
+
+  if (!projectId) {
+    return defaultConfig;
+  }
+
+  try {
+    // First look up the agent by name to get its ID
+    const agent = await prisma.agent.findUnique({
+      where: { name: agentName },
+    });
+
+    if (!agent) {
+      return defaultConfig;
+    }
+
+    // Check for project-specific override using agentId
+    const agentConfig = await prisma.agentConfig.findUnique({
+      where: {
+        projectId_agentId: {
+          projectId,
+          agentId: agent.id,
+        },
+      },
+    });
+
+    if (agentConfig?.provider && agentConfig?.model) {
+      return {
+        provider: agentConfig.provider as LLMProviderName,
+        model: agentConfig.model,
+      };
+    }
+
+    return defaultConfig;
+  } catch (error) {
+    console.warn(`Failed to fetch agent config for ${agentName}:`, error);
+    return defaultConfig;
+  }
+}
 
 const chatSchema = z.object({
   message: z.string().min(1),
@@ -14,7 +100,7 @@ const chatSchema = z.object({
   context: z.string(),
   projectId: z.string().optional(),
   cardId: z.string().optional(),
-  phase: z.enum(['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture', 'general']).optional(),
+  phase: z.enum(['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'playbook-review', 'planning-complete', 'general']).optional(),
   metadata: z.record(z.any()).optional(),
 });
 
@@ -29,6 +115,8 @@ const AGENT_ROUTING: Record<string, { lanes: number[]; priority: string; default
   'architect-agent': { lanes: [3, 4], priority: 'High', defaultLane: 3 },
   'research-agent': { lanes: [2], priority: 'Medium', defaultLane: 2 },
   'docs-agent': { lanes: [9], priority: 'Low', defaultLane: 9 },
+  // CMS Agents - WordPress has access to all lanes for full project lifecycle
+  'wordpress-agent': { lanes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], priority: 'High', defaultLane: 5 },
 };
 
 // Agent aliases for natural language matching
@@ -61,6 +149,17 @@ const AGENT_ALIASES: Record<string, string> = {
   'docs agent': 'docs-agent',
   'copilot': 'ceo-copilot',
   'ceo': 'ceo-copilot',
+  // WordPress CMS Agent aliases
+  'wordpress': 'wordpress-agent',
+  'wordpress agent': 'wordpress-agent',
+  'wp': 'wordpress-agent',
+  'wp agent': 'wordpress-agent',
+  'cms': 'wordpress-agent',
+  'cms agent': 'wordpress-agent',
+  'woocommerce': 'wordpress-agent',
+  'gutenberg': 'wordpress-agent',
+  'theme': 'wordpress-agent',
+  'plugin': 'wordpress-agent',
 };
 
 // Parse actions from AI response
@@ -181,26 +280,62 @@ async function executeActions(
         }
 
         if (lane) {
-          // Get max position in lane
-          const maxPos = await prisma.card.aggregate({
-            where: { laneId: lane.id },
-            _max: { position: true },
-          });
-
-          const card = await prisma.card.create({
-            data: {
+          // Check for existing card with same title - update if exists, create if not
+          const existingCard = await prisma.card.findFirst({
+            where: {
               boardId,
-              laneId: lane.id,
               title: action.data.title,
-              description: action.data.description || '',
-              type: 'task',
-              priority: action.data.priority || routing.priority,
-              assignedAgent: agentSlug,
-              status: 'pending',
-              position: (maxPos._max.position ?? -1) + 1,
             },
           });
-          console.log('[CoPilot] SUCCESS - Created card:', card.id, '-', card.title);
+
+          let card;
+          if (existingCard) {
+            // Update existing card instead of creating duplicate
+            card = await prisma.card.update({
+              where: { id: existingCard.id },
+              data: {
+                laneId: lane.id,
+                description: action.data.description || existingCard.description,
+                priority: action.data.priority || routing.priority,
+                assignedAgent: agentSlug,
+                status: 'pending',
+              },
+            });
+            console.log('[CoPilot] SUCCESS - Updated existing card:', card.id, '-', card.title);
+
+            // Add history note for the update
+            await prisma.cardHistory.create({
+              data: {
+                cardId: card.id,
+                action: 'updated',
+                previousValue: existingCard.description || null,
+                newValue: action.data.description || null,
+                performedBy: agentSlug,
+                metadata: { reason: 'CoPilot CREATE_CARD action - updated existing card instead of creating duplicate' },
+              },
+            });
+          } else {
+            // Get max position in lane for new card
+            const maxPos = await prisma.card.aggregate({
+              where: { laneId: lane.id },
+              _max: { position: true },
+            });
+
+            card = await prisma.card.create({
+              data: {
+                boardId,
+                laneId: lane.id,
+                title: action.data.title,
+                description: action.data.description || '',
+                type: 'task',
+                priority: action.data.priority || routing.priority,
+                assignedAgent: agentSlug,
+                status: 'pending',
+                position: (maxPos._max.position ?? -1) + 1,
+              },
+            });
+            console.log('[CoPilot] SUCCESS - Created new card:', card.id, '-', card.title);
+          }
           result.cardsCreated.push(card);
         }
       } else if (action.type === 'MOVE_CARD') {
@@ -303,6 +438,12 @@ Recommend and discuss:
 - Backend needs (if any)
 - Data storage needs
 
+WORDPRESS DETECTION: If the user mentions WordPress, WooCommerce, themes, plugins, Gutenberg, or any WordPress-related technology:
+1. IMMEDIATELY recommend the WordPress CMS Agent for this project
+2. Mention that the WordPress CMS Agent is a full-stack WordPress expert
+3. Explain that it can handle themes (classic & block), plugins, Gutenberg blocks, WooCommerce, and deployment
+4. Create a card to assign the WordPress CMS Agent using [ACTION:CREATE_CARD] with agent: wordpress-agent
+
 IMPORTANT: Make concrete recommendations. After discussing, say "Planning is complete! Ready to generate your Blueprint, PRD, and MVP documents."`,
 
   general: `You are a helpful AI assistant. Answer the user's questions directly and helpfully. Don't force them into a planning flow unless they ask for it.`,
@@ -319,7 +460,16 @@ function detectPhaseCompletion(response: string, phase: string): boolean {
     requirements: ['goals phase', 'move to goals', 'goals stage', 'define goals', 'set goals', 'success metrics'],
     goals: ['roles phase', 'move to roles', 'roles stage', 'identify roles', 'team and agents'],
     roles: ['architecture phase', 'move to architecture', 'architecture stage', 'technical architecture', 'tech stack'],
-    architecture: ['planning complete', 'blueprint', 'ready to generate', 'prd', 'complete', 'finished planning'],
+    architecture: [
+      'planning complete', 'blueprint', 'ready to generate', 'prd', 'complete', 'finished planning',
+      // Document creation triggers
+      'create the documents', 'creating the documents', 'generate the documents', 'generating documents',
+      'i\'ll create the necessary documents', 'create the necessary documents',
+      'let me create', 'let me generate', 'creating your documents', 'generating your documents',
+      'i\'ll generate', 'i will generate', 'i will create', 'begin generating',
+      'start generating', 'start creating', 'proceed with document', 'create your blueprint',
+      'finalize the planning', 'finalize planning', 'ready to finalize', 'let\'s finalize',
+    ],
   };
 
   // Check phase-specific triggers
@@ -348,7 +498,17 @@ function detectPhaseCompletion(response: string, phase: string): boolean {
 
 // Get the next phase in sequence
 function getNextPhase(currentPhase: string): string | null {
-  const phaseOrder = ['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture'];
+  // Extended phase order including review phases
+  const phaseOrder = [
+    'welcome',
+    'vision',
+    'requirements',
+    'goals',
+    'roles',
+    'architecture',
+    'blueprint-review',  // After architecture, generate documents and review
+    'planning-complete'
+  ];
   const currentIndex = phaseOrder.indexOf(currentPhase);
   if (currentIndex === -1 || currentIndex >= phaseOrder.length - 1) {
     return null;
@@ -365,13 +525,19 @@ const createConversationSchema = z.object({
 
 const phaseResponseSchema = z.object({
   projectId: z.string(),
-  phase: z.enum(['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture']),
+  phase: z.enum(['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'playbook-review', 'planning-complete']),
   response: z.string(),
 });
 
 const generateDocumentSchema = z.object({
   projectId: z.string(),
-  documentType: z.enum(['blueprint', 'prd', 'mvp']),
+  documentType: z.enum(['blueprint', 'prd', 'mvp', 'playbook']),
+  createReviewCard: z.boolean().optional().default(true),
+  createTodo: z.boolean().optional().default(true),
+});
+
+const generateAllDocumentsSchema = z.object({
+  projectId: z.string(),
 });
 
 const generateCardsSchema = z.object({
@@ -383,7 +549,7 @@ type PhaseData = Record<string, string>;
 // Helper function to save document to project filesystem
 async function saveDocumentToFilesystem(
   localPath: string | null,
-  docType: 'blueprint' | 'prd' | 'mvp',
+  docType: 'blueprint' | 'prd' | 'mvp' | 'playbook',
   content: string
 ): Promise<{ saved: boolean; filePath?: string; error?: string }> {
   if (!localPath) {
@@ -580,7 +746,7 @@ agent: frontend-agent
 priority: High
 [/ACTION]
 
-Valid agents: frontend-agent, backend-agent, database-agent, qa-agent, devops-agent, architect-agent, research-agent, docs-agent, ceo-copilot
+Valid agents: frontend-agent, backend-agent, database-agent, qa-agent, devops-agent, architect-agent, research-agent, docs-agent, ceo-copilot, wordpress-agent
 Valid priorities: Critical, High, Medium, Low
 
 === AGENT PLAYBOOK ===
@@ -593,6 +759,13 @@ Valid priorities: Critical, High, Medium, Low
 - **Research Agent** (research-agent): Research tasks, competitive analysis
 - **Docs Agent** (docs-agent): Documentation, user guides
 - **CEO CoPilot** (ceo-copilot): Planning, oversight (that's you!)
+- **WordPress CMS Agent** (wordpress-agent): WordPress themes, plugins, Gutenberg blocks, WooCommerce, full-stack WordPress development
+
+=== WORDPRESS AUTO-DETECTION ===
+If the user mentions WordPress, WooCommerce, themes, plugins, Gutenberg, or any WordPress-related technology, ALWAYS:
+1. Recommend the WordPress CMS Agent as the primary development agent
+2. Explain that it can handle full-stack WordPress development
+3. Create a card for the WordPress CMS Agent
 
 === EXAMPLE ===
 User: "Yes, let's create the frontend and backend tasks"
@@ -641,13 +814,14 @@ Remember: Be helpful, not interrogative. Accept what the user tells you and help
       { role: 'user' as const, content: body.message },
     ];
 
-    // Call AI Gateway with OpenAI (CEO CoPilot uses gpt-4-turbo)
+    // Call AI Gateway with configured provider (respects project-specific overrides)
     let assistantResponse: string;
     try {
       const gateway = createGateway();
+      const agentConfig = await getAgentProviderConfig(body.projectId, 'ceo_copilot');
       const response = await gateway.chat(aiMessages, {
-        provider: 'openai',
-        model: 'gpt-4-turbo',
+        provider: agentConfig.provider,
+        model: agentConfig.model,
         temperature: 0.7,
         maxTokens: 2048,
       });
@@ -922,6 +1096,13 @@ Please try again or check the Admin Panel for provider configuration.`;
 
     const project = await prisma.project.findUnique({
       where: { id: body.projectId },
+      include: {
+        boards: {
+          include: {
+            lanes: { orderBy: { laneNumber: 'asc' } },
+          },
+        },
+      },
     });
 
     if (!project) {
@@ -944,6 +1125,9 @@ Please try again or check the Admin Panel for provider configuration.`;
         break;
       case 'mvp':
         content = generateMVP(project.name, responses);
+        break;
+      case 'playbook':
+        content = generatePlaybook(project.name, responses);
         break;
     }
 
@@ -972,10 +1156,483 @@ Please try again or check the Admin Panel for provider configuration.`;
       content
     );
 
+    // Create a review card in Lane 6 (Review) if requested
+    let reviewCard = null;
+    let linkedTodo = null;
+    const board = project.boards[0];
+
+    if (board && body.createReviewCard !== false) {
+      // Find the Review lane (lane number 6)
+      const reviewLane = board.lanes.find(l => l.laneNumber === 6);
+      if (reviewLane) {
+        const documentTypeNames: Record<string, string> = {
+          blueprint: 'Blueprint',
+          prd: 'PRD',
+          mvp: 'MVP',
+          playbook: 'Agent Playbook',
+        };
+        const docTypeName = documentTypeNames[body.documentType] || body.documentType.toUpperCase();
+
+        // Document order for positioning: blueprint=0, prd=1, mvp=2, playbook=3
+        const documentOrder: Record<string, number> = {
+          blueprint: 0,
+          prd: 1,
+          mvp: 2,
+          playbook: 3,
+        };
+        const order = documentOrder[body.documentType] ?? 0;
+
+        // Check for existing review card - update if exists, create if not
+        const existingCard = await prisma.card.findFirst({
+          where: {
+            boardId: board.id,
+            title: `Review ${docTypeName}`,
+          },
+        });
+
+        if (existingCard) {
+          // Update existing card instead of creating duplicate
+          reviewCard = await prisma.card.update({
+            where: { id: existingCard.id },
+            data: {
+              laneId: reviewLane.id,
+              description: `Please review the updated ${docTypeName} document.\n\nClick "Approve" to move to Complete, or chat to request revisions.`,
+              status: 'Ready',
+              position: order,
+            },
+          });
+
+          // Add history note for the update
+          await prisma.cardHistory.create({
+            data: {
+              cardId: reviewCard.id,
+              action: 'updated',
+              previousValue: existingCard.description || null,
+              newValue: `Document regenerated - ${docTypeName}`,
+              performedBy: 'ceo_copilot',
+              metadata: { documentType: body.documentType, documentId: doc.id, reason: 'Document regenerated - updated existing card' },
+            },
+          });
+        } else {
+          // Create new review card
+          reviewCard = await prisma.card.create({
+            data: {
+              boardId: board.id,
+              laneId: reviewLane.id,
+              title: `Review ${docTypeName}`,
+              description: `Please review the generated ${docTypeName} document and approve or request changes.\n\nClick "Approve" to move to Complete, or chat to request revisions.`,
+              type: 'Doc',
+              priority: 'high',
+              position: order,
+              assignedAgent: 'ceo_copilot',
+              status: 'Ready',
+            },
+          });
+
+          // Create CardHistory entry for card creation
+          await prisma.cardHistory.create({
+            data: {
+              cardId: reviewCard.id,
+              action: 'created',
+              previousValue: null,
+              newValue: 'Review',
+              performedBy: 'ceo_copilot',
+              metadata: { documentType: body.documentType, documentId: doc.id },
+            },
+          });
+        }
+
+        // Create or update linked todo if requested
+        if (body.createTodo !== false) {
+          // Check for existing todo
+          const existingTodo = await prisma.projectTodo.findFirst({
+            where: {
+              projectId: body.projectId,
+              content: `Review ${docTypeName}`,
+            },
+          });
+
+          if (existingTodo) {
+            // Update existing todo to link to current card
+            linkedTodo = await prisma.projectTodo.update({
+              where: { id: existingTodo.id },
+              data: {
+                cardId: reviewCard.id,
+                completed: false,
+              },
+            });
+          } else {
+            // Create new todo
+            linkedTodo = await prisma.projectTodo.create({
+              data: {
+                projectId: body.projectId,
+                content: `Review ${docTypeName}`,
+                completed: false,
+                category: 'review',
+                agentSource: 'ceo_copilot',
+                cardId: reviewCard.id,
+              },
+            });
+          }
+        }
+
+        // Initialize context file for the review card
+        if (project.localPath) {
+          try {
+            const { getContextFileService } = await import('../lib/context-file-service.js');
+            const contextService = getContextFileService();
+            await contextService.initializeContext(
+              project.localPath,
+              reviewCard.id,
+              reviewCard.title,
+              'ceo_copilot'
+            );
+            await contextService.appendToContext(project.localPath, reviewCard.id, {
+              timestamp: new Date(),
+              agentName: 'ceo_copilot',
+              type: 'completion',
+              content: `Generated ${docTypeName} document from planning conversation.\n\nPlease review the document and approve or request changes.\n\nDocument ID: ${doc.id}`,
+            });
+          } catch (err) {
+            console.error('Failed to initialize context for review card:', err);
+          }
+        }
+      }
+    }
+
     return {
       success: true,
       doc,
       filesystem: filesystemResult,
+      reviewCard,
+      linkedTodo,
+    };
+  });
+
+  // Approve a review card and move it to the Complete lane
+  const approveReviewSchema = z.object({
+    projectId: z.string(),
+    documentType: z.enum(['blueprint', 'prd', 'mvp', 'playbook']),
+  });
+
+  app.post('/approve-review', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = approveReviewSchema.parse(request.body);
+
+    const project = await prisma.project.findUnique({
+      where: { id: body.projectId },
+      include: {
+        boards: {
+          include: {
+            lanes: { orderBy: { laneNumber: 'asc' } },
+            cards: true,
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      return reply.status(404).send({ error: 'Project not found' });
+    }
+
+    const board = project.boards[0];
+    if (!board) {
+      return reply.status(404).send({ error: 'No board found for project' });
+    }
+
+    // Find the review card for this document type
+    const documentTypeNames: Record<string, string> = {
+      blueprint: 'Blueprint',
+      prd: 'PRD',
+      mvp: 'MVP',
+      playbook: 'Agent Playbook',
+    };
+    const docTypeName = documentTypeNames[body.documentType] || body.documentType.toUpperCase();
+    const reviewCardTitle = `Review ${docTypeName}`;
+
+    const reviewCard = board.cards.find(c => c.title === reviewCardTitle);
+    if (!reviewCard) {
+      return reply.status(404).send({ error: `Review card not found: ${reviewCardTitle}` });
+    }
+
+    // Find the Complete lane (lane number 7 - shifted after adding Review lane)
+    const completeLane = board.lanes.find(l => l.laneNumber === 7);
+    if (!completeLane) {
+      return reply.status(404).send({ error: 'Complete lane not found' });
+    }
+
+    // Get current lane for history
+    const currentLane = board.lanes.find(l => l.id === reviewCard.laneId);
+    const currentLaneName = currentLane?.name || 'Unknown';
+
+    // Get max position in complete lane
+    const maxPosition = await prisma.card.aggregate({
+      where: { laneId: completeLane.id },
+      _max: { position: true },
+    });
+
+    // Move the card to Complete lane
+    const updatedCard = await prisma.card.update({
+      where: { id: reviewCard.id },
+      data: {
+        laneId: completeLane.id,
+        status: 'Done',
+        position: (maxPosition._max.position ?? -1) + 1,
+      },
+    });
+
+    // Create CardHistory entry for approval
+    await prisma.cardHistory.create({
+      data: {
+        cardId: reviewCard.id,
+        action: 'approved',
+        previousValue: currentLaneName,
+        newValue: completeLane.name,
+        performedBy: user.id || 'user',
+        metadata: { documentType: body.documentType },
+      },
+    });
+
+    // Mark any linked todos as complete
+    const linkedTodos = await prisma.projectTodo.updateMany({
+      where: { cardId: reviewCard.id },
+      data: { completed: true },
+    });
+
+    // Log the approval to the context file
+    if (project.localPath) {
+      try {
+        const { getContextFileService } = await import('../lib/context-file-service.js');
+        const contextService = getContextFileService();
+        await contextService.appendToContext(project.localPath, reviewCard.id, {
+          timestamp: new Date(),
+          agentName: 'user',
+          type: 'approval',
+          content: `${docTypeName} document approved by user. Card moved to Complete lane.`,
+        });
+      } catch (err) {
+        console.error('Failed to log approval to context:', err);
+      }
+    }
+
+    return {
+      success: true,
+      card: updatedCard,
+      movedToLane: completeLane.name,
+      todosCompleted: linkedTodos.count,
+    };
+  });
+
+  // Generate all 4 planning documents SEQUENTIALLY
+  // This endpoint uses the card state machine to prevent duplicates and ensure proper card lifecycle
+  app.post('/generate-all', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = generateAllDocumentsSchema.parse(request.body);
+
+    const project = await prisma.project.findUnique({
+      where: { id: body.projectId },
+      include: {
+        boards: {
+          include: {
+            lanes: { orderBy: { laneNumber: 'asc' } },
+          },
+        },
+      },
+    });
+
+    if (!project) {
+      return reply.status(404).send({ error: 'Project not found' });
+    }
+
+    // Get phase responses for document generation
+    const phaseComponent = await prisma.projectComponent.findFirst({
+      where: { projectId: body.projectId, type: 'discovery', name: 'phase-responses' },
+    });
+
+    const responses = (phaseComponent?.data || {}) as PhaseData;
+    const board = project.boards[0];
+
+    if (!board) {
+      return reply.status(404).send({ error: 'No board found for project' });
+    }
+
+    // Find the Review lane (lane number 6)
+    const reviewLane = board.lanes.find(l => l.laneNumber === 6);
+    if (!reviewLane) {
+      return reply.status(404).send({ error: 'Review lane not found. Ensure lane 6 (Review) exists.' });
+    }
+
+    // Process documents SEQUENTIALLY to prevent race conditions
+    const results: Array<{
+      documentType: string;
+      success: boolean;
+      doc?: any;
+      reviewCard?: any;
+      linkedTodo?: any;
+      cardCreated?: boolean;
+      error?: string;
+    }> = [];
+
+    for (const documentType of DOCUMENT_TYPES) {
+      try {
+        // Generate document content
+        let content = '';
+        switch (documentType) {
+          case 'blueprint':
+            content = generateBlueprint(project.name, responses);
+            break;
+          case 'prd':
+            content = generatePRD(project.name, responses);
+            break;
+          case 'mvp':
+            content = generateMVP(project.name, responses);
+            break;
+          case 'playbook':
+            content = generatePlaybook(project.name, responses);
+            break;
+        }
+
+        // Save document to database
+        const doc = await prisma.projectDoc.upsert({
+          where: {
+            projectId_type: {
+              projectId: body.projectId,
+              type: documentType.toUpperCase(),
+            },
+          },
+          update: {
+            content,
+            version: { increment: 1 },
+          },
+          create: {
+            projectId: body.projectId,
+            type: documentType.toUpperCase(),
+            content,
+          },
+        });
+
+        // Save to filesystem
+        await saveDocumentToFilesystem(project.localPath, documentType, content);
+
+        const docTypeName = DOCUMENT_TYPE_NAMES[documentType];
+
+        // Use card state machine to find or create the document card
+        const { card: reviewCard, created: cardCreated } = await findOrCreateDocumentCard({
+          boardId: board.id,
+          documentType,
+          projectName: project.name,
+          performedBy: 'ceo_copilot',
+        });
+
+        // Transition the card to the review lane with 'document_generated' trigger
+        await transitionCard({
+          cardId: reviewCard.id,
+          trigger: 'document_generated',
+          performedBy: 'ceo_copilot',
+          targetLaneNumber: 6, // Review lane
+          details: `${docTypeName} document generated and ready for review`,
+          metadata: { documentId: doc.id, documentType },
+        });
+
+        // Log the document generation event
+        await logCardEvent(
+          reviewCard.id,
+          'document_generated',
+          'ceo_copilot',
+          `Generated ${docTypeName} document from planning conversation`,
+          { documentId: doc.id, documentType, version: doc.version }
+        );
+
+        // Check for existing linked todo - update if exists, create if not
+        const existingTodo = await prisma.projectTodo.findFirst({
+          where: {
+            projectId: body.projectId,
+            content: `Review ${docTypeName}`,
+          },
+        });
+
+        let linkedTodo;
+        if (existingTodo) {
+          // Update existing todo to link to current card
+          linkedTodo = await prisma.projectTodo.update({
+            where: { id: existingTodo.id },
+            data: {
+              cardId: reviewCard.id,
+              completed: false,
+            },
+          });
+        } else {
+          // Create new todo
+          linkedTodo = await prisma.projectTodo.create({
+            data: {
+              projectId: body.projectId,
+              content: `Review ${docTypeName}`,
+              completed: false,
+              category: 'review',
+              agentSource: 'ceo_copilot',
+              cardId: reviewCard.id,
+            },
+          });
+        }
+
+        // Initialize context file
+        if (project.localPath) {
+          try {
+            const { getContextFileService } = await import('../lib/context-file-service.js');
+            const contextService = getContextFileService();
+            await contextService.initializeContext(
+              project.localPath,
+              reviewCard.id,
+              reviewCard.title,
+              'ceo_copilot'
+            );
+            await contextService.appendToContext(project.localPath, reviewCard.id, {
+              timestamp: new Date(),
+              agentName: 'ceo_copilot',
+              type: 'completion',
+              content: `Generated ${docTypeName} document from planning conversation.\n\nPlease review the document and approve or request changes.\n\nDocument ID: ${doc.id}`,
+            });
+          } catch (err) {
+            console.error(`Failed to initialize context for ${documentType} review card:`, err);
+          }
+        }
+
+        results.push({
+          documentType,
+          success: true,
+          doc,
+          reviewCard,
+          linkedTodo,
+          cardCreated,
+        });
+      } catch (err) {
+        console.error(`Failed to generate ${documentType}:`, err);
+        results.push({
+          documentType,
+          success: false,
+          error: err instanceof Error ? err.message : 'Unknown error',
+        });
+      }
+    }
+
+    // Update project phase to 'review-documents'
+    await prisma.project.update({
+      where: { id: body.projectId },
+      data: { phase: 'blueprint-review' },
+    });
+
+    return {
+      success: true,
+      results,
+      message: 'All 4 planning documents generated sequentially with card state machine.',
     };
   });
 
@@ -1016,26 +1673,64 @@ Please try again or check the Admin Panel for provider configuration.`;
       const lane = board.lanes.find(l => l.laneNumber === card.laneNumber);
       if (!lane) continue;
 
-      const maxPosition = await prisma.card.aggregate({
-        where: { laneId: lane.id },
-        _max: { position: true },
-      });
-
-      const createdCard = await prisma.card.create({
-        data: {
+      // Check for existing card with same title - update if exists, create if not
+      const existingCard = await prisma.card.findFirst({
+        where: {
           boardId: board.id,
-          laneId: lane.id,
           title: card.title,
-          description: card.description,
-          type: card.type,
-          priority: card.priority,
-          position: (maxPosition._max.position ?? -1) + 1,
-          assignedAgent: card.assignedAgent,
-          status: card.assignedAgent && AGENT_EXECUTION_MODE[card.assignedAgent]?.autoRun
-            ? 'Queued'
-            : 'Ready', // Ready = waiting for human approval
         },
       });
+
+      let createdCard;
+      if (existingCard) {
+        // Update existing card instead of creating duplicate
+        createdCard = await prisma.card.update({
+          where: { id: existingCard.id },
+          data: {
+            laneId: lane.id,
+            description: card.description,
+            type: card.type,
+            priority: card.priority,
+            assignedAgent: card.assignedAgent,
+            status: card.assignedAgent && AGENT_EXECUTION_MODE[card.assignedAgent]?.autoRun
+              ? 'Queued'
+              : 'Ready',
+          },
+        });
+
+        // Add history note for the update
+        await prisma.cardHistory.create({
+          data: {
+            cardId: createdCard.id,
+            action: 'updated',
+            previousValue: existingCard.description || null,
+            newValue: card.description,
+            performedBy: 'ceo_copilot',
+            metadata: { reason: 'Generate cards from MVP - updated existing card instead of creating duplicate' },
+          },
+        });
+      } else {
+        const maxPosition = await prisma.card.aggregate({
+          where: { laneId: lane.id },
+          _max: { position: true },
+        });
+
+        createdCard = await prisma.card.create({
+          data: {
+            boardId: board.id,
+            laneId: lane.id,
+            title: card.title,
+            description: card.description,
+            type: card.type,
+            priority: card.priority,
+            position: (maxPosition._max.position ?? -1) + 1,
+            assignedAgent: card.assignedAgent,
+            status: card.assignedAgent && AGENT_EXECUTION_MODE[card.assignedAgent]?.autoRun
+              ? 'Queued'
+              : 'Ready', // Ready = waiting for human approval
+          },
+        });
+      }
       createdCards.push(createdCard);
     }
 
@@ -1120,8 +1815,9 @@ Please analyze the above context and respond to the user's request.`;
 
     const userPrompt = body.prompt;
 
-    // Call AI to review
+    // Call AI to review (using configured provider)
     const gateway = createGateway();
+    const agentConfig = await getAgentProviderConfig(project.id, 'ceo_copilot');
 
     const completion = await gateway.chat(
       [
@@ -1129,8 +1825,8 @@ Please analyze the above context and respond to the user's request.`;
         { role: 'user', content: userPrompt },
       ],
       {
-        provider: 'openai',
-        model: 'gpt-4-turbo',
+        provider: agentConfig.provider,
+        model: agentConfig.model,
         temperature: 0.3,
       }
     );
@@ -1244,6 +1940,19 @@ Please analyze the above context and respond to the user's request.`;
       body.userName || user.name || user.email || 'Human'
     );
 
+    // Log to CardHistory
+    await prisma.cardHistory.create({
+      data: {
+        cardId: body.cardId,
+        action: 'context_chat',
+        previousValue: null,
+        newValue: null,
+        performedBy: user.id,
+        details: `Chat message: ${body.message.slice(0, 100)}${body.message.length > 100 ? '...' : ''}`,
+        metadata: { source: 'human', messageLength: body.message.length },
+      },
+    });
+
     // Return updated context
     const content = await contextService.readContext(project.localPath, body.cardId);
     const size = await contextService.getContextSize(project.localPath, body.cardId);
@@ -1311,6 +2020,19 @@ Please analyze the above context and respond to the user's request.`;
       await prisma.card.update({
         where: { id: card.id },
         data: { status: 'Running' },
+      });
+
+      // Log agent invocation to CardHistory
+      await prisma.cardHistory.create({
+        data: {
+          cardId: card.id,
+          action: 'agent_invoked',
+          previousValue: null,
+          newValue: agentName,
+          performedBy: user.id,
+          details: `Agent ${agentName} started in conversation mode`,
+          metadata: { runId: String(runId), mode: 'conversation', source: 'context-tab' },
+        },
       });
 
       return {
@@ -1410,6 +2132,19 @@ Please analyze the above context and respond to the user's request.`;
 
     await contextService.updateInstructions(project.localPath, cardId, body.instructions);
 
+    // Log instruction update to CardHistory
+    await prisma.cardHistory.create({
+      data: {
+        cardId,
+        action: 'instructions_updated',
+        previousValue: null,
+        newValue: null,
+        performedBy: user.id,
+        details: `Instructions updated (${body.instructions.length} characters)`,
+        metadata: { source: 'human', instructionLength: body.instructions.length },
+      },
+    });
+
     return {
       success: true,
       instructions: body.instructions,
@@ -1468,8 +2203,8 @@ Please analyze the above context and respond to the user's request.`;
       }
     }
 
-    // Generate instructions using LLM
-    const instructions = await generateCardInstructions(project, card, card.assignedAgent || 'unknown');
+    // Generate instructions using LLM (with project-specific provider config)
+    const instructions = await generateCardInstructions(project.id, project, card, card.assignedAgent || 'unknown');
 
     // Write instructions to context file
     const exists = await contextService.contextExists(project.localPath, body.cardId);
@@ -1492,17 +2227,476 @@ Please analyze the above context and respond to the user's request.`;
       generated: true,
     };
   });
+
+  // Generate visual workflow from natural language prompt
+  const generateWorkflowSchema = z.object({
+    prompt: z.string().min(1),
+    projectId: z.string().optional(),
+  });
+
+  app.post('/generate-workflow', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = generateWorkflowSchema.parse(request.body);
+
+    // Use Design UX or Architect agent to generate workflow
+    const systemPrompt = `You are a workflow design expert. Your task is to create visual workflow diagrams for automation processes.
+
+CRITICAL: You MUST respond with a valid JSON object containing "nodes" and "edges" arrays. Do NOT include any text before or after the JSON.
+
+## Node Types
+- trigger: Entry points (events, schedules, webhooks)
+- action: Operations (create, update, delete, API calls)
+- condition: Decision points (if/else branching)
+- database: Data operations (read, write, query)
+- api: HTTP endpoints or external API calls
+- ui: User interface components
+- agent: AI agent execution
+- notification: Alerts, emails, messages
+
+## Node Structure
+Each node MUST have:
+{
+  "id": "unique-id",
+  "type": "workflow",
+  "position": { "x": number, "y": number },
+  "data": {
+    "label": "Display Name",
+    "nodeType": "trigger|action|condition|database|api|ui|agent|notification",
+    "description": "Brief description of what this node does",
+    "config": { optional configuration }
+  }
+}
+
+## Edge Structure
+Each edge connects nodes:
+{
+  "id": "edge-id",
+  "source": "source-node-id",
+  "target": "target-node-id",
+  "animated": true,
+  "label": "optional label for conditions"
+}
+
+## Layout Guidelines
+- Start triggers at y=0
+- Increment y by 100 for sequential nodes
+- Center nodes at x=300
+- For parallel branches: left=100, center=300, right=500
+- For conditions: add "label" to edges ("Yes", "No", etc.)
+
+## Example Response
+{
+  "name": "Social Media Content Workflow",
+  "nodes": [
+    { "id": "trigger-1", "type": "workflow", "position": { "x": 300, "y": 0 }, "data": { "label": "Content Request", "nodeType": "trigger", "description": "User requests content creation" }},
+    { "id": "action-1", "type": "workflow", "position": { "x": 300, "y": 100 }, "data": { "label": "Generate Content", "nodeType": "agent", "description": "AI generates post copy" }}
+  ],
+  "edges": [
+    { "id": "e1", "source": "trigger-1", "target": "action-1", "animated": true }
+  ]
+}
+
+Respond ONLY with valid JSON. No markdown, no explanations.`;
+
+    const userPrompt = `Create a visual workflow for: ${body.prompt}
+
+Generate a complete workflow with appropriate nodes and edges. Include all necessary steps from start to finish.`;
+
+    try {
+      const gateway = createGateway();
+      const agentConfig = await getAgentProviderConfig(body.projectId, 'architect');
+
+      const response = await gateway.chat(
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        {
+          provider: agentConfig.provider,
+          model: agentConfig.model,
+          temperature: 0.7,
+          maxTokens: 4000,
+        }
+      );
+
+      // Parse the workflow JSON from response
+      let workflowData;
+      try {
+        // Try to extract JSON from the response
+        let jsonStr = response.content.trim();
+
+        // Remove markdown code blocks if present
+        if (jsonStr.startsWith('```json')) {
+          jsonStr = jsonStr.slice(7);
+        } else if (jsonStr.startsWith('```')) {
+          jsonStr = jsonStr.slice(3);
+        }
+        if (jsonStr.endsWith('```')) {
+          jsonStr = jsonStr.slice(0, -3);
+        }
+        jsonStr = jsonStr.trim();
+
+        workflowData = JSON.parse(jsonStr);
+      } catch (parseError) {
+        console.error('Failed to parse workflow JSON:', parseError);
+        console.error('Raw response:', response.content);
+        return reply.status(400).send({
+          error: 'Failed to parse workflow',
+          message: 'The AI generated an invalid workflow format. Please try again.',
+          rawResponse: response.content,
+        });
+      }
+
+      // Validate the workflow structure
+      if (!workflowData.nodes || !Array.isArray(workflowData.nodes)) {
+        return reply.status(400).send({
+          error: 'Invalid workflow',
+          message: 'Workflow must contain a "nodes" array',
+        });
+      }
+      if (!workflowData.edges || !Array.isArray(workflowData.edges)) {
+        workflowData.edges = [];
+      }
+
+      return {
+        success: true,
+        workflow: {
+          name: workflowData.name || 'Generated Workflow',
+          nodes: workflowData.nodes,
+          edges: workflowData.edges,
+        },
+      };
+    } catch (error: any) {
+      console.error('Workflow generation error:', error);
+      return reply.status(500).send({
+        error: 'Workflow generation failed',
+        message: error?.message || 'Unknown error',
+      });
+    }
+  });
+
+  // ============================================
+  // AGENT COPILOT ENDPOINTS
+  // ============================================
+
+  const agentsChatSchema = z.object({
+    message: z.string().min(1),
+    projectId: z.string().optional(),
+    agentContext: z.object({
+      agents: z.array(z.object({
+        name: z.string(),
+        displayName: z.string(),
+        description: z.string().optional(),
+        status: z.enum(['active', 'byoa', 'inactive']),
+        provider: z.string().optional(),
+        model: z.string().optional(),
+        temperature: z.number().optional(),
+        maxTokens: z.number().optional(),
+        lanes: z.array(z.string()).optional(),
+      })),
+      projectType: z.string().optional(),
+      credentials: z.array(z.object({
+        provider: z.string(),
+        status: z.string(),
+        assignedAgents: z.array(z.string()),
+      })),
+    }),
+  });
+
+  /**
+   * Agent CoPilot Chat - AI-powered agent configuration assistant
+   */
+  app.post('/agents/chat', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const parseResult = agentsChatSchema.safeParse(request.body);
+    if (!parseResult.success) {
+      return reply.status(400).send({ error: 'Invalid request body', details: parseResult.error.issues });
+    }
+
+    const body = parseResult.data;
+
+    try {
+      const { analyzeAgents } = await import('../lib/agent-analyzer.js');
+      const { AGENT_COPILOT_SYSTEM_PROMPT, buildAgentContextPrompt } = await import('../lib/agent-copilot-prompts.js');
+
+      // Build context from agent configuration
+      const contextPrompt = buildAgentContextPrompt({
+        agents: body.agentContext.agents.map(a => ({
+          name: a.name,
+          displayName: a.displayName,
+          status: a.status,
+          provider: a.provider,
+          model: a.model,
+          temperature: a.temperature,
+        })),
+        projectType: body.agentContext.projectType,
+        credentials: body.agentContext.credentials,
+      });
+
+      // Get analysis for context
+      const analysis = analyzeAgents(
+        body.agentContext.agents.map(a => ({
+          name: a.name,
+          displayName: a.displayName,
+          description: a.description || '',
+          status: a.status,
+          provider: a.provider,
+          model: a.model,
+          temperature: a.temperature,
+          maxTokens: a.maxTokens,
+          lanes: a.lanes,
+        })),
+        body.agentContext.projectType
+      );
+
+      const gateway = createGateway();
+      const agentConfig = await getAgentProviderConfig(body.projectId, 'ceo_copilot');
+
+      const messages = [
+        { role: 'system' as const, content: AGENT_COPILOT_SYSTEM_PROMPT + '\n\n' + contextPrompt },
+        { role: 'user' as const, content: body.message },
+      ];
+
+      const response = await gateway.chat(messages, {
+        provider: agentConfig.provider,
+        model: agentConfig.model,
+        temperature: 0.7,
+        maxTokens: 2048,
+      });
+
+      // Try to parse recommendations from response
+      let recommendations = [];
+      let actions = [];
+
+      try {
+        const jsonMatch = response.content.match(/```json\s*([\s\S]*?)\s*```/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[1]);
+          recommendations = parsed.recommendations || [];
+          actions = parsed.actions || [];
+        }
+      } catch {
+        // If no JSON found, use analysis recommendations
+        recommendations = analysis.recommendations;
+      }
+
+      return {
+        message: {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: response.content.replace(/```json[\s\S]*?```/g, '').trim(),
+          timestamp: new Date(),
+        },
+        recommendations,
+        actions,
+        analysis: body.message.toLowerCase().includes('analyze') ? analysis : undefined,
+      };
+    } catch (error: any) {
+      console.error('Agent CoPilot chat error:', error);
+      return reply.status(500).send({
+        error: 'Agent CoPilot failed',
+        message: error?.message || 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * Analyze agent configuration
+   */
+  app.post('/agents/analyze', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = request.body as {
+      projectId?: string;
+      agents: Array<{
+        name: string;
+        displayName: string;
+        description?: string;
+        status: 'active' | 'byoa' | 'inactive';
+        provider?: string;
+        model?: string;
+        temperature?: number;
+        maxTokens?: number;
+        lanes?: string[];
+      }>;
+      projectType?: string;
+    };
+
+    try {
+      const { analyzeAgents } = await import('../lib/agent-analyzer.js');
+
+      const analysis = analyzeAgents(
+        body.agents.map(a => ({
+          name: a.name,
+          displayName: a.displayName,
+          description: a.description || '',
+          status: a.status,
+          provider: a.provider,
+          model: a.model,
+          temperature: a.temperature,
+          maxTokens: a.maxTokens,
+          lanes: a.lanes,
+        })),
+        body.projectType
+      );
+
+      return { analysis };
+    } catch (error: any) {
+      console.error('Agent analysis error:', error);
+      return reply.status(500).send({
+        error: 'Agent analysis failed',
+        message: error?.message || 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * Get agent recommendations based on project type
+   */
+  app.post('/agents/recommend', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = request.body as {
+      projectId?: string;
+      projectType?: string;
+      agents: Array<{
+        name: string;
+        displayName: string;
+        status: 'active' | 'byoa' | 'inactive';
+      }>;
+    };
+
+    try {
+      const { analyzeAgents, getOptimalSettings } = await import('../lib/agent-analyzer.js');
+
+      // Get recommendations based on project type
+      const fullAgents = body.agents.map(a => ({
+        name: a.name,
+        displayName: a.displayName,
+        description: '',
+        status: a.status,
+        provider: undefined,
+        model: undefined,
+        temperature: undefined,
+        maxTokens: undefined,
+        lanes: undefined,
+      }));
+
+      const analysis = analyzeAgents(fullAgents, body.projectType);
+
+      // Enhance recommendations with optimal settings
+      const recommendations = analysis.recommendations.map(rec => ({
+        ...rec,
+        suggestedSettings: getOptimalSettings(rec.agentName),
+      }));
+
+      return { recommendations };
+    } catch (error: any) {
+      console.error('Agent recommendation error:', error);
+      return reply.status(500).send({
+        error: 'Agent recommendation failed',
+        message: error?.message || 'Unknown error',
+      });
+    }
+  });
+
+  /**
+   * Bulk configure agents
+   */
+  app.post('/agents/bulk-configure', async (request, reply) => {
+    const user = (request as any).user;
+    if (!user) {
+      return reply.status(401).send({ error: 'Not authenticated' });
+    }
+
+    const body = request.body as {
+      projectId: string;
+      configurations: Array<{
+        agentName: string;
+        provider?: string;
+        model?: string;
+        temperature?: number;
+        maxTokens?: number;
+      }>;
+    };
+
+    if (!body.projectId) {
+      return reply.status(400).send({ error: 'Project ID is required' });
+    }
+
+    try {
+      const results = [];
+
+      for (const config of body.configurations) {
+        // Find or create agent config
+        const agent = await prisma.agent.findUnique({
+          where: { name: config.agentName },
+        });
+
+        if (!agent) {
+          results.push({ agentName: config.agentName, success: false, error: 'Agent not found' });
+          continue;
+        }
+
+        // Upsert agent config
+        await prisma.agentConfig.upsert({
+          where: {
+            projectId_agentId: {
+              projectId: body.projectId,
+              agentId: agent.id,
+            },
+          },
+          update: {
+            provider: config.provider,
+            model: config.model,
+          },
+          create: {
+            projectId: body.projectId,
+            agentId: agent.id,
+            provider: config.provider || 'anthropic',
+            model: config.model || 'claude-sonnet-4-20250514',
+          },
+        });
+
+        results.push({ agentName: config.agentName, success: true });
+      }
+
+      return { success: true, results };
+    } catch (error: any) {
+      console.error('Bulk configure error:', error);
+      return reply.status(500).send({
+        error: 'Bulk configuration failed',
+        message: error?.message || 'Unknown error',
+      });
+    }
+  });
 };
 
 /**
  * Generate card-specific instructions using CoPilot LLM
  */
 async function generateCardInstructions(
+  projectId: string,
   project: { name: string; description: string | null; blueprint?: string | null },
   card: { title: string; description: string | null; type: string; priority: string; lane?: { name: string; laneNumber: number } | null },
   agentName: string
 ): Promise<string> {
   const gateway = createGateway();
+  const agentConfig = await getAgentProviderConfig(projectId, 'ceo_copilot');
 
   const laneDescription = card.lane ? `Lane ${card.lane.laneNumber}: ${card.lane.name}` : 'Unknown Lane';
 
@@ -1540,8 +2734,8 @@ Output only the instructions, no additional commentary.`;
         { role: 'user', content: prompt },
       ],
       {
-        provider: 'openai',
-        model: 'gpt-4o',
+        provider: agentConfig.provider,
+        model: agentConfig.model,
         temperature: 0.7,
         maxTokens: 1000,
       }
@@ -1660,32 +2854,9 @@ function generateCardsFromMVP(
 ): CardTemplate[] {
   const cards: CardTemplate[] = [];
 
-  cards.push({
-    title: `${projectName} - Blueprint`,
-    description: `Project Blueprint document.\n\nVision: ${(responses.vision || '').slice(0, 200)}...`,
-    type: 'document',
-    priority: 'High',
-    laneNumber: 0,
-    assignedAgent: 'ceo_copilot',
-  });
-
-  cards.push({
-    title: `${projectName} - PRD`,
-    description: `Product Requirements Document.\n\nRequirements: ${(responses.requirements || '').slice(0, 200)}...`,
-    type: 'document',
-    priority: 'High',
-    laneNumber: 1,
-    assignedAgent: 'prd',
-  });
-
-  cards.push({
-    title: `${projectName} - MVP Scope`,
-    description: 'MVP feature scope and definition.',
-    type: 'document',
-    priority: 'High',
-    laneNumber: 1,
-    assignedAgent: 'mvp_scope',
-  });
+  // NOTE: Document cards (Blueprint, PRD, MVP, Playbook) are now handled by the card state machine
+  // in the generateAll() endpoint. This function only creates development task cards.
+  // This prevents duplicate cards from being created.
 
   cards.push({
     title: 'Architecture Design',
@@ -1856,6 +3027,56 @@ ${responses.requirements || 'Not defined yet'}
 
 ## Architecture Notes
 ${responses.architecture || 'Not defined yet'}
+
+---
+Generated by AgentWorks CoPilot
+`;
+}
+
+function generatePlaybook(projectName: string, responses: PhaseData): string {
+  return `# ${projectName} - Agent Playbook
+
+## Overview
+This playbook defines the agent execution plan for building ${projectName}.
+
+## Agent Execution Order
+
+### Phase 1: Planning & Architecture (Lane 0-3)
+| Agent | Responsibility | Inputs | Outputs |
+|-------|---------------|--------|---------|
+| CEO CoPilot | Project oversight | Blueprint, PRD, MVP | Progress reports |
+| Architect Agent | System design | Requirements | Architecture docs |
+| Research Agent | Tech research | Requirements | Research briefs |
+
+### Phase 2: Development (Lane 5-6)
+| Agent | Responsibility | Inputs | Outputs |
+|-------|---------------|--------|---------|
+| Backend Agent | API & services | Architecture | Backend code |
+| Frontend Agent | UI components | UX specs | Frontend code |
+| DB Agent | Data layer | Schema design | Database code |
+
+### Phase 3: Quality & Deploy (Lane 7-8)
+| Agent | Responsibility | Inputs | Outputs |
+|-------|---------------|--------|---------|
+| QA Agent | Testing | Code | Test reports |
+| DevOps Agent | Deployment | Tested code | Live system |
+
+## Execution Rules
+
+1. **Approval Gates**: Code-writing agents require human approval
+2. **Auto-Run Agents**: Planning agents run automatically
+3. **Dependencies**: Each lane depends on previous lane completion
+
+## Agent Configuration
+
+### Vision from Discovery
+${responses.vision || 'Not defined yet'}
+
+### Technical Architecture
+${responses.architecture || 'Not defined yet'}
+
+### Team Roles
+${responses.roles || 'Not defined yet'}
 
 ---
 Generated by AgentWorks CoPilot

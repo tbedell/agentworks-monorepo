@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@agentworks/db';
 import { createCardSchema, updateCardSchema, moveCardSchema } from '@agentworks/shared';
 import { lucia } from '../lib/auth.js';
+import { transitionCard } from '../lib/card-state-machine.js';
 
 export const cardRoutes: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', async (request, reply) => {
@@ -41,6 +42,12 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
       _max: { position: true },
     });
 
+    // Get lane info for history tracking
+    const lane = await prisma.lane.findUnique({
+      where: { id: body.laneId },
+      select: { name: true, laneNumber: true },
+    });
+
     const card = await prisma.card.create({
       data: {
         boardId: body.boardId,
@@ -55,6 +62,24 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
       },
       include: {
         assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+    });
+
+    // Create CardHistory entry for card creation
+    await prisma.cardHistory.create({
+      data: {
+        cardId: card.id,
+        action: 'created',
+        previousValue: null,
+        newValue: lane?.name || 'Unknown Lane',
+        performedBy: user.id,
+        details: `Card "${card.title}" created`,
+        metadata: {
+          source: 'cards-api',
+          laneNumber: lane?.laneNumber,
+          type: card.type,
+          priority: card.priority,
+        },
       },
     });
 
@@ -129,7 +154,10 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
 
     const card = await prisma.card.findUnique({
       where: { id },
-      include: { board: { include: { project: { include: { workspace: { include: { members: true } } } } } } },
+      include: {
+        lane: true,
+        board: { include: { project: { include: { workspace: { include: { members: true } } } } } },
+      },
     });
 
     if (!card) {
@@ -141,8 +169,10 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
       return reply.status(403).send({ error: 'Not authorized' });
     }
 
+    const laneChanged = body.laneId !== card.laneId;
+
     await prisma.$transaction(async (tx) => {
-      if (body.laneId !== card.laneId) {
+      if (laneChanged) {
         await tx.card.updateMany({
           where: { laneId: card.laneId, position: { gt: card.position } },
           data: { position: { decrement: 1 } },
@@ -167,6 +197,20 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
         assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
       },
     });
+
+    // Log lane change to CardHistory if lane changed
+    if (laneChanged && updated) {
+      await prisma.cardHistory.create({
+        data: {
+          cardId: id,
+          action: 'lane_change',
+          previousValue: card.lane.name,
+          newValue: updated.lane.name,
+          performedBy: user.id,
+          metadata: { fromLaneId: card.laneId, toLaneId: body.laneId },
+        },
+      });
+    }
 
     return updated;
   });
@@ -262,6 +306,19 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
       },
     });
 
+    // Log approval to CardHistory
+    await prisma.cardHistory.create({
+      data: {
+        cardId: id,
+        action: 'approved',
+        previousValue: card.lane.name,
+        newValue: advance && nextLane ? nextLane.name : card.lane.name,
+        performedBy: user.id,
+        details: notes || null,
+        metadata: advance && nextLane ? { laneChange: true, fromLaneId: card.laneId, toLaneId: nextLane.id } : undefined,
+      },
+    });
+
     return {
       card: updated,
       advanced: advance && !!nextLane,
@@ -331,6 +388,19 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
       },
     });
 
+    // Log rejection to CardHistory
+    await prisma.cardHistory.create({
+      data: {
+        cardId: id,
+        action: 'rejected',
+        previousValue: card.lane.name,
+        newValue: returnToPrevious && prevLane ? prevLane.name : card.lane.name,
+        performedBy: user.id,
+        details: notes || null,
+        metadata: returnToPrevious && prevLane ? { laneChange: true, fromLaneId: card.laneId, toLaneId: prevLane.id } : undefined,
+      },
+    });
+
     return {
       card: updated,
       returnedToPrevious: returnToPrevious && !!prevLane,
@@ -376,6 +446,79 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
     });
 
     return updated;
+  });
+
+  // Mark a card as complete and move to completed lane
+  app.post('/:id/complete', async (request, reply) => {
+    const user = (request as any).user;
+    const { id } = request.params as { id: string };
+
+    const card = await prisma.card.findUnique({
+      where: { id },
+      include: {
+        lane: true,
+        board: { include: { project: { include: { workspace: { include: { members: true } } } } } },
+      },
+    });
+
+    if (!card) {
+      return reply.status(404).send({ error: 'Card not found' });
+    }
+
+    const membership = card.board.project.workspace.members.find((m) => m.userId === user.id);
+    if (!membership || membership.role === 'viewer') {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    // Find the completed lane (usually lane 6 or the highest numbered lane)
+    const completedLane = await prisma.lane.findFirst({
+      where: {
+        boardId: card.boardId,
+        OR: [
+          { laneNumber: 6 }, // Default completed lane
+          { name: { contains: 'Complete', mode: 'insensitive' } },
+          { name: { contains: 'Done', mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { laneNumber: 'desc' },
+    });
+
+    const completedAt = new Date();
+
+    // Update the card
+    const updated = await prisma.card.update({
+      where: { id },
+      data: {
+        status: 'Done',
+        completedAt,
+        laneId: completedLane?.id || card.laneId, // Move to completed lane if found
+        reviewStatus: null, // Clear review status
+      },
+      include: {
+        lane: true,
+        assignee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      },
+    });
+
+    // Log to card history
+    await prisma.cardHistory.create({
+      data: {
+        cardId: id,
+        action: 'completed',
+        previousValue: card.status,
+        newValue: 'Done',
+        performedBy: user.id,
+        details: `Card marked as complete by ${user.name || user.email}`,
+        metadata: completedLane && completedLane.id !== card.laneId
+          ? { laneChange: true, fromLaneId: card.laneId, toLaneId: completedLane.id }
+          : undefined,
+      },
+    });
+
+    return {
+      card: updated,
+      completedAt: completedAt.toISOString(),
+    };
   });
 
   // ============================================
@@ -540,5 +683,143 @@ export const cardRoutes: FastifyPluginAsync = async (app) => {
     await prisma.cardTodo.delete({ where: { id: todoId } });
 
     return { success: true };
+  });
+
+  // GET /api/cards/:cardId/history - Get history entries for a card
+  app.get('/:cardId/history', async (request, reply) => {
+    const user = (request as any).user;
+    const { cardId } = request.params as { cardId: string };
+
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        board: { include: { project: { include: { workspace: { include: { members: true } } } } } },
+      },
+    });
+
+    if (!card) {
+      return reply.status(404).send({ error: 'Card not found' });
+    }
+
+    const isMember = card.board.project.workspace.members.some((m) => m.userId === user.id);
+    if (!isMember) {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    const history = await prisma.cardHistory.findMany({
+      where: { cardId },
+      orderBy: { timestamp: 'desc' },
+    });
+
+    return { history };
+  });
+
+  // POST /api/cards/:cardId/history - Add a history entry to a card
+  app.post('/:cardId/history', async (request, reply) => {
+    const user = (request as any).user;
+    const { cardId } = request.params as { cardId: string };
+    const { action, previousValue, newValue, details, metadata } = request.body as {
+      action: string;
+      previousValue?: string;
+      newValue?: string;
+      details?: string;
+      metadata?: Record<string, any>;
+    };
+
+    if (!action || typeof action !== 'string') {
+      return reply.status(400).send({ error: 'Action is required' });
+    }
+
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      include: {
+        board: { include: { project: { include: { workspace: { include: { members: true } } } } } },
+      },
+    });
+
+    if (!card) {
+      return reply.status(404).send({ error: 'Card not found' });
+    }
+
+    const membership = card.board.project.workspace.members.find((m) => m.userId === user.id);
+    if (!membership || membership.role === 'viewer') {
+      return reply.status(403).send({ error: 'Not authorized' });
+    }
+
+    const historyEntry = await prisma.cardHistory.create({
+      data: {
+        cardId,
+        action,
+        previousValue: previousValue ?? null,
+        newValue: newValue ?? null,
+        performedBy: user.id,
+        details: details ?? null,
+        metadata: metadata ?? undefined,
+      },
+    });
+
+    return { history: historyEntry };
+  });
+
+  // Transition card state (for agent orchestration)
+  // This endpoint can be called by internal services with the internal service token
+  app.post('/:cardId/transition', async (request, reply) => {
+    const { cardId } = request.params as { cardId: string };
+    const { trigger, performedBy, targetLaneNumber, details, metadata } = request.body as {
+      trigger: 'agent_start' | 'agent_complete' | 'human_approve' | 'human_reject' | 'document_generated';
+      performedBy: string;
+      targetLaneNumber?: number;
+      details?: string;
+      metadata?: Record<string, any>;
+    };
+
+    if (!trigger || !performedBy) {
+      return reply.status(400).send({ error: 'Trigger and performedBy are required' });
+    }
+
+    // Check for internal service token (service-to-service calls)
+    const authHeader = request.headers.authorization;
+    const internalToken = process.env.INTERNAL_SERVICE_TOKEN || 'internal-service-token-dev';
+    const isInternalCall = authHeader === `Bearer ${internalToken}`;
+
+    if (!isInternalCall) {
+      // For non-internal calls, validate user session
+      const user = (request as any).user;
+      if (!user) {
+        return reply.status(401).send({ error: 'Not authenticated' });
+      }
+
+      const card = await prisma.card.findUnique({
+        where: { id: cardId },
+        include: {
+          board: { include: { project: { include: { workspace: { include: { members: true } } } } } },
+        },
+      });
+
+      if (!card) {
+        return reply.status(404).send({ error: 'Card not found' });
+      }
+
+      const membership = card.board.project.workspace.members.find((m) => m.userId === user.id);
+      if (!membership || membership.role === 'viewer') {
+        return reply.status(403).send({ error: 'Not authorized' });
+      }
+    }
+
+    try {
+      const updatedCard = await transitionCard({
+        cardId,
+        trigger,
+        performedBy,
+        targetLaneNumber,
+        details,
+        metadata,
+      });
+
+      return { card: updatedCard };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to transition card';
+      return reply.status(500).send({ error: message });
+    }
   });
 };

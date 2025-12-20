@@ -29,11 +29,12 @@ const phaseDisplayConfig: Record<string, { label: string; icon: React.ElementTyp
   'blueprint-review': { label: 'Blueprint Review', icon: FileText, color: 'text-blue-600 bg-blue-50' },
   'prd-review': { label: 'PRD Review', icon: FileText, color: 'text-green-600 bg-green-50' },
   'mvp-review': { label: 'MVP Review', icon: Target, color: 'text-purple-600 bg-purple-50' },
+  'playbook-review': { label: 'Agent Playbook Review', icon: Users, color: 'text-indigo-600 bg-indigo-50' },
   'planning-complete': { label: 'Ready to Build', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
   general: { label: 'In Development', icon: Rocket, color: 'text-slate-600 bg-slate-50' },
 };
 
-const phaseOrder = ['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'planning-complete'];
+const phaseOrder = ['welcome', 'vision', 'requirements', 'goals', 'roles', 'architecture', 'blueprint-review', 'prd-review', 'mvp-review', 'playbook-review', 'planning-complete'];
 
 interface RightPanelProps {
   collapsed: boolean;

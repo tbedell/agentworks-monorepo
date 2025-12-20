@@ -14,6 +14,7 @@
     "@agentworks/agents": "workspace:*",
     "@agentworks/ai-gateway": "workspace:*",
     "@agentworks/agent-tools": "workspace:*",
+    "@agentworks/context-service": "workspace:*",
     "@agentworks/project-files": "workspace:*",
     "@fastify/cors": "^10.0.1",
     "@fastify/helmet": "^12.0.1",

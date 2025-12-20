@@ -9,6 +9,10 @@
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
+    },
+    "./workflow-templates": {
+      "import": "./dist/workflow-templates/index.js",
+      "types": "./dist/workflow-templates/index.d.ts"
     }
   },
   "scripts": {

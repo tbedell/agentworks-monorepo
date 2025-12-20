@@ -14,6 +14,12 @@ export interface StoredSession {
   gatewayId: string;
   createdAt: string;
   lastActivityAt: string;
+  // AI Chat Mode fields
+  agentName?: string;
+  provider?: string;
+  model?: string;
+  linkedCardId?: string;
+  aiChatEnabled?: boolean;
 }
 
 const SESSION_PREFIX = 'terminal:session:';

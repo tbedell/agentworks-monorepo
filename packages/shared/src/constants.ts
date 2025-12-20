@@ -5,7 +5,8 @@ export const LANES = [
   { id: 3, name: 'Workflow Build', icon: 'git-branch' },
   { id: 4, name: 'Test/Troubleshoot', icon: 'check-circle' },
   { id: 5, name: 'Deploy', icon: 'rocket' },
-  { id: 6, name: 'Complete', icon: 'check' },
+  { id: 6, name: 'Review', icon: 'eye' },
+  { id: 7, name: 'Complete', icon: 'check' },
 ] as const;
 
 export const CARD_TYPES = ['Epic', 'Feature', 'Task', 'Bug', 'Doc', 'Blueprint'] as const;
@@ -32,6 +33,8 @@ export const AGENT_NAMES = [
   'refactor',
   'troubleshooter',
   'claude_code_agent',
+  'cms_wordpress',
+  'design_ux',
 ] as const;
 
 export const PROVIDERS = ['openai', 'anthropic', 'google', 'nanobanana'] as const;
@@ -89,6 +92,55 @@ export const PROVIDER_MODELS: Record<string, ModelPricing[]> = {
 export const PRICING_MULTIPLIER = 5;
 export const PRICING_INCREMENT = 0.25;
 
+// Maximum OUTPUT tokens per model (what agents can generate)
+// Note: This is different from contextWindow (total input + output)
+export const MODEL_MAX_OUTPUT_TOKENS: Record<string, number> = {
+  // OpenAI models
+  'gpt-5': 32768,
+  'gpt-4o': 16384,
+  'gpt-4o-mini': 16384,
+  'gpt-4-turbo': 4096,
+  'gpt-4': 8192,
+  'gpt-3.5-turbo': 4096,
+  'o3': 100000,
+  'o3-mini': 65536,
+  'o1': 100000,
+  'o1-mini': 65536,
+  'o1-preview': 32768,
+  // Anthropic models
+  'claude-opus-4-5-20251101': 32768,
+  'claude-opus-4-20250514': 32768,
+  'claude-sonnet-4-20250514': 16384,
+  'claude-3-7-sonnet-20250219': 8192,
+  'claude-3-5-sonnet-20241022': 8192,
+  'claude-3-5-haiku-20241022': 8192,
+  'claude-3-opus-20240229': 4096,
+  'claude-3-sonnet-20240229': 4096,
+  'claude-3-haiku-20240307': 4096,
+  // Google models
+  'gemini-2.5-pro': 65536,
+  'gemini-2.5-flash': 65536,
+  'gemini-2.0-flash': 8192,
+  'gemini-2.0-flash-lite': 8192,
+  'gemini-1.5-pro': 8192,
+  'gemini-1.5-flash': 8192,
+  'gemini-1.5-flash-8b': 8192,
+};
+
+// Default max tokens when model not found
+export const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
+
+// Default temperature for all agents
+export const DEFAULT_AGENT_TEMPERATURE = 1.0;
+
+/**
+ * Get the maximum output tokens for a given model
+ * Falls back to DEFAULT_MAX_OUTPUT_TOKENS if model not found
+ */
+export function getMaxTokensForModel(model: string): number {
+  return MODEL_MAX_OUTPUT_TOKENS[model] ?? DEFAULT_MAX_OUTPUT_TOKENS;
+}
+
 // Agent execution mode classification for hybrid control
 // autoRun: true = agent runs automatically without human approval
 // autoRun: false = agent requires human approval before execution
@@ -113,4 +165,8 @@ export const AGENT_EXECUTION_MODE: Record<string, { autoRun: boolean; riskLevel:
   refactor:       { autoRun: false, riskLevel: 'high' },
   // Claude Code Agent - full-featured coding agent with tool-calling
   claude_code_agent: { autoRun: false, riskLevel: 'high' },
+  // WordPress CMS Agent - full-stack WordPress development
+  cms_wordpress: { autoRun: false, riskLevel: 'high' },
+  // Design UX Agent - visual workflow and UI design (low risk, generates designs not code)
+  design_ux: { autoRun: true, riskLevel: 'low' },
 } as const;

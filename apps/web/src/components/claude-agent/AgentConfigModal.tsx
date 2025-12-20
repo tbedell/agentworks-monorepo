@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { X, Settings, Save } from 'lucide-react';
-import type { AgentConfigModalProps, ClaudeAgentConfig } from './types';
+import { useState, useEffect, useCallback } from 'react';
+import { X, Settings, Save, Loader2 } from 'lucide-react';
+import type { AgentConfigModalProps, ClaudeAgentConfig, AgentDetailsResponse } from './types';
 
 const AVAILABLE_TOOLS = [
   { id: 'read_file', name: 'Read File', description: 'Read files from project workspace' },
@@ -21,26 +21,119 @@ const AVAILABLE_TOOLS = [
   { id: 'log_run_summary', name: 'Log Summary', description: 'Log structured run summary' },
 ];
 
-const AVAILABLE_MODELS = [
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'Anthropic' },
-  { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-  { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus', provider: 'Anthropic' },
+// Provider list from @agentworks/shared constants
+const PROVIDERS = [
+  { id: 'anthropic', name: 'Anthropic' },
+  { id: 'openai', name: 'OpenAI' },
+  { id: 'google', name: 'Google' },
 ];
+
+// All models organized by provider - from @agentworks/shared PROVIDER_MODELS
+const PROVIDER_MODELS: Record<string, { id: string; name: string }[]> = {
+  anthropic: [
+    { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5' },
+    { id: 'claude-opus-4-20250514', name: 'Claude Opus 4' },
+    { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4' },
+    { id: 'claude-3-7-sonnet-20250219', name: 'Claude 3.7 Sonnet' },
+    { id: 'claude-3-5-sonnet-20241022', name: 'Claude 3.5 Sonnet' },
+    { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku' },
+    { id: 'claude-3-opus-20240229', name: 'Claude 3 Opus' },
+    { id: 'claude-3-sonnet-20240229', name: 'Claude 3 Sonnet' },
+    { id: 'claude-3-haiku-20240307', name: 'Claude 3 Haiku' },
+  ],
+  openai: [
+    { id: 'gpt-5', name: 'GPT-5' },
+    { id: 'gpt-4o', name: 'GPT-4o' },
+    { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo' },
+    { id: 'gpt-4', name: 'GPT-4' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo' },
+    { id: 'o3', name: 'o3' },
+    { id: 'o3-mini', name: 'o3 Mini' },
+    { id: 'o1', name: 'o1' },
+    { id: 'o1-mini', name: 'o1 Mini' },
+    { id: 'o1-preview', name: 'o1 Preview' },
+  ],
+  google: [
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
+    { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
+    { id: 'gemini-2.0-flash-lite', name: 'Gemini 2.0 Flash Lite' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+    { id: 'gemini-1.5-flash-8b', name: 'Gemini 1.5 Flash 8B' },
+  ],
+};
+
+const API_BASE = '/api';
 
 export default function AgentConfigModal({
   isOpen,
   onClose,
   cardId: _cardId,
+  projectId,
+  agentName = 'claude_code_agent',
   config,
   onSave,
 }: AgentConfigModalProps) {
   // cardId available for future use (e.g., per-card config persistence)
   void _cardId;
   const [localConfig, setLocalConfig] = useState<ClaudeAgentConfig>(config);
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverDefaults, setServerDefaults] = useState<AgentDetailsResponse | null>(null);
+
+  // Fetch agent defaults from API when modal opens
+  const fetchAgentDefaults = useCallback(async () => {
+    if (!isOpen || !agentName) return;
+
+    setIsLoading(true);
+    try {
+      const url = projectId
+        ? `${API_BASE}/agents/${agentName}?projectId=${projectId}`
+        : `${API_BASE}/agents/${agentName}`;
+
+      const response = await fetch(url, { credentials: 'include' });
+      if (response.ok) {
+        const data = (await response.json()) as AgentDetailsResponse;
+        setServerDefaults(data);
+
+        // Update config with server defaults if not already set
+        setLocalConfig((prev) => ({
+          ...prev,
+          provider: prev.provider || data.effectiveProvider,
+          model: prev.model || data.effectiveModel,
+          temperature: prev.temperature ?? data.defaultTemperature,
+          maxTokens: prev.maxTokens ?? data.defaultMaxTokens,
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to fetch agent defaults:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isOpen, agentName, projectId]);
+
+  useEffect(() => {
+    fetchAgentDefaults();
+  }, [fetchAgentDefaults]);
 
   useEffect(() => {
     setLocalConfig(config);
   }, [config]);
+
+  // Get models for the selected provider
+  const availableModels = PROVIDER_MODELS[localConfig.provider] || PROVIDER_MODELS.anthropic;
+
+  // Handle provider change - reset model to first available model for that provider
+  const handleProviderChange = (newProvider: string) => {
+    const newModels = PROVIDER_MODELS[newProvider] || [];
+    const defaultModel = newModels[0]?.id || 'claude-sonnet-4-20250514';
+    setLocalConfig((prev) => ({
+      ...prev,
+      provider: newProvider,
+      model: defaultModel,
+    }));
+  };
 
   if (!isOpen) return null;
 
@@ -66,14 +159,49 @@ export default function AgentConfigModal({
           <div className="flex items-center gap-2">
             <Settings className="h-5 w-5 text-gray-500" />
             <h2 className="text-lg font-semibold text-gray-900">Agent Configuration</h2>
+            {isLoading && <Loader2 className="h-4 w-4 animate-spin text-gray-400" />}
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
             <X className="h-5 w-5" />
           </button>
         </div>
 
+        {/* Server defaults info */}
+        {serverDefaults && (
+          <div className="mx-6 mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <span className="font-medium">{serverDefaults.displayName}</span>
+              {serverDefaults.projectConfig ? (
+                <span className="ml-2 text-blue-600">
+                  (Project config: {serverDefaults.projectConfig.provider}/{serverDefaults.projectConfig.model})
+                </span>
+              ) : (
+                <span className="ml-2 text-blue-500">
+                  (Using defaults: {serverDefaults.effectiveProvider}/{serverDefaults.effectiveModel})
+                </span>
+              )}
+            </p>
+          </div>
+        )}
+
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          {/* Provider Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Provider</label>
+            <select
+              value={localConfig.provider}
+              onChange={(e) => handleProviderChange(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              {PROVIDERS.map((provider) => (
+                <option key={provider.id} value={provider.id}>
+                  {provider.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Model Selection */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
@@ -82,9 +210,9 @@ export default function AgentConfigModal({
               onChange={(e) => setLocalConfig((prev) => ({ ...prev, model: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              {AVAILABLE_MODELS.map((model) => (
+              {availableModels.map((model) => (
                 <option key={model.id} value={model.id}>
-                  {model.name} ({model.provider})
+                  {model.name}
                 </option>
               ))}
             </select>
@@ -93,7 +221,7 @@ export default function AgentConfigModal({
           {/* Temperature */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Temperature: {localConfig.temperature}
+              Temperature: {localConfig.temperature.toFixed(1)}
             </label>
             <input
               type="range"
@@ -107,9 +235,12 @@ export default function AgentConfigModal({
               className="w-full"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
-              <span>Deterministic</span>
-              <span>Creative</span>
+              <span>Deterministic (0.0)</span>
+              <span>Default (1.0)</span>
             </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Default agent temperature is 1.0 (maximum creativity). Lower values produce more deterministic outputs.
+            </p>
           </div>
 
           {/* Max Tokens */}
@@ -119,13 +250,16 @@ export default function AgentConfigModal({
               type="number"
               value={localConfig.maxTokens}
               onChange={(e) =>
-                setLocalConfig((prev) => ({ ...prev, maxTokens: parseInt(e.target.value) || 4096 }))
+                setLocalConfig((prev) => ({ ...prev, maxTokens: parseInt(e.target.value) || 0 }))
               }
-              min="1024"
+              min="0"
               max="100000"
               step="1024"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Set to 0 to use model's maximum output tokens automatically.
+            </p>
           </div>
 
           {/* Max Iterations */}

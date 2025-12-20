@@ -102,15 +102,21 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         set({ isLoadingProjects: true });
         try {
           const projects = await api.projects.list(workspaceId);
-          set(state => ({ 
+          set(state => ({
             projects: { ...state.projects, [workspaceId]: projects },
-            isLoadingProjects: false 
+            isLoadingProjects: false
           }));
-          
-          // Auto-select first project if none selected in current workspace
+
+          // Validate currentProjectId exists in loaded projects
           const { currentWorkspaceId, currentProjectId } = get();
-          if (workspaceId === currentWorkspaceId && !currentProjectId && projects.length > 0) {
+          const projectExists = currentProjectId && projects.some(p => p.id === currentProjectId);
+
+          // Auto-select first project if none selected OR if persisted ID is invalid
+          if (workspaceId === currentWorkspaceId && (!currentProjectId || !projectExists) && projects.length > 0) {
             get().setCurrentProject(projects[0].id);
+          } else if (workspaceId === currentWorkspaceId && currentProjectId && !projectExists) {
+            // Clear invalid project ID if no projects exist
+            get().setCurrentProject(null);
           }
         } catch (error) {
           console.error('Failed to load projects:', error);
@@ -195,7 +201,6 @@ export const useWorkspaceStore = create<WorkspaceState>()(
   )
 );
 
-// Initialize workspace data on app start
-if (typeof window !== 'undefined') {
-  useWorkspaceStore.getState().loadWorkspaces();
-}
+// NOTE: Don't auto-initialize here. Workspace loading is triggered after authentication
+// by subscribing to the auth store in a useEffect or by the component that needs it.
+// Premature loading will result in 401 errors since user is not authenticated yet.

@@ -4,11 +4,24 @@ import { lucia } from '../lib/auth.js';
 import { z } from 'zod';
 import crypto from 'crypto';
 
-// GitHub OAuth configuration
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || '';
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || '';
-const GITHUB_REDIRECT_URI = process.env.GITHUB_REDIRECT_URI || 'http://localhost:3010/api/github/callback';
+// GitHub OAuth configuration - read lazily to ensure dotenv has loaded
 const GITHUB_API_BASE = 'https://api.github.com';
+
+function getGitHubClientId(): string {
+  return process.env.GITHUB_CLIENT_ID || '';
+}
+
+function getGitHubClientSecret(): string {
+  return process.env.GITHUB_CLIENT_SECRET || '';
+}
+
+function getGitHubRedirectUri(): string {
+  return process.env.GITHUB_REDIRECT_URI || 'http://localhost:3010/api/github/callback';
+}
+
+function getEncryptionKey(): string {
+  return process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
+}
 
 // Schemas
 const SelectRepoSchema = z.object({
@@ -48,11 +61,10 @@ const PullRequestSchema = z.object({
 });
 
 // Helper to encrypt/decrypt tokens
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
-
 function encryptToken(token: string): string {
   const iv = crypto.randomBytes(16);
-  const key = Buffer.from(ENCRYPTION_KEY.slice(0, 32).padEnd(32, '0'));
+  const encryptionKey = getEncryptionKey();
+  const key = Buffer.from(encryptionKey.slice(0, 32).padEnd(32, '0'));
   const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   let encrypted = cipher.update(token, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -62,7 +74,8 @@ function encryptToken(token: string): string {
 function decryptToken(encryptedToken: string): string {
   const [ivHex, encrypted] = encryptedToken.split(':');
   const iv = Buffer.from(ivHex, 'hex');
-  const key = Buffer.from(ENCRYPTION_KEY.slice(0, 32).padEnd(32, '0'));
+  const encryptionKey = getEncryptionKey();
+  const key = Buffer.from(encryptionKey.slice(0, 32).padEnd(32, '0'));
   const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
   let decrypted = decipher.update(encrypted, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
@@ -113,8 +126,8 @@ interface GitHubBranch {
 export const githubRoutes: FastifyPluginAsync = async (app) => {
   // Auth hook for protected routes
   app.addHook('preHandler', async (request, reply) => {
-    // Skip auth for OAuth callback
-    if (request.url.includes('/callback')) {
+    // Skip auth for OAuth flow endpoints (auth initiation and callback)
+    if (request.url.includes('/auth') || request.url.includes('/callback')) {
       return;
     }
 
@@ -209,7 +222,8 @@ export const githubRoutes: FastifyPluginAsync = async (app) => {
     const user = (request as any).user;
     const { returnUrl } = request.query as { returnUrl?: string };
 
-    if (!GITHUB_CLIENT_ID) {
+    const clientId = getGitHubClientId();
+    if (!clientId) {
       return reply.status(500).send({ error: 'GitHub OAuth not configured' });
     }
 
@@ -234,8 +248,8 @@ export const githubRoutes: FastifyPluginAsync = async (app) => {
     }
 
     const authUrl = new URL('https://github.com/login/oauth/authorize');
-    authUrl.searchParams.set('client_id', GITHUB_CLIENT_ID);
-    authUrl.searchParams.set('redirect_uri', GITHUB_REDIRECT_URI);
+    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('redirect_uri', getGitHubRedirectUri());
     authUrl.searchParams.set('scope', 'repo user:email');
     authUrl.searchParams.set('state', state);
 
@@ -276,10 +290,10 @@ export const githubRoutes: FastifyPluginAsync = async (app) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          client_id: GITHUB_CLIENT_ID,
-          client_secret: GITHUB_CLIENT_SECRET,
+          client_id: getGitHubClientId(),
+          client_secret: getGitHubClientSecret(),
           code,
-          redirect_uri: GITHUB_REDIRECT_URI,
+          redirect_uri: getGitHubRedirectUri(),
         }),
       });
 
@@ -725,6 +739,209 @@ export const githubRoutes: FastifyPluginAsync = async (app) => {
     } catch (error) {
       console.error('Failed to fetch PRs:', error);
       return reply.status(500).send({ error: 'Failed to fetch pull requests' });
+    }
+  });
+
+  // Get a specific pull request
+  app.get('/pull-requests/:projectId/:prNumber', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId, prNumber } = request.params as { projectId: string; prNumber: string };
+
+    const access = await verifyProjectAccess(projectId, user.id);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    if (!access.project.repository) {
+      return reply.status(400).send({ error: 'No repository connected to this project' });
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { tenantId: true },
+    });
+
+    if (!dbUser?.tenantId) {
+      return reply.status(400).send({ error: 'User has no tenant' });
+    }
+
+    const connection = await getGitHubConnection(dbUser.tenantId);
+    if (!connection) {
+      return reply.status(400).send({ error: 'GitHub not connected' });
+    }
+
+    const repo = access.project.repository;
+
+    try {
+      const pr = await githubApi(
+        `/repos/${repo.repoFullName}/pulls/${prNumber}`,
+        connection.accessToken
+      ) as {
+        number: number;
+        html_url: string;
+        title: string;
+        body: string | null;
+        state: string;
+        draft: boolean;
+        mergeable: boolean | null;
+        merged: boolean;
+        head: { ref: string };
+        base: { ref: string };
+        user: { login: string; avatar_url: string };
+        created_at: string;
+        updated_at: string;
+        merged_at: string | null;
+        additions: number;
+        deletions: number;
+        changed_files: number;
+      };
+
+      return {
+        pullRequest: {
+          number: pr.number,
+          url: pr.html_url,
+          title: pr.title,
+          body: pr.body,
+          state: pr.state,
+          draft: pr.draft,
+          mergeable: pr.mergeable,
+          merged: pr.merged,
+          head: pr.head.ref,
+          base: pr.base.ref,
+          author: {
+            login: pr.user.login,
+            avatarUrl: pr.user.avatar_url,
+          },
+          createdAt: pr.created_at,
+          updatedAt: pr.updated_at,
+          mergedAt: pr.merged_at,
+          additions: pr.additions,
+          deletions: pr.deletions,
+          changedFiles: pr.changed_files,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to fetch PR:', error);
+      return reply.status(500).send({ error: 'Failed to fetch pull request' });
+    }
+  });
+
+  // Merge a pull request
+  app.post('/pull-requests/:projectId/:prNumber/merge', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId, prNumber } = request.params as { projectId: string; prNumber: string };
+    const { mergeMethod = 'merge', commitTitle, commitMessage } = request.body as {
+      mergeMethod?: 'merge' | 'squash' | 'rebase';
+      commitTitle?: string;
+      commitMessage?: string;
+    };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    if (!access.project.repository) {
+      return reply.status(400).send({ error: 'No repository connected to this project' });
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { tenantId: true },
+    });
+
+    if (!dbUser?.tenantId) {
+      return reply.status(400).send({ error: 'User has no tenant' });
+    }
+
+    const connection = await getGitHubConnection(dbUser.tenantId);
+    if (!connection) {
+      return reply.status(400).send({ error: 'GitHub not connected' });
+    }
+
+    const repo = access.project.repository;
+
+    try {
+      const result = await githubApi(
+        `/repos/${repo.repoFullName}/pulls/${prNumber}/merge`,
+        connection.accessToken,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merge_method: mergeMethod,
+            commit_title: commitTitle,
+            commit_message: commitMessage,
+          }),
+        }
+      ) as { sha: string; merged: boolean; message: string };
+
+      return {
+        success: true,
+        merged: result.merged,
+        sha: result.sha,
+        message: result.message,
+      };
+    } catch (error: any) {
+      console.error('Failed to merge PR:', error);
+      return reply.status(500).send({ error: error.message || 'Failed to merge pull request' });
+    }
+  });
+
+  // Close a pull request
+  app.patch('/pull-requests/:projectId/:prNumber', async (request, reply) => {
+    const user = (request as any).user;
+    const { projectId, prNumber } = request.params as { projectId: string; prNumber: string };
+    const { state } = request.body as { state: 'open' | 'closed' };
+
+    const access = await verifyProjectAccess(projectId, user.id, true);
+    if ('error' in access) {
+      return reply.status(access.status).send({ error: access.error });
+    }
+
+    if (!access.project.repository) {
+      return reply.status(400).send({ error: 'No repository connected to this project' });
+    }
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { tenantId: true },
+    });
+
+    if (!dbUser?.tenantId) {
+      return reply.status(400).send({ error: 'User has no tenant' });
+    }
+
+    const connection = await getGitHubConnection(dbUser.tenantId);
+    if (!connection) {
+      return reply.status(400).send({ error: 'GitHub not connected' });
+    }
+
+    const repo = access.project.repository;
+
+    try {
+      const pr = await githubApi(
+        `/repos/${repo.repoFullName}/pulls/${prNumber}`,
+        connection.accessToken,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ state }),
+        }
+      ) as GitHubPullRequest;
+
+      return {
+        success: true,
+        pullRequest: {
+          number: pr.number,
+          url: pr.html_url,
+          title: pr.title,
+          state: pr.state,
+        },
+      };
+    } catch (error: any) {
+      console.error('Failed to update PR:', error);
+      return reply.status(500).send({ error: error.message || 'Failed to update pull request' });
     }
   });
 

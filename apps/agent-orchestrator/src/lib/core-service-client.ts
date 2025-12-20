@@ -45,10 +45,125 @@ class CoreServiceClient {
     return response.json();
   }
 
+  /**
+   * Create a new card in a specific board and lane
+   * Used by terminal integration to create cards from Claude CLI commands
+   */
+  async createCard(data: {
+    boardId: string;
+    laneId: string;
+    title: string;
+    description?: string;
+    type: string;
+    priority?: string;
+    assignedAgent?: string;
+  }): Promise<any> {
+    const { boardId, laneId, ...cardData } = data;
+    const response = await this.request('POST', `/cards/board/${boardId}/lane/${laneId}`, cardData);
+    return response.json();
+  }
+
+  /**
+   * Update a card's status
+   * Used to move cards through the workflow from terminal
+   */
+  async updateCardStatus(cardId: string, status: string): Promise<any> {
+    const response = await this.request('PATCH', `/cards/${cardId}`, { status });
+    return response.json();
+  }
+
+  /**
+   * Move a card to a different lane
+   * Used to advance cards through the Kanban board from terminal
+   */
+  async moveCard(cardId: string, laneId: string, position?: number): Promise<any> {
+    const response = await this.request('PATCH', `/cards/${cardId}/move`, {
+      laneId,
+      position: position ?? 0,
+    });
+    return response.json();
+  }
+
+  /**
+   * Get board details including lanes
+   * Used to find the correct lane for card creation
+   */
+  async getBoard(boardId: string): Promise<any> {
+    const response = await this.request('GET', `/boards/${boardId}`);
+    return response.json();
+  }
+
+  /**
+   * Get project details including boards
+   * Used to find board/lane info when only project ID is known
+   */
+  async getProjectWithBoard(projectId: string): Promise<any> {
+    const response = await this.request('GET', `/projects/${projectId}`);
+    return response.json();
+  }
+
   async validateAuth(token: string): Promise<any> {
     const response = await this.request('GET', '/auth/me', undefined, {
       'Authorization': `Bearer ${token}`,
     });
+    return response.json();
+  }
+
+  /**
+   * Transition a card's state using the card state machine
+   * Used by agent executor to update card status at start/complete
+   */
+  async transitionCard(
+    cardId: string,
+    trigger: 'agent_start' | 'agent_complete' | 'human_approve' | 'human_reject' | 'document_generated',
+    performedBy: string,
+    options?: {
+      targetLaneNumber?: number;
+      details?: string;
+      metadata?: Record<string, any>;
+    }
+  ): Promise<any> {
+    // Call the API server directly for card transitions
+    const apiUrl = process.env.API_URL || 'http://localhost:3010';
+    const url = `${apiUrl}/api/cards/${cardId}/transition`;
+
+    const requestInit: RequestInit = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
+      },
+      body: JSON.stringify({
+        trigger,
+        performedBy,
+        ...options,
+      }),
+    };
+
+    logger.debug('Transitioning card', { cardId, trigger, performedBy });
+
+    const response = await retryWithBackoff(
+      () => withTimeout(
+        fetch(url, requestInit),
+        10000,
+        `Card transition timed out: ${cardId}`
+      ),
+      3,
+      1000,
+      5000
+    );
+
+    if (!response.ok) {
+      const error = await response.text();
+      logger.error('Card transition failed', {
+        cardId,
+        trigger,
+        status: response.status,
+        error,
+      });
+      throw new Error(`Card transition error: ${response.status} ${error}`);
+    }
+
     return response.json();
   }
 

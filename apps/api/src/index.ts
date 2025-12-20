@@ -33,6 +33,7 @@ import { waitlistRoutes } from './routes/waitlist.js';
 import { affiliateRoutes } from './routes/affiliate.js';
 import { checkoutRoutes } from './routes/checkout.js';
 import { copilotRoutes } from './routes/copilot.js';
+import uiAgentRoutes from './routes/ui-agent.js';
 import { byoaRoutes } from './routes/byoa.js';
 import { projectFilesRoutes } from './routes/project-files.js';
 import { styleGuideRoutes } from './routes/style-guide.js';
@@ -41,6 +42,9 @@ import { userRoutes } from './routes/user.js';
 import { providersRoutes } from './routes/providers.js';
 import { filesystemRoutes } from './routes/filesystem.js';
 import { githubRoutes } from './routes/github.js';
+import { contextRoutes } from './routes/context.js';
+import { collaborationRoutes } from './routes/collaboration.js';
+import { databaseRoutes } from './routes/database.js';
 
 const app = Fastify({
   logger: true,
@@ -83,6 +87,7 @@ await app.register(waitlistRoutes, { prefix: '/api/waitlist' });
 await app.register(affiliateRoutes, { prefix: '/api/affiliate' });
 await app.register(checkoutRoutes, { prefix: '/api/checkout' });
 await app.register(copilotRoutes, { prefix: '/api/copilot' });
+await app.register(uiAgentRoutes, { prefix: '/api/ui-agent' });
 await app.register(byoaRoutes, { prefix: '/api/byoa' });
 await app.register(projectFilesRoutes, { prefix: '/api/projects' });
 await app.register(styleGuideRoutes, { prefix: '/api/projects' });
@@ -91,6 +96,9 @@ await app.register(userRoutes, { prefix: '/api/user' });
 await app.register(providersRoutes, { prefix: '/api/providers' });
 await app.register(filesystemRoutes, { prefix: '/api/filesystem' });
 await app.register(githubRoutes, { prefix: '/api/github' });
+await app.register(contextRoutes, { prefix: '/api/context' });
+await app.register(collaborationRoutes, { prefix: '/api/collaboration' });
+await app.register(databaseRoutes, { prefix: '/api/database' });
 await app.register(websocketRoutes);
 
 const port = parseInt(process.env.PORT || '3010', 10);

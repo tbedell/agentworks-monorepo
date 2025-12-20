@@ -28,6 +28,11 @@ import {
 import { getCoreServiceClient } from './core-service-client.js';
 import { getLogStreamingClient } from './log-streaming-client.js';
 import { getContextFileService } from './context-file-service.js';
+import {
+  getContextService,
+  type ConversationMessage,
+  type SSEEvent,
+} from '@agentworks/context-service';
 
 // Register all tools on module load
 registerAllTools();
@@ -181,6 +186,23 @@ async function processExecution(runId: string, executionData: any): Promise<void
       model: executionData.agent.defaultModel,
       userId: executionData.userId,
     });
+
+    // Transition card to "Running" state
+    try {
+      await coreService.transitionCard(
+        executionData.cardId,
+        'agent_start',
+        executionData.agentId,
+        {
+          details: `Agent ${executionData.agentId} started execution`,
+          metadata: { runId: agentRun.id },
+        }
+      );
+      loggerWithContext.info('Card transitioned to Running', { cardId: executionData.cardId });
+    } catch (transitionError) {
+      loggerWithContext.warn('Failed to transition card to Running', { transitionError });
+      // Continue execution even if transition fails
+    }
     
     // Get card context
     const card = await coreService.getCard(executionData.cardId);
@@ -208,6 +230,23 @@ async function processExecution(runId: string, executionData: any): Promise<void
       }
     }
 
+    // Initialize Redis context for this card
+    try {
+      const redisContextService = getContextService();
+      await redisContextService.initCardContext(cardId, card.board.projectId, agentName);
+      loggerWithContext.info('Initialized Redis context for card', { cardId, agentName });
+
+      // Broadcast SSE event for agent start
+      await broadcastSSEEvent(cardId, {
+        type: 'iteration_start',
+        timestamp: new Date().toISOString(),
+        data: { runId, agentName, status: 'running' },
+      });
+    } catch (redisContextError) {
+      loggerWithContext.warn('Failed to initialize Redis context', { redisContextError });
+      // Continue execution even if Redis context fails
+    }
+
     // Prepare agent context
     const agentContext = {
       card,
@@ -226,8 +265,18 @@ async function processExecution(runId: string, executionData: any): Promise<void
     });
     
     // Execute agent with provider router
+    // Pass BYOA provider/model overrides from the execution request
     const executionMode = executionData.mode || 'standard';
-    const result = await executeAgentWithProvider(runId, executionData.agent, agentContext, projectPath, cardId, executionMode);
+    const result = await executeAgentWithProvider(
+      runId,
+      executionData.agent,
+      agentContext,
+      projectPath,
+      cardId,
+      executionMode,
+      executionData.provider,  // BYOA provider override from request
+      executionData.model      // BYOA model override from request
+    );
     
     // Update run with results
     await coreService.updateAgentRun(agentRun.id, {
@@ -297,6 +346,54 @@ async function processExecution(runId: string, executionData: any): Promise<void
       } catch (contextError) {
         loggerWithContext.warn('Failed to log completion to context file', { contextError });
       }
+    }
+
+    // Append agent response to Redis context
+    if (result.content) {
+      await appendMessageToContext(cardId, 'assistant', result.content, {
+        agentName,
+        runId,
+        toolsUsed: result.toolsUsed,
+        iterations: result.iterations,
+      });
+    }
+
+    // Broadcast SSE completion event
+    await broadcastSSEEvent(cardId, {
+      type: 'agent_complete',
+      timestamp: new Date().toISOString(),
+      data: {
+        runId,
+        agentName,
+        status: 'completed',
+        usage: {
+          inputTokens: result.usage.inputTokens || 0,
+          outputTokens: result.usage.outputTokens || 0,
+          cost: result.usage.providerCost,
+        },
+      },
+    });
+
+    // Transition card to completed/review state
+    try {
+      await coreService.transitionCard(
+        executionData.cardId,
+        'agent_complete',
+        executionData.agentId,
+        {
+          details: `Agent ${executionData.agentId} completed execution`,
+          metadata: {
+            runId: agentRun.id,
+            inputTokens: result.usage.inputTokens || 0,
+            outputTokens: result.usage.outputTokens || 0,
+            cost: result.usage.providerCost,
+          },
+        }
+      );
+      loggerWithContext.info('Card transitioned to Review', { cardId: executionData.cardId });
+    } catch (transitionError) {
+      loggerWithContext.warn('Failed to transition card to Review', { transitionError });
+      // Continue execution even if transition fails
     }
 
     // Clean up
@@ -397,7 +494,9 @@ async function executeAgentWithProvider(
   context: any,
   projectPath: string | null,
   cardId: string,
-  mode: 'standard' | 'conversation' = 'standard'
+  mode: 'standard' | 'conversation' = 'standard',
+  providerOverride?: string,
+  modelOverride?: string
 ): Promise<ExtendedGatewayResponse> {
   const contextService = getContextFileService();
   const aiGateway = getGateway();
@@ -463,6 +562,18 @@ Remember to use your tools (read_file, write_file, update_file, etc.) to actuall
     projectPath: context.project.localPath || `/projects/${context.workspace.slug}/${context.project.slug}`,
   };
 
+  // Log BYOA overrides if provided
+  if (providerOverride || modelOverride) {
+    logger.info('Using BYOA overrides', {
+      runId,
+      agentName,
+      providerOverride,
+      modelOverride,
+      defaultProvider: agent.defaultProvider,
+      defaultModel: agent.defaultModel,
+    });
+  }
+
   // Track cumulative usage
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
@@ -471,8 +582,8 @@ Remember to use your tools (read_file, write_file, update_file, etc.) to actuall
   const toolsUsed: string[] = [];
   let iterations = 0;
   let finalContent = '';
-  let lastProvider = agent.defaultProvider;
-  let lastModel = agent.defaultModel;
+  let lastProvider = providerOverride || agent.defaultProvider;
+  let lastModel = modelOverride || agent.defaultModel;
 
   // Tool calling loop
   while (iterations < MAX_TOOL_ITERATIONS) {
@@ -480,13 +591,17 @@ Remember to use your tools (read_file, write_file, update_file, etc.) to actuall
 
     logger.debug('Agent iteration', { runId, iteration: iterations, messageCount: messages.length });
 
-    // Make LLM call
+    // Make LLM call - use BYOA overrides if provided, otherwise fall back to agent defaults
+    const effectiveProvider = (providerOverride || agent.defaultProvider) as LLMProviderName;
+    const effectiveModel = modelOverride || agent.defaultModel;
+
     const result = await retryWithBackoff(
       () => withTimeout(
         aiGateway.chat(messages, {
-          provider: agent.defaultProvider as LLMProviderName,
-          model: agent.defaultModel,
+          provider: effectiveProvider,
+          model: effectiveModel,
           workspaceId: context.workspace.id,
+          tenantId: context.workspace.tenantId ?? undefined,
           projectId: context.project.id,
           agentId: agent.id,
           maxTokens: agent.maxTokens ?? 4096,
@@ -707,6 +822,53 @@ async function sendBillingEvent(event: BillingUsageEvent): Promise<void> {
   } catch (error) {
     logger.error('Failed to send billing event', { event, error });
     // Don't throw - billing failures shouldn't stop execution
+  }
+}
+
+async function broadcastSSEEvent(cardId: string, event: SSEEvent): Promise<void> {
+  try {
+    // Broadcast to API's SSE endpoint
+    const apiUrl = process.env.API_URL || 'http://localhost:3010';
+    const response = await fetch(`${apiUrl}/api/context/cards/${cardId}/broadcast`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(event),
+    });
+    if (!response.ok) {
+      logger.warn('Failed to broadcast SSE event', { cardId, status: response.status });
+    }
+  } catch (error) {
+    logger.debug('Could not broadcast SSE event (API may be unavailable)', { cardId, error });
+    // Don't throw - SSE broadcast failures shouldn't stop execution
+  }
+}
+
+async function appendMessageToContext(
+  cardId: string,
+  role: 'user' | 'assistant' | 'system' | 'tool',
+  content: string,
+  metadata?: Record<string, unknown>
+): Promise<void> {
+  try {
+    const redisContextService = getContextService();
+    const message: ConversationMessage = {
+      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      role,
+      content,
+      timestamp: new Date().toISOString(),
+      metadata,
+    };
+    await redisContextService.appendCardMessage(cardId, message);
+
+    // Broadcast SSE event
+    await broadcastSSEEvent(cardId, {
+      type: 'message',
+      timestamp: new Date().toISOString(),
+      data: message,
+    });
+  } catch (error) {
+    logger.warn('Failed to append message to Redis context', { cardId, role, error });
+    // Don't throw - context failures shouldn't stop execution
   }
 }
 

@@ -354,8 +354,8 @@ export async function runRoutes(
         agent: {
           select: {
             id: true,
-            agentId: true,
             name: true,
+            displayName: true,
           },
         },
       },

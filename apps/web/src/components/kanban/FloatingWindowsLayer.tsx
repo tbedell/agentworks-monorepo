@@ -4,6 +4,9 @@ import FloatingCardWindow from './FloatingCardWindow';
 interface FloatingWindowsLayerProps {
   onRunAgent?: (cardId: string, agentName: string) => void;
   onReviewContext?: (cardId: string) => void;
+  onApprove?: (cardId: string, data: { notes?: string; advance?: boolean }) => void;
+  onReject?: (cardId: string, data: { notes?: string; returnToPrevious?: boolean }) => void;
+  onMarkComplete?: (cardId: string) => void;
   onDelete?: (cardId: string) => void;
   agentLogs?: Record<string, { agentName: string; status: string; logs: string[] }[]>;
 }
@@ -11,6 +14,9 @@ interface FloatingWindowsLayerProps {
 export default function FloatingWindowsLayer({
   onRunAgent,
   onReviewContext,
+  onApprove,
+  onReject,
+  onMarkComplete,
   onDelete,
   agentLogs = {},
 }: FloatingWindowsLayerProps) {
@@ -30,6 +36,9 @@ export default function FloatingWindowsLayer({
             floatingState={floatingState}
             onRunAgent={onRunAgent}
             onReviewContext={onReviewContext}
+            onApprove={onApprove}
+            onReject={onReject}
+            onMarkComplete={onMarkComplete}
             onDelete={onDelete}
             agentLogs={agentLogs[floatingState.cardId]}
           />

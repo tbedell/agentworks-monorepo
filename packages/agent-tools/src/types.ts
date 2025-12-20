@@ -49,7 +49,7 @@ export interface AgentTool {
   execute: (args: Record<string, unknown>, context: ToolContext) => Promise<ToolResult>;
   requiresApproval?: boolean;
   allowedAgents?: AgentName[];
-  category: 'file' | 'code' | 'git' | 'search' | 'style' | 'claude-code';
+  category: 'file' | 'code' | 'git' | 'search' | 'style' | 'claude-code' | 'wordpress';
 }
 
 export interface ToolCall {

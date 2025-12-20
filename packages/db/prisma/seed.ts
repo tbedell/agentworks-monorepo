@@ -138,6 +138,24 @@ const AGENT_DEFINITIONS = [
     defaultModel: 'claude-3-5-sonnet-20241022',
     systemPrompt: 'You are the Troubleshooter Agent for AgentWorks...',
   },
+  {
+    name: 'cms_wordpress',
+    displayName: 'WordPress CMS Agent',
+    description: 'Expert WordPress developer for themes, plugins, Gutenberg blocks, WooCommerce, and deployment.',
+    allowedLanes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    defaultProvider: 'anthropic',
+    defaultModel: 'claude-sonnet-4-20250514',
+    systemPrompt: 'You are the WordPress CMS Agent for AgentWorks, an expert in full-stack WordPress development including themes, plugins, Gutenberg blocks, WooCommerce, and deployment.',
+  },
+  {
+    name: 'claude_code_agent',
+    displayName: 'Claude Code Agent',
+    description: 'Full-featured coding agent with file, terminal, docs, and Kanban integration.',
+    allowedLanes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    defaultProvider: 'anthropic',
+    defaultModel: 'claude-sonnet-4-20250514',
+    systemPrompt: 'You are the Claude Code Agent for AgentWorks, a full-featured coding agent with comprehensive file, terminal, documentation, and Kanban integration capabilities.',
+  },
 ];
 
 const FOUNDER_PLANS = [
