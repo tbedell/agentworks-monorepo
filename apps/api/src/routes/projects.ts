@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { prisma } from '@agentworks/db';
+import { prisma, Prisma } from '@agentworks/db';
 import { createProjectSchema, LANES } from '@agentworks/shared';
 import { lucia } from '../lib/auth.js';
 import * as fs from 'fs/promises';
@@ -2101,10 +2101,12 @@ This project was created and managed by [AgentWorks](https://agentworks.dev).
     const newVersion = (existing?.version || 0) + 1;
 
     // Update builder state with revision content
+    // Cast state to InputJsonValue to satisfy Prisma's type requirements
+    const stateValue = revision.state as Prisma.InputJsonValue;
     const builderState = await prisma.builderState.upsert({
       where: { projectId_builderType: { projectId: id, builderType: type } },
-      update: { state: revision.state, version: newVersion },
-      create: { projectId: id, builderType: type, state: revision.state, version: 1 },
+      update: { state: stateValue, version: newVersion },
+      create: { projectId: id, builderType: type, state: stateValue, version: 1 },
     });
 
     // Create a new revision marking this as a restore
@@ -2113,7 +2115,7 @@ This project was created and managed by [AgentWorks](https://agentworks.dev).
         projectId: id,
         builderType: type,
         version: builderState.version,
-        state: revision.state,
+        state: stateValue,
         createdBy: user.id,
         description: `Restored from v${revision.version}`,
       },
