@@ -260,6 +260,34 @@ export const ENHANCED_PROMPT_SECTIONS: Record<AgentName, EnhancedPromptSection> 
       todo: 'Pending implementation, code reviews needed, tests to write',
     },
   },
+
+  cms_wordpress: {
+    tools: ['read_file', 'write_file', 'update_file', 'list_files', 'grep', 'find_files'],
+    coordination: {
+      receivesFrom: ['Storyboard/UX (design specs)', 'Dev Frontend (component patterns)', 'Planner (CMS tasks)'],
+      sendsTo: ['QA (WordPress features for testing)', 'Docs (CMS documentation)', 'DevOps (WordPress hosting)'],
+      collaboratesWith: ['Dev Frontend (theme integration)', 'Design/UX (WordPress-specific UX)', 'DevOps (WordPress deployment)'],
+    },
+    documentation: {
+      plan: 'WordPress theme architecture, plugin selection, content structure',
+      task: 'Themes built, plugins configured, content types created',
+      todo: 'WordPress features to build, plugins to evaluate, migrations pending',
+    },
+  },
+
+  design_ux: {
+    tools: ['read_file', 'write_file', 'list_files'],
+    coordination: {
+      receivesFrom: ['Strategy (brand guidelines)', 'CEO CoPilot (design vision)', 'PRD (feature requirements)'],
+      sendsTo: ['Dev Frontend (design specs, assets)', 'Storyboard/UX (design system)', 'Docs (design documentation)'],
+      collaboratesWith: ['Storyboard/UX (user flows)', 'Dev Frontend (implementation feasibility)', 'Strategy (brand alignment)'],
+    },
+    documentation: {
+      plan: 'Design system, color palette, typography, component library approach',
+      task: 'Designs created, assets exported, design specs documented',
+      todo: 'Screens to design, components to style, accessibility improvements',
+    },
+  },
 };
 
 /**
