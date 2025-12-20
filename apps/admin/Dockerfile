@@ -22,6 +22,7 @@ COPY packages/ai-gateway/package.json ./packages/ai-gateway/
 COPY packages/git-service/package.json ./packages/git-service/
 COPY packages/project-files/package.json ./packages/project-files/
 COPY packages/style-guide/package.json ./packages/style-guide/
+COPY packages/context-service/package.json ./packages/context-service/
 
 # Development stage
 FROM base AS development
