@@ -1,5 +1,8 @@
-const API_BASE = '/api';
-const isDevMode = typeof window !== 'undefined' && 
+// In production, use the VITE_API_URL environment variable; in development, use relative URLs
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL
+  ? `${(import.meta as any).env.VITE_API_URL}/api`
+  : '/api';
+const isDevMode = typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || (import.meta as any)?.env?.DEV);
 
 async function request<T>(
