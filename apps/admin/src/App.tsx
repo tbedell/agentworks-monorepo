@@ -29,6 +29,19 @@ import AffiliateDashboard from '@/routes/affiliates/AffiliateDashboard';
 import AffiliateDetail from '@/routes/affiliates/AffiliateDetail';
 import PayoutQueue from '@/routes/affiliates/PayoutQueue';
 import ExecutiveDashboard from '@/routes/kpi/ExecutiveDashboard';
+import MarketReport from '@/routes/insights/MarketReport';
+
+// Launch System pages
+import LaunchDashboard from '@/routes/launch/LaunchDashboard';
+import LaunchSettings from '@/routes/launch/LaunchSettings';
+import RotatorDashboard from '@/routes/launch/RotatorDashboard';
+
+// Email Campaigns
+import EmailCampaigns from '@/routes/campaigns/EmailCampaigns';
+import EmailCampaignEditor from '@/routes/campaigns/EmailCampaignEditor';
+
+// Influencer Program
+import InfluencerProgram from '@/routes/influencers/InfluencerProgram';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,6 +88,20 @@ export default function App() {
               <Route path="/affiliates/payouts" element={<PayoutQueue />} />
               <Route path="/affiliates/:id" element={<AffiliateDetail />} />
 
+              {/* Launch System */}
+              <Route path="/launch" element={<LaunchDashboard />} />
+              <Route path="/launch/settings" element={<LaunchSettings />} />
+              <Route path="/launch/rotator" element={<RotatorDashboard />} />
+
+              {/* Email Campaigns */}
+              <Route path="/campaigns" element={<EmailCampaigns />} />
+              <Route path="/campaigns/new" element={<EmailCampaignEditor />} />
+              <Route path="/campaigns/:id" element={<EmailCampaigns />} />
+              <Route path="/campaigns/:id/edit" element={<EmailCampaignEditor />} />
+
+              {/* Influencer Program */}
+              <Route path="/influencers" element={<InfluencerProgram />} />
+
               {/* Operations */}
               <Route path="/tenants" element={<TenantList />} />
               <Route path="/tenants/new" element={<TenantForm />} />
@@ -88,6 +115,7 @@ export default function App() {
               <Route path="/byoa" element={<BYOADashboard />} />
 
               {/* Insights */}
+              <Route path="/market-report" element={<MarketReport />} />
               <Route path="/analytics" element={<AnalyticsDashboard />} />
               <Route path="/kpi" element={<KPIDashboard />} />
               <Route path="/kpi/executive" element={<ExecutiveDashboard />} />

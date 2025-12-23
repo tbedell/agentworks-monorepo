@@ -27,6 +27,8 @@ export async function agentRoutes(
   app: FastifyInstance,
   opts: FastifyPluginOptions
 ) {
+  logger.info('agentRoutes function called - starting route setup');
+
   // Get all agents
   app.get('/', async (request, reply) => {
     try {
@@ -244,6 +246,8 @@ export async function agentRoutes(
       });
     }
   });
+
+  logger.info('agentRoutes function completed - all routes defined');
 }
 
 function getAgentSpecializations(agentName: string): string[] {

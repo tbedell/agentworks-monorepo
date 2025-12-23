@@ -150,10 +150,16 @@ export default function NavigationV2() {
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-4">
             <Link
-              to="/waitlist"
+              to="/login"
+              className="px-5 py-2.5 text-base font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              Sign In
+            </Link>
+            <Link
+              to="/register"
               className="px-6 py-2.5 text-base font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
             >
-              Join Waitlist
+              Get Started
             </Link>
           </div>
 
@@ -210,13 +216,22 @@ export default function NavigationV2() {
               ))}
 
               {/* CTA */}
-              <Link
-                to="/waitlist"
-                onClick={() => setIsOpen(false)}
-                className="block px-4 py-3 text-base font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg text-center mt-4"
-              >
-                Join Waitlist
-              </Link>
+              <div className="mt-4 space-y-2">
+                <Link
+                  to="/login"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-3 text-base font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg text-center"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsOpen(false)}
+                  className="block px-4 py-3 text-base font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-lg text-center"
+                >
+                  Get Started
+                </Link>
+              </div>
             </div>
           </motion.div>
         )}

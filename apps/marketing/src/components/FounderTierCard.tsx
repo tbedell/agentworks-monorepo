@@ -31,7 +31,13 @@ const iconMap = {
   medal: Medal,
 }
 
-const tierColors = {
+const tierColors: Record<string, {
+  bg: string
+  border: string
+  icon: string
+  badge: string
+  gradient: string
+}> = {
   diamond: {
     bg: 'from-cyan-50 to-blue-50',
     border: 'border-cyan-300',
@@ -125,20 +131,16 @@ export default function FounderTierCard({ tier, index, onSelect }: FounderTierCa
 
       <div className="space-y-3 mb-6">
         <div className="flex items-center justify-between p-3 rounded-lg bg-slate-100">
-          <span className="text-slate-600">Monthly API Calls</span>
+          <span className="text-slate-600">Agent Runs/Month</span>
           <span className="text-slate-900 font-bold">{tier.apiCalls.toLocaleString()}</span>
         </div>
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-100">
-          <span className="text-slate-600">Extra Call Rate</span>
-          <span className="text-green-600 font-bold">${tier.overageRate}/call</span>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200">
+          <span className="text-slate-600">Passive Revenue</span>
+          <span className="text-green-600 font-bold">{tier.affiliateCommission}%</span>
         </div>
         <div className="flex items-center justify-between p-3 rounded-lg bg-slate-100">
-          <span className="text-slate-600">Affiliate Commission</span>
-          <span className="text-blue-600 font-bold">{tier.affiliateCommission}%</span>
-        </div>
-        <div className="flex items-center justify-between p-3 rounded-lg bg-slate-100">
-          <span className="text-slate-600">Sale Bonus</span>
-          <span className="text-yellow-600 font-bold">+${tier.saleBonus}</span>
+          <span className="text-slate-600">Support Response</span>
+          <span className="text-blue-600 font-bold">{tier.supportSla}</span>
         </div>
       </div>
 
@@ -173,11 +175,11 @@ export default function FounderTierCard({ tier, index, onSelect }: FounderTierCa
               : 'bg-slate-900 text-white hover:bg-slate-800'
         }`}
       >
-        {tier.remainingSpots === 0 ? 'Sold Out' : `Claim ${tier.name} Spot`}
+        {tier.remainingSpots === 0 ? 'Sold Out' : `Get ${tier.name.split(' ')[0]} Package`}
       </motion.button>
 
       <p className="text-center text-xs text-slate-400 mt-4">
-        vs. $49/mo regular price ({Math.ceil(tier.price / 49)} months to break even)
+        Lifetime access • Share in profits ({tier.affiliateCommission}%)
       </p>
     </motion.div>
   )

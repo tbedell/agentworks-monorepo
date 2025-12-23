@@ -1,28 +1,29 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Check, ArrowRight, Bot, Key, Terminal, GitBranch, FileCode, Zap, HelpCircle } from 'lucide-react'
+import { Check, ArrowRight, Bot, Key, Terminal, GitBranch, FileCode, Zap, HelpCircle, DollarSign, Sparkles } from 'lucide-react'
 import { NavigationV2, FooterV2 } from '../components/v2'
 
 const tiers = [
   {
     name: 'Starter',
     description: 'Perfect for exploring AgentWorks',
-    monthlyPrice: 0,
-    yearlyPrice: 0,
+    monthlyPrice: 19,
+    yearlyPrice: 15,
     features: [
       '3 projects',
-      '5 agent runs per day',
+      '25 agent runs per day',
       'Basic Kanban board',
       'Community support',
       '1 workspace member',
     ],
-    cta: 'Get Started Free',
+    cta: 'Get Started',
     highlighted: false,
+    hasAffiliate: false,
   },
   {
     name: 'Pro',
-    description: 'For serious builders and small teams',
+    description: 'For serious builders and developers',
     monthlyPrice: 49,
     yearlyPrice: 39,
     features: [
@@ -35,26 +36,31 @@ const tiers = [
       '5 workspace members',
       'Usage analytics dashboard',
     ],
-    cta: 'Join Waitlist',
+    cta: 'Start Building',
     highlighted: true,
+    hasAffiliate: true,
   },
   {
     name: 'Enterprise',
-    description: 'For teams that need more control',
-    monthlyPrice: 199,
-    yearlyPrice: 159,
+    description: 'For teams that need more power',
+    monthlyPrice: 99,
+    yearlyPrice: 79,
+    extraUserPrice: 39,
+    extraUserYearlyPrice: 31,
+    baseUsers: 6,
     features: [
       'Everything in Pro',
+      'Team of 6 included',
+      '+$39/mo per additional user',
       'Unlimited agent runs',
       'SSO & advanced security',
       'Custom agent configurations',
       'Dedicated support',
-      'Unlimited workspace members',
       'SLA guarantee',
-      'Custom integrations',
     ],
-    cta: 'Contact Sales',
+    cta: 'Start Free Trial',
     highlighted: false,
+    hasAffiliate: true,
   },
 ]
 
@@ -68,8 +74,12 @@ const faqs = [
     a: 'Yes! You can change your plan at any time. When upgrading, you\'ll be prorated for the remaining period. When downgrading, the change takes effect at the next billing cycle.',
   },
   {
-    q: 'What\'s included in the free tier?',
-    a: 'The Starter tier includes access to all basic features: 3 projects, 5 agent runs per day, and the core Kanban board. It\'s perfect for trying out AgentWorks.',
+    q: 'How does the affiliate program work?',
+    a: 'Pro and Enterprise subscribers get access to our "Code & Cash" affiliate program. Earn 25% recurring lifetime commission on every user you refer. Refer 4 friends and your subscription pays for itself!',
+  },
+  {
+    q: 'How does Enterprise team pricing work?',
+    a: 'Enterprise includes 6 team members. Additional users are just $39/month each (or $31/month when billed annually). All team members get full platform access.',
   },
   {
     q: 'Do you offer discounts for startups?',
@@ -155,7 +165,15 @@ export default function PricingV2() {
                   </div>
                 )}
 
-                <h3 className="text-2xl font-bold text-slate-900 mb-2">{tier.name}</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-2xl font-bold text-slate-900">{tier.name}</h3>
+                  {tier.hasAffiliate && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                      <DollarSign className="w-3 h-3" />
+                      Earn 25%
+                    </span>
+                  )}
+                </div>
                 <p className="text-slate-500 mb-6">{tier.description}</p>
 
                 <div className="mb-6">
@@ -194,6 +212,75 @@ export default function PricingV2() {
                 </Link>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Code & Cash Affiliate Section */}
+      <section className="py-16 bg-gradient-to-br from-green-50 to-emerald-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <motion.span
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-700 text-sm font-semibold mb-4"
+            >
+              <DollarSign className="w-4 h-4" />
+              Code & Cash Affiliate Program
+            </motion.span>
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-4xl font-bold text-slate-900 mb-4"
+            >
+              Earn While You Build
+            </motion.h2>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="text-lg text-slate-600 max-w-2xl mx-auto"
+            >
+              Pro and Enterprise subscribers earn <span className="font-bold text-green-600">25% recurring lifetime commission</span> on every referral.
+              Refer just 4 friends and your subscription pays for itself.
+            </motion.p>
+          </div>
+
+          <div className="grid md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-10">
+            {[
+              { level: 'Free Software', referrals: 4, monthly: '$49', annual: '$588' },
+              { level: 'Side Hustle', referrals: 20, monthly: '$245', annual: '$2,940' },
+              { level: 'Influencer', referrals: 100, monthly: '$1,225', annual: '$14,700' },
+              { level: 'Agency Partner', referrals: 500, monthly: '$6,125', annual: '$73,500' },
+            ].map((tier, index) => (
+              <motion.div
+                key={tier.level}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-xl p-6 border border-green-200 shadow-sm text-center"
+              >
+                <div className="text-sm font-medium text-slate-500 mb-1">{tier.level}</div>
+                <div className="text-2xl font-bold text-slate-900 mb-2">{tier.referrals} referrals</div>
+                <div className="text-lg font-semibold text-green-600">{tier.monthly}/mo</div>
+                <div className="text-xs text-slate-400">{tier.annual}/year</div>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link
+              to="/affiliates"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors"
+            >
+              <Sparkles className="w-5 h-5" />
+              Learn About Code & Cash
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </div>
       </section>

@@ -11,6 +11,10 @@ import { adminKPIRoutes } from './kpi.js';
 import { adminWaitlistRoutes } from './waitlist.js';
 import { adminFoundersRoutes } from './founders.js';
 import { adminAffiliatesRoutes } from './affiliates.js';
+import { adminRotatorRoutes } from './rotator.js';
+import { adminLaunchRoutes } from './launch.js';
+import { adminCampaignsRoutes } from './campaigns.js';
+import { adminInfluencersRoutes } from './influencers.js';
 
 export const adminRoutes: FastifyPluginAsync = async (app) => {
   await app.register(adminAuthRoutes, { prefix: '/auth' });
@@ -26,4 +30,9 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   await app.register(adminWaitlistRoutes, { prefix: '/waitlist' });
   await app.register(adminFoundersRoutes, { prefix: '/founders' });
   await app.register(adminAffiliatesRoutes, { prefix: '/affiliates' });
+  // Launch System routes
+  await app.register(adminRotatorRoutes, { prefix: '/rotator' });
+  await app.register(adminLaunchRoutes, { prefix: '/launch' });
+  await app.register(adminCampaignsRoutes, { prefix: '/campaigns' });
+  await app.register(adminInfluencersRoutes, { prefix: '/influencers' });
 };

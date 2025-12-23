@@ -4,8 +4,6 @@ import Layout from './components/layout/Layout';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import { CoPilotProvider } from './contexts/CoPilotContext';
-import LoginPage from './pages/Login';
-import RegisterPage from './pages/Register';
 import PlanningPage from './pages/Planning';
 import KanbanPage from './pages/Kanban';
 import UIBuilderPage from './pages/UIBuilder';
@@ -23,7 +21,6 @@ function RouteContent() {
   return (
     <ErrorBoundary key={location.pathname}>
       <Routes>
-        <Route path="/" element={<Navigate to="/planning" replace />} />
         <Route path="/planning" element={<PlanningPage />} />
         <Route path="/kanban" element={<KanbanPage />} />
         <Route path="/ui-builder" element={<UIBuilderPage />} />
@@ -47,18 +44,41 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Redirect to marketing site's login
+    const marketingUrl = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3012';
+    window.location.href = `${marketingUrl}/login`;
+    return <LoadingSpinner size="xl" message="Redirecting..." className="min-h-screen" />;
   }
 
   return <>{children}</>;
+}
+
+// Marketing site URL for redirects
+const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3012';
+
+// Component to handle root route - redirect based on auth status
+function RootRoute() {
+  const { user, isLoading } = useAuthStore();
+
+  if (isLoading) {
+    return <LoadingSpinner size="xl" message="Loading..." className="min-h-screen" />;
+  }
+
+  // If user is logged in, redirect to the app
+  if (user) {
+    return <Navigate to="/planning" replace />;
+  }
+
+  // If not logged in, redirect to marketing site's login
+  window.location.href = `${MARKETING_URL}/login`;
+  return <LoadingSpinner size="xl" message="Redirecting..." className="min-h-screen" />;
 }
 
 export default function App() {
   return (
     <ErrorBoundary>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<RootRoute />} />
         <Route
           path="/*"
           element={

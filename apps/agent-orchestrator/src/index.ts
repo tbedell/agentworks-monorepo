@@ -39,7 +39,7 @@ await app.register(rateLimit, {
 
 // CORS
 await app.register(cors, {
-  origin: process.env.NODE_ENV === 'development' 
+  origin: process.env.NODE_ENV === 'development'
     ? ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:8080']
     : [process.env.FRONTEND_URL!],
   credentials: true,
@@ -51,11 +51,15 @@ let agentRegistryHealthy = false;
 let executorHealthy = false;
 
 try {
-  await initializeRedis();
-  redisHealthy = true;
-  logger.info('Redis initialized successfully');
+  const redis = await initializeRedis();
+  redisHealthy = redis !== null;
+  if (redisHealthy) {
+    logger.info('Redis initialized successfully');
+  } else {
+    logger.info('Running without Redis (optional)');
+  }
 } catch (error) {
-  logger.error('Failed to initialize Redis', { error });
+  logger.warn('Redis unavailable (optional)', { error });
 }
 
 try {
@@ -75,10 +79,11 @@ try {
 }
 
 // Health check endpoint
+// Redis is optional - service is healthy if executor and registry are working
 app.get('/health', async () => {
   const uptime = Date.now() - startTime;
-  const status = redisHealthy && agentRegistryHealthy && executorHealthy ? 'healthy' : 'unhealthy';
-  
+  const status = agentRegistryHealthy && executorHealthy ? 'healthy' : 'unhealthy';
+
   return createHealthResponse(
     status,
     '1.0.0',
@@ -94,10 +99,23 @@ app.get('/health', async () => {
 });
 
 // Routes
+logger.info('Registering routes...');
+
+logger.info('Registering agent routes...');
 await app.register(agentRoutes, { prefix: '/agents' });
+logger.info('Agent routes registered');
+
+logger.info('Registering execution routes...');
 await app.register(executionRoutes, { prefix: '/execution' });
+logger.info('Execution routes registered');
+
+logger.info('Registering run routes...');
 await app.register(runRoutes, { prefix: '/runs' });
+logger.info('Run routes registered');
+
+logger.info('Registering terminal command routes...');
 await app.register(terminalCommandRoutes, { prefix: '/terminal-commands' });
+logger.info('All routes registered');
 
 // Global error handler
 app.setErrorHandler(async (error, request, reply) => {
@@ -126,6 +144,8 @@ app.setErrorHandler(async (error, request, reply) => {
 
 const port = parseInt(process.env.PORT || '8001', 10);
 const host = process.env.HOST || '0.0.0.0';
+
+logger.info('Starting server...', { port, host });
 
 try {
   await app.listen({ port, host });

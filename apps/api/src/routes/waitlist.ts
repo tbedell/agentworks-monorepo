@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { prisma } from '@agentworks/db';
 import { z } from 'zod';
 import { sendWaitlistWelcome } from '../lib/email.js';
+import { getNextRotatorAffiliate, assignOrganicLead } from '../lib/rotator.js';
 
 function generateReferralCode(): string {
   return 'AW-' + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -62,12 +63,15 @@ export const waitlistRoutes: FastifyPluginAsync = async (app) => {
     }
 
     let affiliateId: string | undefined;
+    let isOrganicLead = true; // Track if this is an organic lead (no affiliate/referral)
+
     if (body.affiliateCode) {
       const affiliate = await prisma.affiliate.findUnique({
         where: { code: body.affiliateCode, status: 'approved' },
       });
       if (affiliate) {
         affiliateId = affiliate.id;
+        isOrganicLead = false;
         await prisma.affiliate.update({
           where: { id: affiliate.id },
           data: { totalReferrals: { increment: 1 } },
@@ -80,10 +84,24 @@ export const waitlistRoutes: FastifyPluginAsync = async (app) => {
         where: { referralCode: body.referredByCode },
       });
       if (referrer) {
+        isOrganicLead = false;
         await prisma.waitlistLead.update({
           where: { id: referrer.id },
           data: { referralCount: { increment: 1 } },
         });
+      }
+    }
+
+    // For organic leads (no affiliate or referral), use the rotator
+    if (isOrganicLead && !affiliateId) {
+      try {
+        const rotatorAffiliate = await getNextRotatorAffiliate();
+        if (rotatorAffiliate) {
+          affiliateId = rotatorAffiliate.id;
+        }
+      } catch (error) {
+        console.error('Error getting rotator affiliate:', error);
+        // Continue without affiliate - rotator is optional
       }
     }
 
@@ -107,6 +125,11 @@ export const waitlistRoutes: FastifyPluginAsync = async (app) => {
         utmCampaign: body.utmCampaign,
       },
     });
+
+    // If this was an organic lead assigned via rotator, record the assignment
+    if (isOrganicLead && affiliateId) {
+      assignOrganicLead(lead.id, affiliateId).catch(console.error);
+    }
 
     sendWaitlistWelcome(lead.email, lead.position, lead.referralCode).catch(console.error);
 

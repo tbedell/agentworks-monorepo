@@ -694,6 +694,8 @@ model Affiliate {
   leads             WaitlistLead[]
   conversions       AffiliateConversion[]
   payouts           AffiliatePayout[]
+  rotator           AffiliateRotator?
+  influencerAccess  InfluencerAccess[]
 
   @@index([code])
   @@index([status])
@@ -1302,4 +1304,126 @@ model CollaborationParticipant {
   @@unique([sessionId, userId])
   @@index([sessionId])
   @@index([userId])
+}
+
+// ============================================
+// Founding Member Launch System Models
+// ============================================
+
+// Affiliate Rotator for Founding Members - Round-robin organic lead distribution
+model AffiliateRotator {
+  id              String    @id @default(uuid())
+  affiliateId     String    @unique
+  rotatorPosition Int       // Position in the rotation queue
+  lastAssigned    DateTime? // When they last received an organic lead
+  totalAssigned   Int       @default(0) // Total organic leads assigned
+  isActive        Boolean   @default(true) // Can receive organic leads
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  affiliate       Affiliate @relation(fields: [affiliateId], references: [id], onDelete: Cascade)
+
+  @@index([rotatorPosition])
+  @@index([isActive, lastAssigned])
+}
+
+// Launch Configuration for Founding Member launches
+model LaunchConfig {
+  id                String   @id @default(uuid())
+  name              String   @unique // e.g., "founding_member_launch"
+  launchDate        DateTime
+  countdownEnabled  Boolean  @default(false)
+  doorsOpen         Boolean  @default(false)
+  totalSpots        Int      @default(1000)
+  spotsSold         Int      @default(0)
+  phase             String   @default("pre_launch") // pre_launch, live, closed
+  settings          Json?    // Additional config (FOMO thresholds, auto-close, etc.)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// Email Campaign for bulk marketing emails
+model EmailCampaign {
+  id              String    @id @default(uuid())
+  name            String
+  subject         String
+  template        String    // email template identifier
+  htmlContent     String?   // Custom HTML content if not using template
+  targetAudience  String    // "waitlist", "founders", "affiliates", "all"
+  filters         Json?     // Additional filtering criteria (e.g., min referrals, specific tiers)
+  status          String    @default("draft") // draft, scheduled, sending, sent, cancelled
+  scheduledFor    DateTime?
+  sentAt          DateTime?
+  totalRecipients Int       @default(0)
+  sentCount       Int       @default(0)
+  openCount       Int       @default(0)
+  clickCount      Int       @default(0)
+  bounceCount     Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  sends           EmailSend[]
+
+  @@index([status])
+  @@index([targetAudience])
+  @@index([scheduledFor])
+}
+
+// Email Sends for tracking individual email deliveries
+model EmailSend {
+  id          String    @id @default(uuid())
+  campaignId  String?
+  email       String
+  template    String
+  subject     String?
+  status      String    @default("pending") // pending, sent, delivered, opened, clicked, bounced, failed
+  messageId   String?   // Resend/email provider message ID
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  bouncedAt   DateTime?
+  metadata    Json?     // Additional tracking data
+  createdAt   DateTime  @default(now())
+
+  campaign    EmailCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([email])
+  @@index([status])
+  @@index([messageId])
+}
+
+// Influencer Access for seeding program
+model InfluencerAccess {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  platform      String    // "youtube", "twitter", "indie_hackers", "linkedin", "tiktok"
+  handle        String?   // @username or channel name
+  accessCode    String    @unique // Special access code for platform
+  affiliateId   String?   // Optional link to affiliate account
+  contentLinks  Json?     // Array of content URLs they've created
+  followers     Int?      // Estimated follower count
+  isActive      Boolean   @default(true)
+  expiresAt     DateTime?
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  affiliate     Affiliate? @relation(fields: [affiliateId], references: [id])
+
+  @@index([platform])
+  @@index([isActive])
+  @@index([accessCode])
+}
+
+// Organic Lead Assignment History for rotator tracking
+model OrganicLeadAssignment {
+  id              String   @id @default(uuid())
+  leadId          String   // WaitlistLead ID
+  affiliateId     String   // Affiliate who received this lead
+  rotatorPosition Int      // Position at time of assignment
+  createdAt       DateTime @default(now())
+
+  @@index([affiliateId])
+  @@index([createdAt])
 }

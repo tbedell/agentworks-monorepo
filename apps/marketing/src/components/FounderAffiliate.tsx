@@ -1,66 +1,45 @@
 import { motion } from 'framer-motion'
 import {
-  Users, DollarSign, TrendingUp, Gift,
-  Percent, Zap, CheckCircle
+  Users, Plus, ArrowRight,
+  RotateCw, Target, TrendingUp
 } from 'lucide-react'
 
-const affiliateTiers = [
+const founderTiers = [
   {
-    founderTier: 'Diamond',
-    affiliateTier: 'Gold',
-    commission: 40,
-    bonus: 100,
-    color: 'text-cyan-600',
-    bgColor: 'bg-cyan-100',
+    tier: 'Bronze',
+    commission: 1,
+    price: 249,
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
   },
   {
-    founderTier: 'Gold',
-    affiliateTier: 'Silver',
-    commission: 35,
-    bonus: 75,
+    tier: 'Silver',
+    commission: 2,
+    price: 349,
+    color: 'text-slate-500',
+    bgColor: 'bg-slate-200',
+  },
+  {
+    tier: 'Gold',
+    commission: 3,
+    price: 549,
     color: 'text-yellow-600',
     bgColor: 'bg-yellow-100',
   },
   {
-    founderTier: 'Silver',
-    affiliateTier: 'Standard',
-    commission: 30,
-    bonus: 50,
-    color: 'text-slate-500',
-    bgColor: 'bg-slate-200',
+    tier: 'Diamond',
+    commission: 4,
+    price: 799,
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-100',
   },
 ]
 
-const earningExamples = [
-  {
-    scenario: 'Refer 5 Silver Founders',
-    calculation: '5 × ($199 × 30% + $50 bonus)',
-    total: '$548.50',
-  },
-  {
-    scenario: 'Refer 3 Gold Founders',
-    calculation: '3 × ($249 × 35% + $75 bonus)',
-    total: '$486.45',
-  },
-  {
-    scenario: 'Refer 2 Diamond Founders',
-    calculation: '2 × ($299 × 40% + $100 bonus)',
-    total: '$439.20',
-  },
-  {
-    scenario: 'Refer 10 mixed (4S, 4G, 2D)',
-    calculation: 'Mixed calculations',
-    total: '$1,474.16',
-  },
-]
-
-const benefits = [
-  'No application required - instant activation',
-  'Real-time dashboard to track clicks and conversions',
-  '30-day cookie window for attribution',
-  'Monthly payouts via PayPal or Stripe',
-  'Dedicated affiliate support channel',
-  'Custom promo materials provided',
+// ROI Projections based on customer growth
+const roiProjections = [
+  { customers: 10000, perFounder: 10, label: '10K Customers' },
+  { customers: 100000, perFounder: 100, label: '100K Customers' },
+  { customers: 1000000, perFounder: 1000, label: '1M+ Customers' },
 ]
 
 export default function FounderAffiliate() {
@@ -76,175 +55,217 @@ export default function FounderAffiliate() {
           className="text-center mb-12"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-sm mb-6">
-            <DollarSign className="w-4 h-4 text-green-600" />
+            <TrendingUp className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium text-slate-600">
-              Built-in earning potential
+              Your Reward for Believing Early
             </span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
-            Every Founder is an{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Affiliate</span>
+            Share in Our{' '}
+            <span className="bg-gradient-to-r from-green-600 to-blue-600 bg-clip-text text-transparent">Profits as We Grow</span>
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            No application. No waiting. The moment you become a founder, you can start earning
-            30-40% commission plus bonuses on every sale you refer.
+            As a Founding Developer, you don't just get lifetime platform access—you earn passive revenue
+            as we scale. Every new subscriber is assigned to a founder via <strong>Round Robin</strong>,
+            and you earn 1-4% of their subscription for life.
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-12">
-          {affiliateTiers.map((tier, index) => (
-            <motion.div
-              key={tier.founderTier}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-xl p-6 border border-slate-200 shadow-lg"
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className={`w-12 h-12 rounded-xl ${tier.bgColor} flex items-center justify-center ${tier.color}`}>
-                  <Users className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className={`font-bold ${tier.color}`}>{tier.founderTier} Founder</p>
-                  <p className="text-slate-500 text-sm">→ {tier.affiliateTier} Affiliate</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-slate-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Percent className="w-4 h-4 text-green-600" />
-                    <span className="text-slate-500 text-sm">Commission</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">{tier.commission}%</p>
-                </div>
-                <div className="p-4 rounded-lg bg-slate-100">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Gift className="w-4 h-4 text-yellow-600" />
-                    <span className="text-slate-500 text-sm">Bonus/Sale</span>
-                  </div>
-                  <p className="text-2xl font-bold text-slate-900">+${tier.bonus}</p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-8 mb-12">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg"
-          >
-            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              Example Earnings
-            </h3>
-            <div className="space-y-4">
-              {earningExamples.map((example, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg bg-slate-100"
-                >
-                  <div>
-                    <p className="text-slate-900 font-medium">{example.scenario}</p>
-                    <p className="text-slate-500 text-sm">{example.calculation}</p>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">{example.total}</p>
-                </div>
-              ))}
-            </div>
-            <p className="text-xs text-slate-400 mt-4">
-              * Plus recurring commission on any subscription conversions post-launch
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg"
-          >
-            <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-              <Zap className="w-5 h-5 text-blue-600" />
-              How It Works
-            </h3>
-
-            <div className="space-y-6 mb-8">
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                  1
-                </div>
-                <div>
-                  <p className="text-slate-900 font-medium">Become a Founder</p>
-                  <p className="text-slate-500 text-sm">Purchase any founder tier to activate your affiliate account instantly</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                  2
-                </div>
-                <div>
-                  <p className="text-slate-900 font-medium">Share Your Link</p>
-                  <p className="text-slate-500 text-sm">Get your unique referral link from the dashboard and share it</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold flex-shrink-0">
-                  3
-                </div>
-                <div>
-                  <p className="text-slate-900 font-medium">Earn on Every Sale</p>
-                  <p className="text-slate-500 text-sm">Commission + bonus paid monthly. Track everything in real-time</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center gap-2 text-slate-600 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  {benefit}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-
+        {/* How It Works - Visual */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-lg"
+          className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg mb-12"
         >
-          <h3 className="text-2xl font-bold text-slate-900 mb-4">
-            Perfect for Influencers & Content Creators
+          <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+            <Target className="w-5 h-5 text-blue-600" />
+            How the Round Robin Works
           </h3>
-          <p className="text-slate-600 max-w-2xl mx-auto mb-6">
-            YouTubers, Twitter/X creators, newsletter authors, and tech bloggers -
-            become a founder and earn while sharing AgentWorks with your audience.
-            Your founder tier pays for itself with just 2-3 referrals.
+
+          <div className="grid md:grid-cols-3 gap-8 mb-8">
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-xl mx-auto mb-4">
+                1
+              </div>
+              <p className="text-slate-900 font-medium mb-2">Customer Signs Up</p>
+              <p className="text-slate-500 text-sm">A new user subscribes to AgentWorks at $49/mo</p>
+            </div>
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-green-600 mx-auto mb-4">
+                <RotateCw className="w-8 h-8" />
+              </div>
+              <p className="text-slate-900 font-medium mb-2">Round Robin Assigns</p>
+              <p className="text-slate-500 text-sm">The algorithm assigns them to the next founder in sequence</p>
+            </div>
+            <div className="text-center p-6 bg-slate-50 rounded-xl">
+              <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-xl mx-auto mb-4">
+                $
+              </div>
+              <p className="text-slate-900 font-medium mb-2">You Earn Forever</p>
+              <p className="text-slate-500 text-sm">You earn 1-4% of their subscription every month, for life</p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200">
+            <h4 className="font-semibold text-slate-900 mb-4 text-center">Example: Customer #105 is Assigned to You</h4>
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="text-center p-4 bg-white rounded-lg">
+                <p className="text-slate-500 text-sm mb-1">Diamond Founder (4%)</p>
+                <p className="text-3xl font-bold text-green-600">$1.96/mo</p>
+                <p className="text-slate-400 text-xs">4% of $49</p>
+              </div>
+              <div className="text-center p-4 bg-white rounded-lg">
+                <p className="text-slate-500 text-sm mb-1">Bronze Founder (1%)</p>
+                <p className="text-3xl font-bold text-amber-600">$0.49/mo</p>
+                <p className="text-slate-400 text-xs">1% of $49</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mt-4 text-center">
+              This happens for every customer assigned to your slot via Round Robin.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* ROI Projections */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-8 text-white mb-12"
+        >
+          <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-green-400" />
+            As We Scale to 1 Million+ Customers
+          </h3>
+          <p className="text-slate-300 mb-6">Your slot fills up with assigned customers, building recurring monthly income.</p>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700">
+                  <th className="text-left py-3 px-4 text-slate-400 font-medium">Platform Size</th>
+                  <th className="text-center py-3 px-4 text-slate-400 font-medium">Customers / Founder</th>
+                  <th className="text-center py-3 px-4 text-amber-400 font-medium">Bronze (1%)</th>
+                  <th className="text-center py-3 px-4 text-slate-300 font-medium">Silver (2%)</th>
+                  <th className="text-center py-3 px-4 text-yellow-400 font-medium">Gold (3%)</th>
+                  <th className="text-center py-3 px-4 text-cyan-400 font-medium">Diamond (4%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roiProjections.map((proj) => (
+                  <tr key={proj.customers} className="border-b border-slate-700/50">
+                    <td className="py-4 px-4 text-white font-medium">{proj.label}</td>
+                    <td className="py-4 px-4 text-center text-slate-300">{proj.perFounder.toLocaleString()}</td>
+                    <td className="py-4 px-4 text-center text-amber-400">
+                      ${(proj.perFounder * 49 * 0.01).toFixed(2)}/mo
+                    </td>
+                    <td className="py-4 px-4 text-center text-slate-300">
+                      ${(proj.perFounder * 49 * 0.02).toFixed(2)}/mo
+                    </td>
+                    <td className="py-4 px-4 text-center text-yellow-400">
+                      ${(proj.perFounder * 49 * 0.03).toFixed(2)}/mo
+                    </td>
+                    <td className="py-4 px-4 text-center text-cyan-400 font-bold">
+                      ${(proj.perFounder * 49 * 0.04).toFixed(2)}/mo
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-6 p-4 bg-slate-800/50 rounded-lg">
+            <p className="text-sm text-slate-300">
+              <strong className="text-white">Diamond Package:</strong> At 10K customers, you're assigned 10 = $19.60/mo ($235/year).
+              At 1M customers, you're assigned 1,000 = <span className="text-green-400 font-bold">$1,960/mo ($23,520/year)</span>.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Tier Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+          {founderTiers.map((tier, index) => (
+            <motion.div
+              key={tier.tier}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-white rounded-xl p-6 border border-slate-200 shadow-lg text-center"
+            >
+              <div className={`w-12 h-12 rounded-xl ${tier.bgColor} flex items-center justify-center ${tier.color} mx-auto mb-4`}>
+                <Users className="w-6 h-6" />
+              </div>
+              <p className={`font-bold ${tier.color} mb-1`}>{tier.tier} Package</p>
+              <p className="text-2xl font-bold text-slate-900 mb-1">${tier.price}</p>
+              <p className="text-green-600 font-semibold">{tier.commission}% per customer</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Double Dip */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-8 text-center text-white mb-12"
+        >
+          <h3 className="text-2xl font-bold mb-4">
+            The "Double Dip" Strategy
+          </h3>
+          <p className="text-blue-100 max-w-2xl mx-auto mb-6">
+            You earn passive revenue via Round Robin assignment. But you can ALSO refer developers directly
+            and earn an additional 25% affiliate commission. Stack up to 29% total on each customer.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              YouTube Tech Reviews
+
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <p className="text-3xl font-bold">1-4%</p>
+              <p className="text-sm text-blue-200">Passive (auto)</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              AI/Dev Twitter
+            <Plus className="w-8 h-8 text-blue-200" />
+            <div className="bg-white/10 backdrop-blur rounded-xl p-4">
+              <p className="text-3xl font-bold">25%</p>
+              <p className="text-sm text-blue-200">Affiliate (referrals)</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              Tech Newsletters
+            <ArrowRight className="w-8 h-8 text-blue-200" />
+            <div className="bg-white/20 backdrop-blur rounded-xl p-4 border-2 border-white/30">
+              <p className="text-3xl font-bold">29%</p>
+              <p className="text-sm text-blue-200">Max CAC Stack</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              Dev Blogs
+          </div>
+        </motion.div>
+
+        {/* 30-Day Upgrade */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="bg-white rounded-2xl p-8 border border-slate-200 shadow-lg"
+        >
+          <h3 className="text-xl font-bold text-slate-900 mb-6 text-center">
+            30-Day Upgrade Guarantee
+          </h3>
+          <p className="text-slate-600 text-center max-w-2xl mx-auto mb-6">
+            Start at any tier. Within 30 days, you can upgrade to Diamond by paying the difference.
+            Lock in the maximum 4% passive revenue rate for life.
+          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            <div className="p-4 bg-slate-50 rounded-lg text-center">
+              <p className="text-slate-500 text-sm">Bronze → Diamond</p>
+              <p className="text-xl font-bold text-slate-900">Pay $550</p>
+              <p className="text-xs text-slate-400">($799 - $249)</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              Discord Communities
+            <div className="p-4 bg-slate-50 rounded-lg text-center">
+              <p className="text-slate-500 text-sm">Silver → Diamond</p>
+              <p className="text-xl font-bold text-slate-900">Pay $450</p>
+              <p className="text-xs text-slate-400">($799 - $349)</p>
             </div>
-            <div className="px-4 py-2 rounded-full bg-slate-100 text-slate-600 text-sm">
-              Indie Hackers
+            <div className="p-4 bg-slate-50 rounded-lg text-center">
+              <p className="text-slate-500 text-sm">Gold → Diamond</p>
+              <p className="text-xl font-bold text-slate-900">Pay $250</p>
+              <p className="text-xs text-slate-400">($799 - $549)</p>
             </div>
           </div>
         </motion.div>

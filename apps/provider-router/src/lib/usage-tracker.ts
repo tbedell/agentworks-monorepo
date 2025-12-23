@@ -1,6 +1,6 @@
 import { createLogger } from '@agentworks/shared';
 import type { ProviderRequest, ProviderResponse, BillingUsageEvent } from '@agentworks/shared';
-import { getRedis, cacheProviderUsage } from './redis.js';
+import { getRedis, cacheProviderUsage, isRedisAvailable } from './redis.js';
 
 const logger = createLogger('provider-router:usage-tracker');
 
@@ -46,7 +46,9 @@ export async function trackUsage(
 
     // Add to usage queue for processing
     const redis = getRedis();
-    await redis.lPush('usage-events', JSON.stringify(usage));
+    if (redis) {
+      await redis.lPush('usage-events', JSON.stringify(usage));
+    }
 
     logger.debug('Usage tracked', {
       workspaceId: request.workspaceId,
@@ -78,15 +80,25 @@ export async function getWorkspaceUsage(
 }> {
   try {
     const redis = getRedis();
-    
+
+    if (!redis) {
+      return {
+        totalCost: 0,
+        totalPrice: 0,
+        totalTokens: 0,
+        byProvider: {},
+        byModel: {},
+      };
+    }
+
     // Get usage events from cache (this is a simplified implementation)
     // In a real system, you'd store this in a time-series database
     const usageKey = `workspace:usage:${workspaceId}`;
-    
+
     // This is a placeholder implementation
     // You would typically use Redis Streams or a time-series database
     const cachedUsage = await redis.get(usageKey);
-    
+
     if (!cachedUsage) {
       return {
         totalCost: 0,
@@ -119,11 +131,20 @@ export async function getProviderStats(): Promise<{
 }> {
   try {
     const redis = getRedis();
-    
+
+    if (!redis) {
+      return {
+        totalRequests: 0,
+        totalCost: 0,
+        totalPrice: 0,
+        byProvider: {},
+      };
+    }
+
     // Get provider statistics from cache
     const statsKey = 'provider:stats';
     const cachedStats = await redis.get(statsKey);
-    
+
     if (!cachedStats) {
       return {
         totalRequests: 0,
@@ -146,7 +167,8 @@ async function startUsageAggregationWorker(): Promise<void> {
   const processUsageEvents = async () => {
     try {
       const redis = getRedis();
-      
+      if (!redis) return;
+
       // Process up to 100 events at a time
       const events = [];
       for (let i = 0; i < 100; i++) {
@@ -171,20 +193,21 @@ async function startUsageAggregationWorker(): Promise<void> {
 
   // Run every 10 seconds
   setInterval(processUsageEvents, 10000);
-  
+
   // Process immediately on startup
   processUsageEvents();
 }
 
 async function aggregateUsageEvents(events: any[]): Promise<void> {
   const redis = getRedis();
-  
+  if (!redis) return;
+
   // Aggregate by workspace
   const workspaceAggregates: Record<string, any> = {};
-  
+
   // Aggregate by provider
   const providerAggregates: Record<string, any> = {};
-  
+
   for (const event of events) {
     // Workspace aggregation
     if (!workspaceAggregates[event.workspaceId]) {
@@ -197,12 +220,12 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
         lastUpdated: Date.now(),
       };
     }
-    
+
     const wsAgg = workspaceAggregates[event.workspaceId];
     wsAgg.totalCost += event.cost;
     wsAgg.totalPrice += event.price;
     wsAgg.totalTokens += event.inputTokens + event.outputTokens;
-    
+
     // By provider
     if (!wsAgg.byProvider[event.provider]) {
       wsAgg.byProvider[event.provider] = {
@@ -216,7 +239,7 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
     wsAgg.byProvider[event.provider].price += event.price;
     wsAgg.byProvider[event.provider].tokens += event.inputTokens + event.outputTokens;
     wsAgg.byProvider[event.provider].requests += 1;
-    
+
     // By model
     if (!wsAgg.byModel[event.model]) {
       wsAgg.byModel[event.model] = {
@@ -230,7 +253,7 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
     wsAgg.byModel[event.model].price += event.price;
     wsAgg.byModel[event.model].tokens += event.inputTokens + event.outputTokens;
     wsAgg.byModel[event.model].requests += 1;
-    
+
     // Provider aggregation
     if (!providerAggregates[event.provider]) {
       providerAggregates[event.provider] = {
@@ -240,18 +263,18 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
         errors: 0,
       };
     }
-    
+
     providerAggregates[event.provider].requests += 1;
     providerAggregates[event.provider].cost += event.cost;
     providerAggregates[event.provider].price += event.price;
   }
-  
+
   // Store workspace aggregates
   for (const [workspaceId, aggregate] of Object.entries(workspaceAggregates)) {
     const key = `workspace:usage:${workspaceId}`;
     await redis.setEx(key, 86400, JSON.stringify(aggregate)); // 24 hour TTL
   }
-  
+
   // Store provider aggregates
   if (Object.keys(providerAggregates).length > 0) {
     const currentStats = await redis.get('provider:stats');
@@ -261,12 +284,12 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
       totalPrice: 0,
       byProvider: {},
     };
-    
+
     for (const [provider, aggregate] of Object.entries(providerAggregates) as [string, any][]) {
       stats.totalRequests += aggregate.requests;
       stats.totalCost += aggregate.cost;
       stats.totalPrice += aggregate.price;
-      
+
       if (!stats.byProvider[provider]) {
         stats.byProvider[provider] = {
           requests: 0,
@@ -276,12 +299,12 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
           errors: 0,
         };
       }
-      
+
       stats.byProvider[provider].requests += aggregate.requests;
       stats.byProvider[provider].cost += aggregate.cost;
       stats.byProvider[provider].price += aggregate.price;
     }
-    
+
     await redis.setEx('provider:stats', 3600, JSON.stringify(stats)); // 1 hour TTL
   }
 }
@@ -289,20 +312,21 @@ async function aggregateUsageEvents(events: any[]): Promise<void> {
 export async function recordProviderLatency(provider: string, latencyMs: number): Promise<void> {
   try {
     const redis = getRedis();
+    if (!redis) return;
     const key = `provider:latency:${provider}`;
-    
+
     // Store recent latencies (keep last 100)
     await redis.lPush(key, latencyMs.toString());
     await redis.lTrim(key, 0, 99);
-    
+
     // Calculate average latency
     const latencies = await redis.lRange(key, 0, -1);
     const avgLatency = latencies.reduce((sum, lat) => sum + parseInt(lat, 10), 0) / latencies.length;
-    
+
     // Update provider stats
     const statsKey = 'provider:stats';
     const currentStats = await redis.get(statsKey);
-    
+
     if (currentStats) {
       const stats = JSON.parse(currentStats);
       if (stats.byProvider[provider]) {
@@ -310,7 +334,7 @@ export async function recordProviderLatency(provider: string, latencyMs: number)
         await redis.setEx(statsKey, 3600, JSON.stringify(stats));
       }
     }
-    
+
   } catch (error) {
     logger.error('Failed to record provider latency', { error, provider, latencyMs });
   }
@@ -319,11 +343,12 @@ export async function recordProviderLatency(provider: string, latencyMs: number)
 export async function recordProviderError(provider: string, error: any): Promise<void> {
   try {
     const redis = getRedis();
-    
+    if (!redis) return;
+
     // Update error count in stats
     const statsKey = 'provider:stats';
     const currentStats = await redis.get(statsKey);
-    
+
     if (currentStats) {
       const stats = JSON.parse(currentStats);
       if (!stats.byProvider[provider]) {
@@ -335,11 +360,11 @@ export async function recordProviderError(provider: string, error: any): Promise
           errors: 0,
         };
       }
-      
+
       stats.byProvider[provider].errors += 1;
       await redis.setEx(statsKey, 3600, JSON.stringify(stats));
     }
-    
+
   } catch (err) {
     logger.error('Failed to record provider error', { error: err, provider });
   }

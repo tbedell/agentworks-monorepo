@@ -2,42 +2,49 @@ import { motion } from 'framer-motion'
 import {
   Infinity, Cpu, TrendingDown, Users, Award,
   MessageSquare, Sparkles, Lock, Headphones,
-  Rocket, Calendar, Shield
+  Rocket, Calendar, Shield, Bot
 } from 'lucide-react'
 
 const benefits = [
   {
     icon: Infinity,
-    title: 'Lifetime Access',
-    description: 'One payment, forever access. No monthly fees, ever.',
+    title: 'Lifetime Platform Access',
+    description: 'One payment, forever access to the #1 vibe coding platform.',
     color: 'text-green-600',
     bgColor: 'bg-green-100',
   },
   {
-    icon: Cpu,
-    title: 'Reserved API Allocation',
-    description: 'Guaranteed monthly API calls that never expire or decrease.',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-  },
-  {
-    icon: TrendingDown,
-    title: 'Reduced Overage Rates',
-    description: '40-60% off standard rates when you need extra API calls.',
+    icon: Bot,
+    title: '11 Specialist AI Agents',
+    description: 'CEO CoPilot, Architect, Dev, QA, DevOps, and more working for your team.',
     color: 'text-purple-600',
     bgColor: 'bg-purple-100',
   },
   {
-    icon: Users,
-    title: 'Auto-Enrolled Affiliate',
-    description: 'Start earning 30-40% commission immediately. No application needed.',
-    color: 'text-yellow-600',
-    bgColor: 'bg-yellow-100',
+    icon: Cpu,
+    title: 'Reserved Agent Runs',
+    description: 'Guaranteed monthly agent runs that never expire or decrease.',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
+  },
+  {
+    icon: Sparkles,
+    title: 'Early Feature Access',
+    description: 'First access to new features, agents, and capabilities.',
+    color: 'text-pink-600',
+    bgColor: 'bg-pink-100',
+  },
+  {
+    icon: Headphones,
+    title: 'Priority Support',
+    description: '4-72 hour response SLA based on your tier.',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
   },
   {
     icon: Award,
     title: 'Founder Badge',
-    description: 'Permanent Diamond, Gold, or Silver badge on your profile.',
+    description: 'Permanent Bronze, Silver, Gold, or Diamond badge on your profile.',
     color: 'text-cyan-600',
     bgColor: 'bg-cyan-100',
   },
@@ -49,13 +56,6 @@ const benefits = [
     bgColor: 'bg-indigo-100',
   },
   {
-    icon: Sparkles,
-    title: 'Early Features',
-    description: 'First access to new features, agents, and capabilities.',
-    color: 'text-pink-600',
-    bgColor: 'bg-pink-100',
-  },
-  {
     icon: Lock,
     title: 'Grandfathered Terms',
     description: 'Your pricing and benefits are locked in forever.',
@@ -63,11 +63,11 @@ const benefits = [
     bgColor: 'bg-emerald-100',
   },
   {
-    icon: Headphones,
-    title: 'Priority Support',
-    description: '24-72 hour response SLA based on your tier.',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
+    icon: Calendar,
+    title: 'Founder Calls',
+    description: 'Regular calls with the founding team (frequency by tier).',
+    color: 'text-teal-600',
+    bgColor: 'bg-teal-100',
   },
   {
     icon: Rocket,
@@ -77,11 +77,18 @@ const benefits = [
     bgColor: 'bg-red-100',
   },
   {
-    icon: Calendar,
-    title: 'Founder Calls',
-    description: 'Regular calls with the founding team (frequency by tier).',
-    color: 'text-teal-600',
-    bgColor: 'bg-teal-100',
+    icon: TrendingDown,
+    title: 'Reduced Overage Rates',
+    description: '40-60% off standard rates when you need extra agent runs.',
+    color: 'text-amber-600',
+    bgColor: 'bg-amber-100',
+  },
+  {
+    icon: Users,
+    title: 'Share in Our Profits',
+    description: 'Earn 1-4% passive revenue as the platform grows. Your reward for believing early.',
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
   },
   {
     icon: Shield,
@@ -93,14 +100,14 @@ const benefits = [
 ]
 
 const tierComparison = [
-  { feature: 'Monthly API Calls', diamond: '2,000', gold: '1,500', silver: '1,000', regular: '~3,000*' },
-  { feature: 'Extra Call Rate', diamond: '$0.10', gold: '$0.12', silver: '$0.15', regular: '$0.25' },
-  { feature: 'Affiliate Commission', diamond: '40%', gold: '35%', silver: '30%', regular: 'Apply required' },
-  { feature: 'Sale Bonus', diamond: '+$100', gold: '+$75', silver: '+$50', regular: '-' },
-  { feature: 'Support SLA', diamond: '24hr', gold: '48hr', silver: '72hr', regular: 'Best effort' },
-  { feature: 'Beta Access', diamond: 'First', gold: 'Early', silver: 'Standard', regular: 'Public' },
-  { feature: 'Founder Calls', diamond: 'Monthly', gold: 'Quarterly', silver: 'Annual', regular: '-' },
-  { feature: 'Discord Channel', diamond: 'VIP + General', gold: 'General', silver: 'General', regular: 'Public' },
+  { feature: 'One-Time Price', diamond: '$799', gold: '$549', silver: '$349', bronze: '$249', regular: '$49/mo' },
+  { feature: 'Agent Runs/Month', diamond: '2,500', gold: '1,500', silver: '1,000', bronze: '500', regular: '~3,000*' },
+  { feature: 'Passive Revenue', diamond: '4%', gold: '3%', silver: '2%', bronze: '1%', regular: '-' },
+  { feature: 'Support Response', diamond: '4hr', gold: '24hr', silver: '48hr', bronze: '72hr', regular: 'Best effort' },
+  { feature: 'Beta Access', diamond: 'Direct', gold: 'First', silver: 'Early', bronze: 'Standard', regular: 'Public' },
+  { feature: 'Founder Calls', diamond: 'Weekly', gold: 'Monthly', silver: 'Quarterly', bronze: 'Annual', regular: '-' },
+  { feature: 'Discord Channel', diamond: 'VIP', gold: 'VIP', silver: 'Founder', bronze: 'Founder', regular: 'Public' },
+  { feature: '30-Day Upgrade', diamond: '-', gold: 'To Diamond', silver: 'To Any', bronze: 'To Any', regular: '-' },
 ]
 
 export default function FounderBenefits() {
@@ -114,11 +121,12 @@ export default function FounderBenefits() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
-            What You Get as a{' '}
-            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Founding Supporter</span>
+            Your{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Founding Developer</span>{' '}
+            Benefits
           </h2>
           <p className="text-slate-600 max-w-2xl mx-auto">
-            More than just early access. You're getting lifetime value that compounds over time.
+            Lifetime access to the best vibe coding platform, plus your reward for believing in us early.
           </p>
         </motion.div>
 
@@ -154,11 +162,12 @@ export default function FounderBenefits() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200">
-                  <th className="text-left py-4 px-4 text-slate-500 font-medium">Feature</th>
-                  <th className="text-center py-4 px-4 text-cyan-600 font-bold">Diamond</th>
-                  <th className="text-center py-4 px-4 text-yellow-600 font-bold">Gold</th>
-                  <th className="text-center py-4 px-4 text-slate-500 font-bold">Silver</th>
-                  <th className="text-center py-4 px-4 text-slate-400 font-medium">Regular ($49/mo)</th>
+                  <th className="text-left py-4 px-3 text-slate-500 font-medium">Feature</th>
+                  <th className="text-center py-4 px-2 text-amber-600 font-bold">Bronze</th>
+                  <th className="text-center py-4 px-2 text-slate-500 font-bold">Silver</th>
+                  <th className="text-center py-4 px-2 text-yellow-600 font-bold">Gold</th>
+                  <th className="text-center py-4 px-2 text-cyan-600 font-bold">Diamond</th>
+                  <th className="text-center py-4 px-2 text-slate-400 font-medium">Pro ($49/mo)</th>
                 </tr>
               </thead>
               <tbody>
@@ -171,11 +180,12 @@ export default function FounderBenefits() {
                     transition={{ delay: index * 0.05 }}
                     className="border-b border-slate-100"
                   >
-                    <td className="py-4 px-4 text-slate-600">{row.feature}</td>
-                    <td className="py-4 px-4 text-center text-slate-900 font-medium">{row.diamond}</td>
-                    <td className="py-4 px-4 text-center text-slate-900 font-medium">{row.gold}</td>
-                    <td className="py-4 px-4 text-center text-slate-900 font-medium">{row.silver}</td>
-                    <td className="py-4 px-4 text-center text-slate-400">{row.regular}</td>
+                    <td className="py-4 px-3 text-slate-600">{row.feature}</td>
+                    <td className="py-4 px-2 text-center text-slate-900 font-medium">{row.bronze}</td>
+                    <td className="py-4 px-2 text-center text-slate-900 font-medium">{row.silver}</td>
+                    <td className="py-4 px-2 text-center text-slate-900 font-medium">{row.gold}</td>
+                    <td className="py-4 px-2 text-center text-slate-900 font-medium">{row.diamond}</td>
+                    <td className="py-4 px-2 text-center text-slate-400">{row.regular}</td>
                   </motion.tr>
                 ))}
               </tbody>

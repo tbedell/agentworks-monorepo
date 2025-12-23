@@ -616,6 +616,8 @@ export const api = {
     },
     daily: (workspaceId: string, days?: number) =>
       request<any[]>(`/usage/daily/${workspaceId}${days ? `?days=${days}` : ''}`),
+    billing: (workspaceId: string) =>
+      request<any>(`/usage/billing/${workspaceId}`),
   },
   copilot: {
     chat: (data: { message: string; conversationId?: string; context: string; projectId?: string; cardId?: string; phase?: string }) =>

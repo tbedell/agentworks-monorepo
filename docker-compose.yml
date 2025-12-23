@@ -1,5 +1,8 @@
 # AgentWorks Development Docker Compose
 # Local development environment with all services
+#
+# Environment variables are loaded from .env file
+# Copy .env.example to .env and configure before running
 
 version: '3.9'
 
@@ -10,16 +13,16 @@ services:
     container_name: agentworks-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: agentworks
-      POSTGRES_USER: agentworks
-      POSTGRES_PASSWORD: dev_password
+      POSTGRES_DB: ${DB_NAME:-agentworks}
+      POSTGRES_USER: ${DB_USER:-agentworks}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./packages/db/migrations:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U agentworks -d agentworks"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-agentworks} -d ${DB_NAME:-agentworks}"]
       interval: 10s
       timeout: 5s
       retries: 5

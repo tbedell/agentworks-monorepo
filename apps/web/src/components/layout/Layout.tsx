@@ -222,6 +222,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   {mainContent}
                 </>
               );
+            case '/usage':
+              // Usage page has no left panel - standalone analytics page
+              return mainContent;
             default:
               return (
                 <>

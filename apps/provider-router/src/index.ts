@@ -55,11 +55,16 @@ let providersHealthy = false;
 let usageTrackerHealthy = false;
 
 try {
-  await initializeRedis();
-  redisHealthy = true;
-  logger.info('Redis initialized successfully');
+  const redisClient = await initializeRedis();
+  redisHealthy = redisClient !== null;
+  if (redisHealthy) {
+    logger.info('Redis initialized successfully');
+  } else {
+    logger.info('Running without Redis - caching and rate limiting will be limited');
+  }
 } catch (error) {
   logger.error('Failed to initialize Redis', { error });
+  redisHealthy = false;
 }
 
 try {
@@ -79,10 +84,12 @@ try {
 }
 
 // Health check endpoint
+// Redis is optional - service is healthy if providers are initialized
 app.get('/health', async () => {
   const uptime = Date.now() - startTime;
-  const status = redisHealthy && providersHealthy && usageTrackerHealthy ? 'healthy' : 'unhealthy';
-  
+  // Service is healthy if providers are working (Redis is optional)
+  const status = providersHealthy ? 'healthy' : 'unhealthy';
+
   return createHealthResponse(
     status,
     '1.0.0',
@@ -94,7 +101,6 @@ app.get('/health', async () => {
       openai: process.env.OPENAI_API_KEY ? 'healthy' : 'unhealthy',
       anthropic: process.env.ANTHROPIC_API_KEY ? 'healthy' : 'unhealthy',
       google: process.env.GOOGLE_AI_API_KEY ? 'healthy' : 'unhealthy',
-      nanobanana: process.env.NANOBANANA_API_KEY ? 'healthy' : 'unhealthy',
     } satisfies Record<string, 'healthy' | 'unhealthy'>
   );
 });

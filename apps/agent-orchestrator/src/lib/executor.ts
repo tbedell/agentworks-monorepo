@@ -34,17 +34,25 @@ import {
   type SSEEvent,
 } from '@agentworks/context-service';
 
-// Register all tools on module load
-registerAllTools();
-registerClaudeCodeTools();
-
 const logger = createLogger('agent-orchestrator:executor');
+
+// Track if tools have been registered
+let toolsRegistered = false;
 
 let isProcessing = false;
 let shouldStop = false;
 
 export async function initializeExecutor(): Promise<void> {
   try {
+    // Register tools if not already done
+    if (!toolsRegistered) {
+      logger.info('Registering agent tools...');
+      registerAllTools();
+      registerClaudeCodeTools();
+      toolsRegistered = true;
+      logger.info('Agent tools registered');
+    }
+
     // Start the execution worker
     if (!isProcessing) {
       startExecutionWorker();
@@ -123,9 +131,11 @@ async function startExecutionWorker(): Promise<void> {
     try {
       // Get next execution request (blocking with timeout)
       const queueItem = await getFromQueue('agent-execution', 5);
-      
+
       if (!queueItem) {
-        continue; // Timeout, try again
+        // No work available - sleep before checking again to avoid tight loop
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
       }
       
       const { runId, ...executionData } = queueItem.data;

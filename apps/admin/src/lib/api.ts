@@ -1,4 +1,7 @@
-const API_BASE = '/api/admin';
+// Use VITE_API_URL if set, otherwise use relative URLs (works with Vite proxy)
+const API_BASE = (import.meta as any)?.env?.VITE_API_URL
+  ? `${(import.meta as any).env.VITE_API_URL}/api/admin`
+  : '/api/admin';
 
 interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -31,8 +34,9 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || 'Request failed');
+    const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+    console.error('API Error:', response.status, url, error);
+    throw new Error(error.error || error.message || `Request failed: ${response.status}`);
   }
 
   return response.json();

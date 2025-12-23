@@ -18,7 +18,11 @@
     "push": "prisma db push",
     "migrate": "prisma migrate dev",
     "studio": "prisma studio",
+    "seed": "tsx prisma/seed-unified.ts",
     "typecheck": "tsc --noEmit"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed-unified.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.0.1",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "@types/node": "^22.10.1",
     "prisma": "^6.0.1",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }
 }

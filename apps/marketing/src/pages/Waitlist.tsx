@@ -25,79 +25,101 @@ interface WaitlistPosition {
 
 const defaultTiers: FounderTier[] = [
   {
-    id: 'diamond',
-    name: 'Diamond Founder',
-    icon: 'diamond',
-    price: 299,
-    totalSpots: 100,
-    remainingSpots: 67,
-    apiCalls: 2000,
-    overageRate: 0.10,
-    affiliateTier: 'Gold',
-    affiliateCommission: 40,
-    saleBonus: 100,
-    supportSla: '24hr',
-    highlight: false,
-    features: [
-      'Lifetime platform access',
-      '2,000 API calls/month',
-      '$0.10 per extra call (60% off)',
-      '40% affiliate commission + $100 bonus',
-      '24-hour priority support SLA',
-      'First access to beta features',
-      'Monthly founder calls',
-      'VIP Discord channel',
-    ],
-  },
-  {
-    id: 'gold',
-    name: 'Gold Founder',
-    icon: 'award',
-    price: 249,
-    totalSpots: 300,
-    remainingSpots: 189,
-    apiCalls: 1500,
-    overageRate: 0.12,
-    affiliateTier: 'Silver',
-    affiliateCommission: 35,
-    saleBonus: 75,
-    supportSla: '48hr',
-    highlight: true,
-    badge: 'Most Popular',
-    features: [
-      'Lifetime platform access',
-      '1,500 API calls/month',
-      '$0.12 per extra call (52% off)',
-      '35% affiliate commission + $75 bonus',
-      '48-hour priority support SLA',
-      'Early access to beta features',
-      'Quarterly founder calls',
-      'Founder Discord channel',
-    ],
-  },
-  {
-    id: 'silver',
-    name: 'Silver Founder',
+    id: 'bronze',
+    name: 'Bronze Founding Developer',
     icon: 'medal',
-    price: 199,
-    totalSpots: 600,
-    remainingSpots: 412,
-    apiCalls: 1000,
-    overageRate: 0.15,
-    affiliateTier: 'Standard',
-    affiliateCommission: 30,
-    saleBonus: 50,
+    price: 249,
+    totalSpots: 500,
+    remainingSpots: 387,
+    apiCalls: 500,
+    overageRate: 0.18,
+    affiliateTier: 'Bronze',
+    affiliateCommission: 1,
+    saleBonus: 0,
     supportSla: '72hr',
     highlight: false,
     features: [
       'Lifetime platform access',
-      '1,000 API calls/month',
-      '$0.15 per extra call (40% off)',
-      '30% affiliate commission + $50 bonus',
-      '72-hour priority support SLA',
-      'Standard beta access',
-      'Annual founder call',
+      '11 specialist AI agents',
+      '500 agent runs/month',
+      '72-hour support response',
       'Founder Discord channel',
+      'Beta feature access',
+      'Share in profits (1%)',
+    ],
+  },
+  {
+    id: 'silver',
+    name: 'Silver Founding Developer',
+    icon: 'medal',
+    price: 349,
+    totalSpots: 300,
+    remainingSpots: 214,
+    apiCalls: 1000,
+    overageRate: 0.15,
+    affiliateTier: 'Silver',
+    affiliateCommission: 2,
+    saleBonus: 0,
+    supportSla: '48hr',
+    highlight: false,
+    features: [
+      'Lifetime platform access',
+      '11 specialist AI agents',
+      '1,000 agent runs/month',
+      '48-hour support response',
+      'Founder Discord channel',
+      'Early beta access',
+      'Share in profits (2%)',
+    ],
+  },
+  {
+    id: 'gold',
+    name: 'Gold Founding Developer',
+    icon: 'award',
+    price: 549,
+    totalSpots: 150,
+    remainingSpots: 98,
+    apiCalls: 1500,
+    overageRate: 0.12,
+    affiliateTier: 'Gold',
+    affiliateCommission: 3,
+    saleBonus: 0,
+    supportSla: '24hr',
+    highlight: true,
+    badge: 'Best Value',
+    features: [
+      'Lifetime platform access',
+      '11 specialist AI agents',
+      '1,500 agent runs/month',
+      '24-hour priority support',
+      'VIP Discord channel',
+      'First access to features',
+      'Share in profits (3%)',
+    ],
+  },
+  {
+    id: 'diamond',
+    name: 'Diamond Founding Developer',
+    icon: 'diamond',
+    price: 799,
+    totalSpots: 50,
+    remainingSpots: 31,
+    apiCalls: 2500,
+    overageRate: 0.10,
+    affiliateTier: 'Diamond',
+    affiliateCommission: 4,
+    saleBonus: 0,
+    supportSla: '4hr',
+    highlight: false,
+    badge: 'Maximum Benefits',
+    features: [
+      'Lifetime platform access',
+      '11 specialist AI agents',
+      '2,500 agent runs/month',
+      '4-hour priority support',
+      'VIP Discord channel',
+      'Direct access to team',
+      'Share in profits (4%)',
     ],
   },
 ]
@@ -210,13 +232,13 @@ export default function Waitlist() {
 
   const shareOnTwitter = () => {
     if (!position) return
-    const text = `I just joined @AgentWorks as a Founding Supporter! 🚀\n\n11 specialist AI agents on a Kanban board - lifetime access + affiliate earnings.\n\nOnly ${remainingSpots} founder spots left: https://agentworks.dev/waitlist?ref=${position.referralCode}`
+    const text = `Just became a Founding Developer at @AgentWorks! 🚀\n\nLifetime access to the #1 vibe coding platform. 11 AI agents. Plus I share in their profits as they grow.\n\nOnly ${remainingSpots} packages left: https://agentworks.dev/founders?ref=${position.referralCode}`
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank')
   }
 
   const shareOnLinkedIn = () => {
     if (!position) return
-    const url = `https://agentworks.dev/waitlist?ref=${position.referralCode}`
+    const url = `https://agentworks.dev/founders?ref=${position.referralCode}`
     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank')
   }
 
@@ -260,12 +282,12 @@ export default function Waitlist() {
 
                   <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 text-slate-900">
                     Become a{' '}
-                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Founding Supporter</span>
+                    <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Founding Developer</span>
                   </h1>
 
                   <p className="text-xl md:text-2xl text-slate-600 mb-8 max-w-3xl mx-auto">
-                    Lock in lifetime access at special rates. Every founder gets
-                    built-in affiliate status to earn while you share.
+                    A lifetime of the best vibe coding tools for your team.
+                    The #1 AI-powered development platform. <strong>One payment, forever.</strong>
                   </p>
 
                   <div className="flex flex-wrap justify-center gap-6 mb-8">
@@ -273,26 +295,26 @@ export default function Waitlist() {
                       <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                         <Check className="w-4 h-4 text-green-600" />
                       </div>
-                      <span>Lifetime Access</span>
+                      <span>Lifetime Platform Access</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700">
                       <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                         <Rocket className="w-4 h-4 text-blue-600" />
                       </div>
-                      <span>Reserved API Calls</span>
+                      <span>11 Specialist AI Agents</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-700">
                       <div className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center">
                         <Star className="w-4 h-4 text-yellow-600" />
                       </div>
-                      <span>30-40% Commission</span>
+                      <span>Share in Our Profits</span>
                     </div>
                   </div>
 
                   <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 max-w-lg mx-auto mb-8">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-slate-600">Founder spots remaining</span>
-                      <span className="text-2xl font-bold text-slate-900">{remainingSpots.toLocaleString()}</span>
+                      <span className="text-slate-600">Founding Packages Remaining</span>
+                      <span className="text-2xl font-bold text-blue-600">{remainingSpots.toLocaleString()} / 1,000</span>
                     </div>
                     <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
                       <motion.div
@@ -303,12 +325,12 @@ export default function Waitlist() {
                       />
                     </div>
                     <p className="text-slate-500 text-sm mt-2">
-                      {((claimedSpots / totalSpots) * 100).toFixed(1)}% claimed - Limited to 1,000 founding members
+                      Only 1,000 Founding Developer packages. Join the teams building the future of software.
                     </p>
                   </div>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto mb-16">
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-16">
                   {founderTiers.map((tier, index) => (
                     <FounderTierCard
                       key={tier.id}
@@ -341,12 +363,13 @@ export default function Waitlist() {
                   {selectedTier && (
                     <div className="flex items-center justify-between p-4 rounded-xl bg-slate-100 mb-6">
                       <div className="flex items-center gap-3">
-                        {selectedTier.icon === 'diamond' && <Diamond className="w-6 h-6 text-cyan-500" />}
-                        {selectedTier.icon === 'award' && <Award className="w-6 h-6 text-yellow-500" />}
-                        {selectedTier.icon === 'medal' && <Medal className="w-6 h-6 text-slate-500" />}
+                        {selectedTier.id === 'diamond' && <Diamond className="w-6 h-6 text-cyan-500" />}
+                        {selectedTier.id === 'gold' && <Award className="w-6 h-6 text-yellow-500" />}
+                        {selectedTier.id === 'silver' && <Medal className="w-6 h-6 text-slate-400" />}
+                        {selectedTier.id === 'bronze' && <Medal className="w-6 h-6 text-amber-600" />}
                         <div>
                           <p className="font-semibold text-slate-900">{selectedTier.name}</p>
-                          <p className="text-sm text-slate-500">${selectedTier.price} lifetime</p>
+                          <p className="text-sm text-slate-500">${selectedTier.price} lifetime • {selectedTier.affiliateCommission}% passive revenue</p>
                         </div>
                       </div>
                       <button
@@ -518,11 +541,14 @@ export default function Waitlist() {
               >
                 <Sparkles className="w-12 h-12 text-blue-500 mx-auto mb-6" />
                 <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900">
-                  Ready to Become a Founder?
+                  Secure Your Slot Now
                 </h2>
-                <p className="text-slate-600 mb-8 max-w-xl mx-auto">
-                  Join {claimedSpots.toLocaleString()} others who've already claimed their lifetime access.
-                  Only {remainingSpots.toLocaleString()} spots remaining.
+                <p className="text-slate-600 mb-4 max-w-xl mx-auto">
+                  {claimedSpots.toLocaleString()} slots claimed. <span className="text-red-600 font-semibold">{remainingSpots.toLocaleString()} remaining.</span>
+                </p>
+                <p className="text-slate-500 mb-8 text-sm max-w-xl mx-auto">
+                  Goal: Sell out on Day 1. As we scale to 1M+ customers, your slot catches assigned customers via Round Robin.
+                  Upgrade to Diamond within 30 days for maximum 4% passive revenue.
                 </p>
                 <motion.button
                   onClick={() => {
@@ -532,7 +558,7 @@ export default function Waitlist() {
                   whileTap={{ scale: 0.95 }}
                   className="bg-blue-500 hover:bg-blue-600 text-white text-lg px-8 py-4 rounded-xl font-medium transition-colors"
                 >
-                  Claim Your Founder Spot <ArrowRight className="w-5 h-5 inline ml-2" />
+                  Secure Your Slot <ArrowRight className="w-5 h-5 inline ml-2" />
                 </motion.button>
               </motion.div>
             </div>

@@ -60,18 +60,25 @@ try {
 }
 
 try {
-  await initializeRedis();
-  redisHealthy = true;
-  logger.info('Redis initialized successfully');
+  const redisClient = await initializeRedis();
+  redisHealthy = redisClient !== null;
+  if (redisHealthy) {
+    logger.info('Redis initialized successfully');
+  } else {
+    logger.info('Running without Redis - session and cache features will be limited');
+  }
 } catch (error) {
   logger.error('Failed to initialize Redis', { error });
+  redisHealthy = false;
 }
 
 // Health check endpoint
+// Redis is optional for production - service is healthy if database is connected
 app.get('/health', async () => {
   const uptime = Date.now() - startTime;
-  const status = dbHealthy && redisHealthy ? 'healthy' : 'unhealthy';
-  
+  // Service is healthy if database is connected (Redis is optional)
+  const status = dbHealthy ? 'healthy' : 'unhealthy';
+
   return createHealthResponse(
     status,
     '1.0.0',

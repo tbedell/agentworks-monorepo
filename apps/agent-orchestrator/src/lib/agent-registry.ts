@@ -231,7 +231,12 @@ const DEFAULT_AGENTS: Omit<Agent, 'id' | 'createdAt' | 'updatedAt'>[] = [
 export async function initializeAgentRegistry(): Promise<void> {
   try {
     const redis = getRedis();
-    
+
+    if (!redis) {
+      logger.info('Agent registry running in memory-only mode (Redis not available)');
+      return;
+    }
+
     // Load default agents into Redis
     for (const agent of DEFAULT_AGENTS) {
       const agentData = {
@@ -240,10 +245,10 @@ export async function initializeAgentRegistry(): Promise<void> {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       await redis.hSet('agents', agent.name, JSON.stringify(agentData));
     }
-    
+
     logger.info('Agent registry initialized', { agentCount: DEFAULT_AGENTS.length });
   } catch (error) {
     logger.error('Failed to initialize agent registry', { error });
@@ -259,8 +264,18 @@ function normalizeAgentName(name: string): string {
 export async function getAgent(agentName: AgentName | string): Promise<Agent | null> {
   try {
     const redis = getRedis();
-    // Normalize the name to use underscores (registry uses underscores)
     const normalizedName = normalizeAgentName(agentName);
+
+    // Fallback to in-memory defaults if Redis not available
+    if (!redis) {
+      const agent = DEFAULT_AGENTS.find(a => a.name === normalizedName || a.name === agentName);
+      if (!agent) {
+        logger.warn('Agent not found', { agentName, normalizedName });
+        return null;
+      }
+      return { ...agent, id: `agent-${agent.name}`, createdAt: new Date(), updatedAt: new Date() } as Agent;
+    }
+
     const agentData = await redis.hGet('agents', normalizedName);
 
     if (!agentData) {
@@ -283,8 +298,19 @@ export async function getAgent(agentName: AgentName | string): Promise<Agent | n
 export async function getAllAgents(): Promise<Agent[]> {
   try {
     const redis = getRedis();
+
+    // Fallback to in-memory defaults if Redis not available
+    if (!redis) {
+      return DEFAULT_AGENTS.map(agent => ({
+        ...agent,
+        id: `agent-${agent.name}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })) as Agent[];
+    }
+
     const agentsData = await redis.hGetAll('agents');
-    
+
     return Object.values(agentsData).map(data => JSON.parse(data));
   } catch (error) {
     logger.error('Failed to get all agents', { error });
@@ -307,19 +333,25 @@ export async function updateAgent(agentName: AgentName, updates: Partial<Agent>)
   try {
     const redis = getRedis();
     const existingAgent = await getAgent(agentName);
-    
+
     if (!existingAgent) {
       return null;
     }
-    
+
     const updatedAgent = {
       ...existingAgent,
       ...updates,
       updatedAt: new Date(),
     };
-    
+
+    // Skip persistence if Redis not available
+    if (!redis) {
+      logger.warn('Agent update not persisted (Redis not available)', { agentName });
+      return updatedAgent;
+    }
+
     await redis.hSet('agents', agentName, JSON.stringify(updatedAgent));
-    
+
     logger.info('Agent updated', { agentName, updates });
     return updatedAgent;
   } catch (error) {

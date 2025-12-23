@@ -1,0 +1,135 @@
+steps:
+  # Build core-service
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-core-service
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/core-service:latest'
+      - '-f'
+      - 'apps/core-service/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build agent-orchestrator
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-agent-orchestrator
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/agent-orchestrator:latest'
+      - '-f'
+      - 'apps/agent-orchestrator/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build provider-router
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-provider-router
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/provider-router:latest'
+      - '-f'
+      - 'apps/provider-router/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build log-streaming
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-log-streaming
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/log-streaming:latest'
+      - '-f'
+      - 'apps/log-streaming/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build billing-service
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-billing-service
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/billing-service:latest'
+      - '-f'
+      - 'apps/billing-service/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build terminal-gateway
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-terminal-gateway
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/terminal-gateway:latest'
+      - '-f'
+      - 'apps/terminal-gateway/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Build dev-env-manager
+  - name: 'gcr.io/cloud-builders/docker'
+    id: build-dev-env-manager
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/dev-env-manager:latest'
+      - '-f'
+      - 'apps/dev-env-manager/Dockerfile'
+      - '--target'
+      - 'production'
+      - '.'
+
+  # Push all images
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-core-service
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/core-service:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-agent-orchestrator
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/agent-orchestrator:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-provider-router
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/provider-router:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-log-streaming
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/log-streaming:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-billing-service
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/billing-service:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-terminal-gateway
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/terminal-gateway:latest']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: push-dev-env-manager
+    args: ['push', 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/dev-env-manager:latest']
+
+images:
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/core-service:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/agent-orchestrator:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/provider-router:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/log-streaming:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/billing-service:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/terminal-gateway:latest'
+  - 'us-central1-docker.pkg.dev/engagesuite-prod/agentworks/dev-env-manager:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '3600s'

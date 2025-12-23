@@ -5,49 +5,27 @@ const logger = createLogger('log-streaming:redis');
 
 let redis: RedisClientType | null = null;
 
-export async function initializeRedis(): Promise<RedisClientType> {
-  if (redis) {
-    return redis;
+export async function initializeRedis(): Promise<RedisClientType | null> {
+  if (redis) return redis;
+  if (!process.env.REDIS_URL || process.env.DISABLE_REDIS === 'true') {
+    logger.info('Redis disabled or not configured');
+    return null;
   }
-
   try {
-    redis = createClient({
-      url: process.env.REDIS_URL || 'redis://localhost:6379',
-    });
-
-    redis.on('error', (err) => {
-      logger.error('Redis client error', { error: err });
-    });
-
-    redis.on('connect', () => {
-      logger.info('Redis client connected');
-    });
-
-    redis.on('ready', () => {
-      logger.info('Redis client ready');
-    });
-
-    redis.on('end', () => {
-      logger.info('Redis client disconnected');
-    });
-
+    redis = createClient({ url: process.env.REDIS_URL, socket: { connectTimeout: 5000, reconnectStrategy: (r) => r > 3 ? false : Math.min(r * 100, 1000) }});
+    redis.on('error', (e) => logger.error('Redis error', { error: e }));
     await redis.connect();
-    
-    // Test the connection
     await redis.ping();
-    
-    logger.info('Redis connection established');
+    logger.info('Redis connected');
     return redis;
-  } catch (error) {
-    logger.error('Failed to initialize Redis', { error });
-    throw error;
+  } catch (e) {
+    logger.warn('Redis unavailable', { error: e });
+    redis = null;
+    return null;
   }
 }
 
-export function getRedis(): RedisClientType {
-  if (!redis) {
-    throw new Error('Redis not initialized. Call initializeRedis() first.');
-  }
+export function getRedis(): RedisClientType | null {
   return redis;
 }
 
@@ -62,28 +40,31 @@ export async function disconnectRedis(): Promise<void> {
 // Log streaming helpers
 export async function publishLogEvent(channel: string, event: any): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   await client.publish(channel, JSON.stringify(event));
 }
 
 export async function subscribeToLogEvents(
   channels: string[],
   callback: (channel: string, message: string) => void
-): Promise<RedisClientType> {
-  const subscriber = redis!.duplicate();
+): Promise<RedisClientType | null> {
+  if (!redis) return null;
+  const subscriber = redis.duplicate();
   await subscriber.connect();
-  
+
   subscriber.on('message', callback);
-  
+
   for (const channel of channels) {
     await subscriber.subscribe(channel, callback);
   }
-  
+
   return subscriber;
 }
 
 // Session management
 export async function createStreamSession(sessionId: string, metadata: any): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   const sessionData = {
     sessionId,
     metadata,
@@ -91,14 +72,15 @@ export async function createStreamSession(sessionId: string, metadata: any): Pro
     lastActivity: Date.now(),
     status: 'active',
   };
-  
+
   await client.setEx(`session:${sessionId}`, 86400, JSON.stringify(sessionData)); // 24 hour TTL
 }
 
 export async function updateSessionActivity(sessionId: string): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   const sessionKey = `session:${sessionId}`;
-  
+
   const sessionData = await client.get(sessionKey);
   if (sessionData) {
     const session = JSON.parse(sessionData);
@@ -109,8 +91,9 @@ export async function updateSessionActivity(sessionId: string): Promise<void> {
 
 export async function endStreamSession(sessionId: string): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   const sessionKey = `session:${sessionId}`;
-  
+
   const sessionData = await client.get(sessionKey);
   if (sessionData) {
     const session = JSON.parse(sessionData);
@@ -122,6 +105,7 @@ export async function endStreamSession(sessionId: string): Promise<void> {
 
 export async function getStreamSession(sessionId: string): Promise<any | null> {
   const client = getRedis();
+  if (!client) return null;
   const sessionData = await client.get(`session:${sessionId}`);
   return sessionData ? JSON.parse(sessionData) : null;
 }
@@ -129,24 +113,27 @@ export async function getStreamSession(sessionId: string): Promise<any | null> {
 // Active connections tracking
 export async function addActiveConnection(connectionId: string, metadata: any): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   const connectionData = {
     connectionId,
     metadata,
     connectedAt: Date.now(),
   };
-  
+
   await client.hSet('active:connections', connectionId, JSON.stringify(connectionData));
 }
 
 export async function removeActiveConnection(connectionId: string): Promise<void> {
   const client = getRedis();
+  if (!client) return;
   await client.hDel('active:connections', connectionId);
 }
 
 export async function getActiveConnections(): Promise<any[]> {
   const client = getRedis();
+  if (!client) return [];
   const connections = await client.hGetAll('active:connections');
-  
+
   return Object.values(connections).map(connectionData => JSON.parse(connectionData));
 }
 

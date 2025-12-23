@@ -14,6 +14,9 @@ import {
   UserPlus,
   Crown,
   Link2,
+  Rocket,
+  Mail,
+  Star,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
@@ -32,6 +35,9 @@ const navigation: NavItem[] = [
 
   // Growth & Marketing section
   { type: 'divider', label: 'Growth & Marketing' },
+  { name: 'Launch Control', href: '/launch', icon: Rocket },
+  { name: 'Email Campaigns', href: '/campaigns', icon: Mail },
+  { name: 'Influencers', href: '/influencers', icon: Star },
   { name: 'Waitlist', href: '/waitlist', icon: UserPlus },
   { name: 'Founders', href: '/founders', icon: Crown },
   { name: 'Affiliates', href: '/affiliates', icon: Link2 },
@@ -45,6 +51,7 @@ const navigation: NavItem[] = [
 
   // Insights section
   { type: 'divider', label: 'Insights' },
+  { name: '2025 Mkt Report', href: '/market-report', icon: TrendingUp },
   { name: 'KPI Metrics', href: '/kpi', icon: BarChart3 },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Audit Logs', href: '/audit', icon: FileText },

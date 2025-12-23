@@ -45,6 +45,7 @@ import { githubRoutes } from './routes/github.js';
 import { contextRoutes } from './routes/context.js';
 import { collaborationRoutes } from './routes/collaboration.js';
 import { databaseRoutes } from './routes/database.js';
+import { launchRoutes } from './routes/launch.js';
 
 const app = Fastify({
   logger: true,
@@ -99,6 +100,7 @@ await app.register(githubRoutes, { prefix: '/api/github' });
 await app.register(contextRoutes, { prefix: '/api/context' });
 await app.register(collaborationRoutes, { prefix: '/api/collaboration' });
 await app.register(databaseRoutes, { prefix: '/api/database' });
+await app.register(launchRoutes, { prefix: '/api/launch' });
 await app.register(websocketRoutes);
 
 const port = parseInt(process.env.PORT || '3010', 10);
