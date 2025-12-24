@@ -43,6 +43,22 @@ import EmailCampaignEditor from '@/routes/campaigns/EmailCampaignEditor';
 // Influencer Program
 import InfluencerProgram from '@/routes/influencers/InfluencerProgram';
 
+// BOS - Business Operating System
+import LeadsDashboard from '@/routes/crm/LeadsDashboard';
+import ContactsDashboard from '@/routes/crm/ContactsDashboard';
+import CompaniesDashboard from '@/routes/crm/CompaniesDashboard';
+import OpportunitiesDashboard from '@/routes/crm/OpportunitiesDashboard';
+import TicketsDashboard from '@/routes/support/TicketsDashboard';
+import MyKanban from '@/routes/work/MyKanban';
+import TasksList from '@/routes/work/TasksList';
+import MyCalendar from '@/routes/calendar/MyCalendar';
+import SessionsDashboard from '@/routes/teams/SessionsDashboard';
+import WhiteboardsDashboard from '@/routes/teams/WhiteboardsDashboard';
+
+// RBAC Admin pages
+import UsersRolesDashboard from '@/routes/admin/UsersRolesDashboard';
+import GroupsDashboard from '@/routes/admin/GroupsDashboard';
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -101,6 +117,30 @@ export default function App() {
 
               {/* Influencer Program */}
               <Route path="/influencers" element={<InfluencerProgram />} />
+
+              {/* BOS - CRM */}
+              <Route path="/crm/leads" element={<LeadsDashboard />} />
+              <Route path="/crm/contacts" element={<ContactsDashboard />} />
+              <Route path="/crm/companies" element={<CompaniesDashboard />} />
+              <Route path="/crm/opportunities" element={<OpportunitiesDashboard />} />
+
+              {/* BOS - Support */}
+              <Route path="/support/tickets" element={<TicketsDashboard />} />
+
+              {/* BOS - Work */}
+              <Route path="/work/my-board" element={<MyKanban />} />
+              <Route path="/work/tasks" element={<TasksList />} />
+
+              {/* BOS - Calendar */}
+              <Route path="/calendar/my" element={<MyCalendar />} />
+
+              {/* BOS - Teams */}
+              <Route path="/teams/sessions" element={<SessionsDashboard />} />
+              <Route path="/teams/whiteboards" element={<WhiteboardsDashboard />} />
+
+              {/* Admin - RBAC */}
+              <Route path="/admin/users" element={<UsersRolesDashboard />} />
+              <Route path="/admin/groups" element={<GroupsDashboard />} />
 
               {/* Operations */}
               <Route path="/tenants" element={<TenantList />} />

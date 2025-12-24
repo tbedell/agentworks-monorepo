@@ -68,7 +68,9 @@ WORKDIR /app/apps/web
 
 # Set build-time environment variables
 ARG VITE_API_URL=https://api.agentworksstudio.com
+ARG VITE_MARKETING_URL=https://www.agentworksstudio.com
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_MARKETING_URL=$VITE_MARKETING_URL
 
 RUN pnpm build
 

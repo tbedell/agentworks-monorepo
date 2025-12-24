@@ -4,10 +4,16 @@ import { prisma } from '@agentworks/db';
 
 const adapter = new PrismaAdapter(prisma.session, prisma.user);
 
+// In production, set cookie domain to .agentworksstudio.com for cross-subdomain auth
+const isProduction = process.env.NODE_ENV === 'production';
+const cookieDomain = isProduction ? '.agentworksstudio.com' : undefined;
+
 export const lucia = new Lucia(adapter, {
   sessionCookie: {
     attributes: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: isProduction,
+      domain: cookieDomain,
+      sameSite: 'lax',
     },
   },
   getUserAttributes: (attributes) => ({

@@ -36,6 +36,22 @@ function RouteContent() {
   );
 }
 
+// Get marketing URL - in production, use www.agentworksstudio.com
+function getMarketingUrl(): string {
+  // Check for explicit env var first
+  if (import.meta.env.VITE_MARKETING_URL) {
+    return import.meta.env.VITE_MARKETING_URL;
+  }
+  // In production (not localhost), derive from current domain
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `${window.location.protocol}//www.agentworksstudio.com`;
+  }
+  // Local development fallback
+  return 'http://localhost:3012';
+}
+
+const MARKETING_URL = getMarketingUrl();
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuthStore();
 
@@ -45,16 +61,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     // Redirect to marketing site's login
-    const marketingUrl = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3012';
-    window.location.href = `${marketingUrl}/login`;
+    window.location.href = `${MARKETING_URL}/login`;
     return <LoadingSpinner size="xl" message="Redirecting..." className="min-h-screen" />;
   }
 
   return <>{children}</>;
 }
-
-// Marketing site URL for redirects
-const MARKETING_URL = import.meta.env.VITE_MARKETING_URL || 'http://localhost:3012';
 
 // Component to handle root route - redirect based on auth status
 function RootRoute() {
