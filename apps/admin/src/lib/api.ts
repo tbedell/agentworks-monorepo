@@ -842,3 +842,642 @@ export const extendedKpiApi = {
   getAffiliateRevenue: () => api.get<AffiliateRevenueMetrics>('/kpi/affiliate-revenue'),
   getFounderMetrics: () => api.get<FounderMetrics>('/kpi/founder-metrics'),
 };
+
+// ===== BOS - BUSINESS OPERATING SYSTEM =====
+
+// RBAC Types
+export interface AdminPermission {
+  id: string;
+  code: string;
+  name: string;
+  description?: string;
+  resource: string;
+  action: string;
+  isSystem: boolean;
+  createdAt: string;
+}
+
+export interface AdminRole {
+  id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  level: number;
+  isSystem: boolean;
+  color?: string;
+  createdAt: string;
+  permissionCount?: number;
+  userCount?: number;
+}
+
+export interface AdminGroup {
+  id: string;
+  name: string;
+  displayName: string;
+  description?: string;
+  parentId?: string;
+  managerId?: string;
+  color?: string;
+  memberCount?: number;
+  childCount?: number;
+  createdAt: string;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  avatarUrl?: string;
+  status: string;
+  roles?: { roleId: string; role: AdminRole }[];
+  groups?: { groupId: string; group: AdminGroup }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const rbacApi = {
+  // Users
+  listUsers: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get<{ users: AdminUser[]; total: number }>('/rbac/users', params),
+
+  // Permissions
+  listPermissions: (params?: { resource?: string; search?: string }) =>
+    api.get<{ permissions: AdminPermission[] }>('/rbac/permissions', params),
+  createPermission: (data: { code: string; name: string; description?: string; resource: string; action: string }) =>
+    api.post<{ permission: AdminPermission }>('/rbac/permissions', data),
+  deletePermission: (id: string) => api.delete<{ success: boolean }>(`/rbac/permissions/${id}`),
+
+  // Roles
+  listRoles: () => api.get<{ roles: AdminRole[] }>('/rbac/roles'),
+  getRole: (id: string) => api.get<{ role: AdminRole; permissions: AdminPermission[] }>(`/rbac/roles/${id}`),
+  createRole: (data: { name: string; displayName: string; description?: string; level?: number; color?: string }) =>
+    api.post<{ role: AdminRole }>('/rbac/roles', data),
+  updateRole: (id: string, data: { displayName?: string; description?: string; level?: number; color?: string }) =>
+    api.put<{ role: AdminRole }>(`/rbac/roles/${id}`, data),
+  deleteRole: (id: string) => api.delete<{ success: boolean }>(`/rbac/roles/${id}`),
+  assignPermission: (roleId: string, permissionId: string) =>
+    api.post<{ success: boolean }>(`/rbac/roles/${roleId}/permissions`, { permissionId }),
+  removePermission: (roleId: string, permissionId: string) =>
+    api.delete<{ success: boolean }>(`/rbac/roles/${roleId}/permissions/${permissionId}`),
+
+  // Groups
+  listGroups: () => api.get<{ groups: AdminGroup[] }>('/rbac/groups'),
+  getGroup: (id: string) => api.get<{ group: AdminGroup; members: any[]; roles: AdminRole[]; children: AdminGroup[] }>(`/rbac/groups/${id}`),
+  createGroup: (data: { name: string; displayName: string; description?: string; parentId?: string; managerId?: string; color?: string }) =>
+    api.post<{ group: AdminGroup }>('/rbac/groups', data),
+  updateGroup: (id: string, data: Partial<AdminGroup>) =>
+    api.put<{ group: AdminGroup }>(`/rbac/groups/${id}`, data),
+  deleteGroup: (id: string) => api.delete<{ success: boolean }>(`/rbac/groups/${id}`),
+  addGroupMember: (groupId: string, adminId: string, isPrimary?: boolean) =>
+    api.post<{ success: boolean }>(`/rbac/groups/${groupId}/members`, { adminId, isPrimary }),
+  removeGroupMember: (groupId: string, adminId: string) =>
+    api.delete<{ success: boolean }>(`/rbac/groups/${groupId}/members/${adminId}`),
+  assignGroupRole: (groupId: string, roleIds: string | string[]) =>
+    api.post<{ success: boolean }>(`/rbac/groups/${groupId}/roles`, { roleIds: Array.isArray(roleIds) ? roleIds : [roleIds] }),
+  removeGroupRole: (groupId: string, roleId: string) =>
+    api.delete<{ success: boolean }>(`/rbac/groups/${groupId}/roles/${roleId}`),
+
+  // User roles
+  getUserRoles: (adminId: string) => api.get<{ roles: AdminRole[] }>(`/rbac/users/${adminId}/roles`),
+  assignUserRole: (adminId: string, roleIds: string | string[], expiresAt?: string) =>
+    api.post<{ success: boolean }>(`/rbac/users/${adminId}/roles`, { roleIds: Array.isArray(roleIds) ? roleIds : [roleIds], expiresAt }),
+  removeUserRole: (adminId: string, roleId: string) =>
+    api.delete<{ success: boolean }>(`/rbac/users/${adminId}/roles/${roleId}`),
+  checkPermission: (adminId: string, permissionCode: string) =>
+    api.get<{ hasPermission: boolean }>(`/rbac/users/${adminId}/check-permission`, { permissionCode }),
+};
+
+// CRM Types
+export interface CrmCompany {
+  id: string;
+  tenantId?: string;
+  name: string;
+  industry?: string;
+  website?: string;
+  phone?: string;
+  email?: string;
+  type: string;
+  status: string;
+  ownerId?: string;
+  tags: string[];
+  contactCount?: number;
+  leadCount?: number;
+  dealCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmContact {
+  id: string;
+  companyId?: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  jobTitle?: string;
+  type: string;
+  status: string;
+  ownerId?: string;
+  tags: string[];
+  company?: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmLead {
+  id: string;
+  contactId?: string;
+  companyId?: string;
+  title: string;
+  source?: string;
+  stage: string;
+  score: number;
+  temperature: string;
+  ownerId?: string;
+  convertedAt?: string;
+  dealId?: string;
+  contact?: { id: string; firstName: string; lastName: string; email?: string };
+  company?: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmDeal {
+  id: string;
+  companyId?: string;
+  name: string;
+  stage: string;
+  value: number;
+  probability: number;
+  expectedCloseDate?: string;
+  ownerId?: string;
+  company?: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CrmActivity {
+  id: string;
+  companyId?: string;
+  contactId?: string;
+  leadId?: string;
+  dealId?: string;
+  ticketId?: string;
+  type: string;
+  subject: string;
+  description?: string;
+  scheduledAt?: string;
+  completedAt?: string;
+  status: string;
+  ownerId?: string;
+  company?: { id: string; name: string };
+  contact?: { id: string; firstName: string; lastName: string };
+  createdAt: string;
+}
+
+export interface CrmStats {
+  contacts: { total: number; byType: any[] };
+  companies: { total: number; byType: any[] };
+  leads: { total: number; byStage: any[]; thisWeek: number; converted: number };
+  deals: { total: number; byStage: any[]; totalValue: number; avgValue: number };
+  activities: { overdue: number; todayDue: number; completedToday: number };
+}
+
+export const crmApi = {
+  // Contacts
+  listContacts: (params?: { companyId?: string; type?: string; status?: string; search?: string; page?: number; limit?: number }) =>
+    api.get<{ contacts: CrmContact[]; total: number }>('/crm/contacts', params),
+  getContact: (id: string) => api.get<{ contact: CrmContact }>(`/crm/contacts/${id}`),
+  createContact: (data: Partial<CrmContact>) => api.post<{ contact: CrmContact }>('/crm/contacts', data),
+  updateContact: (id: string, data: Partial<CrmContact>) => api.put<{ contact: CrmContact }>(`/crm/contacts/${id}`, data),
+  deleteContact: (id: string) => api.delete<{ success: boolean }>(`/crm/contacts/${id}`),
+
+  // Companies
+  listCompanies: (params?: { type?: string; status?: string; search?: string; page?: number; limit?: number }) =>
+    api.get<{ companies: CrmCompany[]; total: number }>('/crm/companies', params),
+  getCompany: (id: string) => api.get<{ company: CrmCompany; contacts: CrmContact[]; leads: CrmLead[]; deals: CrmDeal[]; activities: CrmActivity[] }>(`/crm/companies/${id}`),
+  createCompany: (data: Partial<CrmCompany>) => api.post<{ company: CrmCompany }>('/crm/companies', data),
+  updateCompany: (id: string, data: Partial<CrmCompany>) => api.put<{ company: CrmCompany }>(`/crm/companies/${id}`, data),
+  deleteCompany: (id: string) => api.delete<{ success: boolean }>(`/crm/companies/${id}`),
+
+  // Leads
+  listLeads: (params?: { stage?: string; temperature?: string; ownerId?: string; search?: string; page?: number; limit?: number }) =>
+    api.get<{ leads: CrmLead[]; total: number }>('/crm/leads', params),
+  getLead: (id: string) => api.get<{ lead: CrmLead; activities: CrmActivity[] }>(`/crm/leads/${id}`),
+  createLead: (data: Partial<CrmLead>) => api.post<{ lead: CrmLead }>('/crm/leads', data),
+  updateLead: (id: string, data: Partial<CrmLead>) => api.put<{ lead: CrmLead }>(`/crm/leads/${id}`, data),
+  deleteLead: (id: string) => api.delete<{ success: boolean }>(`/crm/leads/${id}`),
+  convertLead: (id: string, data: {
+    createContact?: boolean;
+    contactData?: { firstName: string; lastName: string; email?: string; phone?: string; jobTitle?: string };
+    createCompany?: boolean;
+    companyData?: { name: string; industry?: string; website?: string; phone?: string };
+    createDeal?: boolean;
+    dealData?: { name: string; value: number; probability: number; expectedCloseDate?: string };
+  }) =>
+    api.post<{ lead: CrmLead; contact?: CrmContact; company?: CrmCompany; deal?: CrmDeal }>(`/crm/leads/${id}/convert`, data),
+
+  // Deals
+  listDeals: (params?: { stage?: string; companyId?: string; ownerId?: string; minValue?: number; maxValue?: number; page?: number; limit?: number }) =>
+    api.get<{ deals: CrmDeal[]; total: number }>('/crm/deals', params),
+  getDeal: (id: string) => api.get<{ deal: CrmDeal; activities: CrmActivity[] }>(`/crm/deals/${id}`),
+  createDeal: (data: Partial<CrmDeal>) => api.post<{ deal: CrmDeal }>('/crm/deals', data),
+  updateDeal: (id: string, data: Partial<CrmDeal>) => api.put<{ deal: CrmDeal }>(`/crm/deals/${id}`, data),
+  deleteDeal: (id: string) => api.delete<{ success: boolean }>(`/crm/deals/${id}`),
+  moveDealStage: (id: string, stage: string) => api.put<{ deal: CrmDeal }>(`/crm/deals/${id}/stage`, { stage }),
+
+  // Activities
+  listActivities: (params?: { type?: string; status?: string; ownerId?: string; upcoming?: boolean; overdue?: boolean; page?: number; limit?: number }) =>
+    api.get<{ activities: CrmActivity[]; total: number }>('/crm/activities', params),
+  createActivity: (data: Partial<CrmActivity>) => api.post<{ activity: CrmActivity }>('/crm/activities', data),
+  updateActivity: (id: string, data: Partial<CrmActivity>) => api.put<{ activity: CrmActivity }>(`/crm/activities/${id}`, data),
+  deleteActivity: (id: string) => api.delete<{ success: boolean }>(`/crm/activities/${id}`),
+  completeActivity: (id: string) => api.put<{ activity: CrmActivity }>(`/crm/activities/${id}/complete`),
+
+  // Stats
+  getStats: () => api.get<CrmStats>('/crm/stats'),
+};
+
+// Tickets Types
+export interface TicketCategory {
+  id: string;
+  name: string;
+  displayName: string;
+  color?: string;
+  defaultPriority: string;
+  isActive: boolean;
+  ticketCount?: number;
+}
+
+export interface TicketQueue {
+  id: string;
+  name: string;
+  displayName: string;
+  groupId?: string;
+  autoAssign: boolean;
+  isActive: boolean;
+  ticketCount?: number;
+}
+
+export interface TicketSla {
+  id: string;
+  name: string;
+  criticalResponseMins: number;
+  highResponseMins: number;
+  mediumResponseMins: number;
+  lowResponseMins: number;
+  useBusinessHours: boolean;
+  isDefault: boolean;
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber: string;
+  categoryId?: string;
+  queueId?: string;
+  slaId?: string;
+  subject: string;
+  description: string;
+  status: string;
+  priority: string;
+  reporterEmail?: string;
+  reporterName?: string;
+  tenantId?: string;
+  assigneeId?: string;
+  firstResponseAt?: string;
+  firstResponseDue?: string;
+  resolutionDue?: string;
+  resolvedAt?: string;
+  slaStatus: string;
+  tags: string[];
+  category?: TicketCategory;
+  queue?: TicketQueue;
+  tenant?: { id: string; name: string };
+  assignee?: { id: string; name: string };
+  commentCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TicketComment {
+  id: string;
+  ticketId: string;
+  authorId?: string;
+  authorName?: string;
+  content: string;
+  isInternal: boolean;
+  createdAt: string;
+}
+
+export interface TicketStats {
+  byStatus: any[];
+  byPriority: any[];
+  bySlaStatus: any[];
+  openCount: number;
+  avgResolutionHours: number;
+}
+
+export const ticketsApi = {
+  // Tickets
+  listTickets: (params?: { status?: string; priority?: string; categoryId?: string; queueId?: string; assigneeId?: string; slaStatus?: string; search?: string; page?: number; limit?: number }) =>
+    api.get<{ tickets: SupportTicket[]; total: number }>('/tickets', params),
+  getTicket: (id: string) => api.get<{ ticket: SupportTicket; comments: TicketComment[] }>(`/tickets/${id}`),
+  createTicket: (data: Partial<SupportTicket>) => api.post<{ ticket: SupportTicket }>('/tickets', data),
+  updateTicket: (id: string, data: Partial<SupportTicket>) => api.put<{ ticket: SupportTicket }>(`/tickets/${id}`, data),
+  deleteTicket: (id: string) => api.delete<{ success: boolean }>(`/tickets/${id}`),
+  assignTicket: (id: string, assigneeId: string) => api.put<{ ticket: SupportTicket }>(`/tickets/${id}/assign`, { assigneeId }),
+  changeStatus: (id: string, status: string, resolution?: string) => api.put<{ ticket: SupportTicket }>(`/tickets/${id}/status`, { status, resolution }),
+
+  // Comments
+  addComment: (ticketId: string, data: { content: string; isInternal?: boolean }) =>
+    api.post<{ comment: TicketComment }>(`/tickets/${ticketId}/comments`, data),
+  deleteComment: (ticketId: string, commentId: string) =>
+    api.delete<{ success: boolean }>(`/tickets/${ticketId}/comments/${commentId}`),
+
+  // Categories
+  listCategories: () => api.get<{ categories: TicketCategory[] }>('/tickets/categories'),
+  createCategory: (data: Partial<TicketCategory>) => api.post<{ category: TicketCategory }>('/tickets/categories', data),
+  updateCategory: (id: string, data: Partial<TicketCategory>) => api.put<{ category: TicketCategory }>(`/tickets/categories/${id}`, data),
+  deleteCategory: (id: string) => api.delete<{ success: boolean }>(`/tickets/categories/${id}`),
+
+  // Queues
+  listQueues: () => api.get<{ queues: TicketQueue[] }>('/tickets/queues'),
+  createQueue: (data: Partial<TicketQueue>) => api.post<{ queue: TicketQueue }>('/tickets/queues', data),
+  updateQueue: (id: string, data: Partial<TicketQueue>) => api.put<{ queue: TicketQueue }>(`/tickets/queues/${id}`, data),
+  deleteQueue: (id: string) => api.delete<{ success: boolean }>(`/tickets/queues/${id}`),
+
+  // SLAs
+  listSlas: () => api.get<{ slas: TicketSla[] }>('/tickets/slas'),
+  createSla: (data: Partial<TicketSla>) => api.post<{ sla: TicketSla }>('/tickets/slas', data),
+  updateSla: (id: string, data: Partial<TicketSla>) => api.put<{ sla: TicketSla }>(`/tickets/slas/${id}`, data),
+  deleteSla: (id: string) => api.delete<{ success: boolean }>(`/tickets/slas/${id}`),
+
+  // Stats
+  getStats: () => api.get<TicketStats>('/tickets/stats'),
+  getMyTickets: () => api.get<{ tickets: SupportTicket[] }>('/tickets/my'),
+};
+
+// Workspace Types
+export interface PersonalKanban {
+  id: string;
+  adminId: string;
+  name: string;
+  lanes: { id: string; name: string; tasks?: PersonalTask[] }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonalTask {
+  id: string;
+  kanbanId: string;
+  title: string;
+  description?: string;
+  laneId: string;
+  position: number;
+  priority: string;
+  dueDate?: string;
+  completed: boolean;
+  completedAt?: string;
+  relatedType?: string;
+  relatedId?: string;
+  tags: string[];
+  assigneeId?: string;
+  assigneeType?: 'user' | 'group';
+  assignee?: {
+    id: string;
+    name: string;
+    type: 'user' | 'group';
+    avatarUrl?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PersonalNote {
+  id: string;
+  adminId: string;
+  title?: string;
+  content: string;
+  category?: string;
+  tags: string[];
+  isPinned: boolean;
+  relatedType?: string;
+  relatedId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WorkspaceStats {
+  tasksByLane: any[];
+  completedToday: number;
+  overdueTasks: number;
+  notesCount: number;
+}
+
+export const workspaceApi = {
+  // Kanban
+  getKanban: () => api.get<{ kanban: PersonalKanban }>('/workspace/kanban'),
+  updateKanban: (data: { name?: string; lanes?: { id: string; name: string }[] }) =>
+    api.put<{ kanban: PersonalKanban }>('/workspace/kanban', data),
+
+  // Tasks
+  listTasks: (params?: { laneId?: string; priority?: string; completed?: string; dueDate?: string }) =>
+    api.get<{ tasks: PersonalTask[] }>('/workspace/tasks', params),
+  getTask: (id: string) => api.get<{ task: PersonalTask }>(`/workspace/tasks/${id}`),
+  createTask: (data: Partial<PersonalTask>) => api.post<{ task: PersonalTask }>('/workspace/tasks', data),
+  updateTask: (id: string, data: Partial<PersonalTask>) => api.put<{ task: PersonalTask }>(`/workspace/tasks/${id}`, data),
+  deleteTask: (id: string) => api.delete<{ success: boolean }>(`/workspace/tasks/${id}`),
+  reorderTasks: (updates: { id: string; laneId: string; position: number }[]) =>
+    api.put<{ success: boolean }>('/workspace/tasks/reorder', { updates }),
+
+  // Notes
+  listNotes: (params?: { category?: string; search?: string; pinned?: string }) =>
+    api.get<{ notes: PersonalNote[] }>('/workspace/notes', params),
+  getNote: (id: string) => api.get<{ note: PersonalNote }>(`/workspace/notes/${id}`),
+  createNote: (data: Partial<PersonalNote>) => api.post<{ note: PersonalNote }>('/workspace/notes', data),
+  updateNote: (id: string, data: Partial<PersonalNote>) => api.put<{ note: PersonalNote }>(`/workspace/notes/${id}`, data),
+  deleteNote: (id: string) => api.delete<{ success: boolean }>(`/workspace/notes/${id}`),
+  toggleNotePin: (id: string) => api.put<{ note: PersonalNote }>(`/workspace/notes/${id}/pin`),
+
+  // Stats
+  getStats: () => api.get<WorkspaceStats>('/workspace/stats'),
+};
+
+// Calendar Types
+export interface BosCalendar {
+  id: string;
+  adminId: string;
+  name: string;
+  timezone: string;
+  color?: string;
+  isPublic: boolean;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BosCalendarEvent {
+  id: string;
+  calendarId: string;
+  title: string;
+  description?: string;
+  type: string;
+  startAt: string;
+  endAt: string;
+  isAllDay: boolean;
+  location?: string;
+  videoUrl?: string;
+  status: string;
+  visibility: string;
+  relatedType?: string;
+  relatedId?: string;
+  reminders?: any;
+  createdBy?: string;
+  attendees?: BosEventAttendee[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BosEventAttendee {
+  id: string;
+  eventId: string;
+  attendeeType: string;
+  attendeeId?: string;
+  email: string;
+  name?: string;
+  role: string;
+  status: string;
+  respondedAt?: string;
+  createdAt: string;
+}
+
+export interface CalendarStats {
+  todayCount: number;
+  weekCount: number;
+  byType: any[];
+}
+
+export const calendarApi = {
+  // Calendar
+  getCalendar: () => api.get<{ calendar: BosCalendar }>('/calendar'),
+  updateCalendar: (data: { name?: string; timezone?: string; color?: string; isPublic?: boolean }) =>
+    api.put<{ calendar: BosCalendar }>('/calendar', data),
+
+  // Events
+  listEvents: (params?: { start?: string; end?: string; type?: string; status?: string }) =>
+    api.get<{ events: BosCalendarEvent[] }>('/calendar/events', params),
+  getEvent: (id: string) => api.get<{ event: BosCalendarEvent }>(`/calendar/events/${id}`),
+  createEvent: (data: Partial<BosCalendarEvent>) => api.post<{ event: BosCalendarEvent }>('/calendar/events', data),
+  updateEvent: (id: string, data: Partial<BosCalendarEvent>) => api.put<{ event: BosCalendarEvent }>(`/calendar/events/${id}`, data),
+  deleteEvent: (id: string) => api.delete<{ success: boolean }>(`/calendar/events/${id}`),
+  cancelEvent: (id: string) => api.put<{ event: BosCalendarEvent }>(`/calendar/events/${id}/cancel`),
+
+  // Attendees
+  addAttendee: (eventId: string, data: { email: string; name?: string; role?: string }) =>
+    api.post<{ attendee: BosEventAttendee }>(`/calendar/events/${eventId}/attendees`, data),
+  removeAttendee: (eventId: string, attendeeId: string) =>
+    api.delete<{ success: boolean }>(`/calendar/events/${eventId}/attendees/${attendeeId}`),
+  respondToEvent: (eventId: string, attendeeId: string, status: string) =>
+    api.put<{ attendee: BosEventAttendee }>(`/calendar/events/${eventId}/attendees/${attendeeId}/respond`, { status }),
+
+  // Quick access
+  getTodayEvents: () => api.get<{ events: BosCalendarEvent[] }>('/calendar/today'),
+  getUpcomingEvents: () => api.get<{ events: BosCalendarEvent[] }>('/calendar/upcoming'),
+
+  // Stats
+  getStats: () => api.get<CalendarStats>('/calendar/stats'),
+};
+
+// Teams Types
+export interface BosTeamRoom {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  scheduledAt?: string;
+  startedAt?: string;
+  endedAt?: string;
+  maxParticipants: number;
+  recordingEnabled: boolean;
+  recordingUrl?: string;
+  chatEnabled: boolean;
+  whiteboardEnabled: boolean;
+  screenShareEnabled: boolean;
+  createdBy?: string;
+  participants?: BosRoomParticipant[];
+  whiteboards?: BosWhiteboard[];
+  participantCount?: number;
+  whiteboardCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BosRoomParticipant {
+  id: string;
+  roomId: string;
+  participantId: string;
+  displayName?: string;
+  role: string;
+  status: string;
+  audioEnabled: boolean;
+  videoEnabled: boolean;
+  joinedAt?: string;
+  leftAt?: string;
+  createdAt: string;
+}
+
+export interface BosWhiteboard {
+  id: string;
+  roomId?: string;
+  name: string;
+  canvasData: any;
+  thumbnailUrl?: string;
+  ownerId: string;
+  isShared: boolean;
+  room?: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TeamsStats {
+  activeRooms: number;
+  totalRooms: number;
+  totalWhiteboards: number;
+  recentRooms: BosTeamRoom[];
+}
+
+export const teamsApi = {
+  // Rooms
+  listRooms: (params?: { status?: string; type?: string; page?: number; limit?: number }) =>
+    api.get<{ rooms: BosTeamRoom[]; total: number }>('/teams/rooms', params),
+  getRoom: (id: string) => api.get<{ room: BosTeamRoom }>(`/teams/rooms/${id}`),
+  createRoom: (data: Partial<BosTeamRoom>) => api.post<{ room: BosTeamRoom }>('/teams/rooms', data),
+  updateRoom: (id: string, data: Partial<BosTeamRoom>) => api.put<{ room: BosTeamRoom }>(`/teams/rooms/${id}`, data),
+  deleteRoom: (id: string) => api.delete<{ success: boolean }>(`/teams/rooms/${id}`),
+
+  // Room actions
+  startRoom: (id: string) => api.post<{ room: BosTeamRoom }>(`/teams/rooms/${id}/start`),
+  endRoom: (id: string) => api.post<{ room: BosTeamRoom }>(`/teams/rooms/${id}/end`),
+  joinRoom: (id: string) => api.post<{ participant: BosRoomParticipant; token: string }>(`/teams/rooms/${id}/join`),
+  leaveRoom: (id: string) => api.post<{ success: boolean }>(`/teams/rooms/${id}/leave`),
+  updateMedia: (id: string, data: { audioEnabled?: boolean; videoEnabled?: boolean }) =>
+    api.put<{ participant: BosRoomParticipant }>(`/teams/rooms/${id}/media`, data),
+
+  // Invitations
+  inviteToRoom: (roomId: string, participantIds: string[]) =>
+    api.post<{ invited: number }>(`/teams/rooms/${roomId}/invite`, { participantIds }),
+
+  // Instant room
+  createInstantRoom: () => api.post<{ room: BosTeamRoom; token: string }>('/teams/rooms/instant'),
+
+  // Whiteboards
+  listWhiteboards: (params?: { roomId?: string; shared?: string }) =>
+    api.get<{ whiteboards: BosWhiteboard[] }>('/teams/whiteboards', params),
+  getWhiteboard: (id: string) => api.get<{ whiteboard: BosWhiteboard }>(`/teams/whiteboards/${id}`),
+  createWhiteboard: (data: Partial<BosWhiteboard>) => api.post<{ whiteboard: BosWhiteboard }>('/teams/whiteboards', data),
+  updateWhiteboard: (id: string, data: Partial<BosWhiteboard>) => api.put<{ whiteboard: BosWhiteboard }>(`/teams/whiteboards/${id}`, data),
+  deleteWhiteboard: (id: string) => api.delete<{ success: boolean }>(`/teams/whiteboards/${id}`),
+
+  // Stats
+  getStats: () => api.get<TeamsStats>('/teams/stats'),
+};

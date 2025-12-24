@@ -476,8 +476,21 @@ export default function FloatingCardWindow({
       );
     }
 
-    // Connect to WebSocket
-    const ws = new WebSocket(`ws://localhost:3010/ws`);
+    // Connect to WebSocket - derive URL from environment or current location
+    const getWsUrl = () => {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const apiUrl = (import.meta as any)?.env?.VITE_API_URL;
+      if (apiUrl) {
+        return apiUrl.replace(/^http/, 'ws') + '/ws';
+      }
+      // In production, use the API domain
+      if (window.location.hostname !== 'localhost') {
+        return `${protocol}//api.agentworksstudio.com/ws`;
+      }
+      // Local development
+      return `ws://localhost:3010/ws`;
+    };
+    const ws = new WebSocket(getWsUrl());
     wsRef.current = ws;
 
     ws.onopen = () => {

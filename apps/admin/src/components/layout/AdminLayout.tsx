@@ -17,6 +17,19 @@ import {
   Rocket,
   Mail,
   Star,
+  // BOS Icons
+  Target,
+  Contact,
+  Building2,
+  DollarSign,
+  KanbanSquare,
+  CheckSquare,
+  Calendar,
+  Video,
+  PenTool,
+  Ticket,
+  UserCog,
+  UsersRound,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth';
 
@@ -33,6 +46,31 @@ const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Executive KPIs', href: '/kpi/executive', icon: TrendingUp },
 
+  // CRM Section (BOS)
+  { type: 'divider', label: 'CRM' },
+  { name: 'Leads', href: '/crm/leads', icon: Target },
+  { name: 'Contacts', href: '/crm/contacts', icon: Contact },
+  { name: 'Companies', href: '/crm/companies', icon: Building2 },
+  { name: 'Opportunities', href: '/crm/opportunities', icon: DollarSign },
+
+  // Work Section (BOS)
+  { type: 'divider', label: 'Work' },
+  { name: 'My Kanban', href: '/work/my-board', icon: KanbanSquare },
+  { name: 'Tasks', href: '/work/tasks', icon: CheckSquare },
+
+  // Calendar Section (BOS)
+  { type: 'divider', label: 'Calendar' },
+  { name: 'My Schedule', href: '/calendar/my', icon: Calendar },
+
+  // Teams Section (BOS)
+  { type: 'divider', label: 'Teams' },
+  { name: 'Sessions', href: '/teams/sessions', icon: Video },
+  { name: 'Whiteboards', href: '/teams/whiteboards', icon: PenTool },
+
+  // Support Section (BOS)
+  { type: 'divider', label: 'Support' },
+  { name: 'Tickets', href: '/support/tickets', icon: Ticket },
+
   // Growth & Marketing section
   { type: 'divider', label: 'Growth & Marketing' },
   { name: 'Launch Control', href: '/launch', icon: Rocket },
@@ -48,6 +86,11 @@ const navigation: NavItem[] = [
   { name: 'BYOA', href: '/byoa', icon: Zap },
   { name: 'Billing', href: '/billing', icon: CreditCard },
   { name: 'Providers', href: '/providers', icon: Key },
+
+  // Admin Section (BOS RBAC)
+  { type: 'divider', label: 'Admin' },
+  { name: 'Users & Roles', href: '/admin/users', icon: UserCog },
+  { name: 'Groups', href: '/admin/groups', icon: UsersRound },
 
   // Insights section
   { type: 'divider', label: 'Insights' },

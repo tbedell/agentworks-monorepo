@@ -4,8 +4,30 @@ import { Sparkles, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import NavigationV2 from '../components/v2/NavigationV2';
 import FooterV2 from '../components/v2/FooterV2';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3010';
-const APP_URL = import.meta.env.VITE_APP_URL || 'http://localhost:5173';
+// Get API URL - in production, use api.agentworksstudio.com
+const getApiUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://api.agentworksstudio.com';
+  }
+  return 'http://localhost:3010';
+};
+
+// Get App URL - in production, use app.agentworksstudio.com
+const getAppUrl = () => {
+  if (import.meta.env.VITE_APP_URL) {
+    return import.meta.env.VITE_APP_URL;
+  }
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return 'https://app.agentworksstudio.com';
+  }
+  return 'http://localhost:5173';
+};
+
+const API_URL = getApiUrl();
+const APP_URL = getAppUrl();
 
 export default function Login() {
   const [email, setEmail] = useState('');

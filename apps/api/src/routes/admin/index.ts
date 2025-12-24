@@ -15,6 +15,13 @@ import { adminRotatorRoutes } from './rotator.js';
 import { adminLaunchRoutes } from './launch.js';
 import { adminCampaignsRoutes } from './campaigns.js';
 import { adminInfluencersRoutes } from './influencers.js';
+// BOS - Business Operating System routes
+import { adminRbacRoutes } from './rbac.js';
+import { adminCrmRoutes } from './crm.js';
+import { adminTicketsRoutes } from './tickets.js';
+import { adminWorkspaceRoutes } from './workspace.js';
+import { adminCalendarRoutes } from './calendar.js';
+import { adminTeamsRoutes } from './teams.js';
 
 export const adminRoutes: FastifyPluginAsync = async (app) => {
   await app.register(adminAuthRoutes, { prefix: '/auth' });
@@ -35,4 +42,11 @@ export const adminRoutes: FastifyPluginAsync = async (app) => {
   await app.register(adminLaunchRoutes, { prefix: '/launch' });
   await app.register(adminCampaignsRoutes, { prefix: '/campaigns' });
   await app.register(adminInfluencersRoutes, { prefix: '/influencers' });
+  // BOS - Business Operating System routes
+  await app.register(adminRbacRoutes, { prefix: '/rbac' });
+  await app.register(adminCrmRoutes, { prefix: '/crm' });
+  await app.register(adminTicketsRoutes, { prefix: '/tickets' });
+  await app.register(adminWorkspaceRoutes, { prefix: '/workspace' });
+  await app.register(adminCalendarRoutes, { prefix: '/calendar' });
+  await app.register(adminTeamsRoutes, { prefix: '/teams' });
 };

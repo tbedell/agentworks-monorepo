@@ -15,11 +15,26 @@ class AgentWorksWebSocket {
   private getWebSocketUrl() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const env = (import.meta as any)?.env || {};
-    const apiPort = env.VITE_API_PORT || '3010';
+
+    // Check for explicit WS URL
     const wsUrl = env.VITE_WS_URL;
     if (wsUrl) {
       return wsUrl.replace(/^http/, 'ws') + '/ws';
     }
+
+    // Check for API URL and derive WS URL from it
+    const apiUrl = env.VITE_API_URL;
+    if (apiUrl) {
+      return apiUrl.replace(/^http/, 'ws') + '/ws';
+    }
+
+    // In production (not localhost), use the API domain
+    if (window.location.hostname !== 'localhost') {
+      return `${protocol}//api.agentworksstudio.com/ws`;
+    }
+
+    // Local development fallback
+    const apiPort = env.VITE_API_PORT || '3010';
     return `${protocol}//${window.location.hostname}:${apiPort}/ws`;
   }
 
