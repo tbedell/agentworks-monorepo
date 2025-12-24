@@ -1,0 +1,54 @@
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:${SHORT_SHA}'
+      - '-t'
+      - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:latest'
+      - '.'
+    dir: 'trident/marketing'
+
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:${SHORT_SHA}'
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:latest'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'trident-marketing'
+      - '--image'
+      - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:${SHORT_SHA}'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '8080'
+      - '--min-instances'
+      - '0'
+      - '--max-instances'
+      - '3'
+      - '--memory'
+      - '256Mi'
+      - '--cpu'
+      - '1'
+
+images:
+  - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:${SHORT_SHA}'
+  - 'us-central1-docker.pkg.dev/${PROJECT_ID}/agentworks/trident-marketing:latest'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

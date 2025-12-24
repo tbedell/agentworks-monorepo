@@ -1,0 +1,83 @@
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply font-sans text-gray-900 bg-white antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-trident-navy text-white font-semibold rounded-lg
+           hover:bg-trident-blue-800 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-trident-navy focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3
+           border-2 border-trident-navy text-trident-navy font-semibold rounded-lg
+           hover:bg-trident-navy hover:text-white transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-trident-navy focus:ring-offset-2;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center px-6 py-3
+           bg-trident-gold text-trident-navy font-semibold rounded-lg
+           hover:bg-amber-500 transition-colors duration-200
+           focus:outline-none focus:ring-2 focus:ring-trident-gold focus:ring-offset-2;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100;
+  }
+
+  .card-hover {
+    @apply card hover:shadow-xl hover:border-trident-blue-200
+           transition-all duration-300 cursor-pointer;
+  }
+
+  .section {
+    @apply py-16 md:py-24;
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-br from-trident-navy via-trident-blue-800 to-trident-blue-900;
+  }
+
+  .trident-text-gradient {
+    @apply bg-gradient-to-r from-trident-navy to-trident-blue-600
+           bg-clip-text text-transparent;
+  }
+
+  .industry-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
