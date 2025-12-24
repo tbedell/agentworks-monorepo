@@ -9,7 +9,6 @@ import {
   Trash2,
   UserPlus,
   X,
-  Check,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
-import { crmApi, type CrmLead, type CrmContact, type CrmCompany } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { crmApi, type CrmLead } from '@/lib/api';
 
 interface LeadFormModalProps {
   isOpen: boolean;

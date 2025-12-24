@@ -173,9 +173,9 @@ export default function WhiteboardsDashboard() {
                   </div>
                   <div className="flex items-center gap-1 ml-2">
                     {whiteboard.isShared ? (
-                      <Share2 className="w-4 h-4 text-green-500" title="Shared" />
+                      <span title="Shared"><Share2 className="w-4 h-4 text-green-500" /></span>
                     ) : (
-                      <Lock className="w-4 h-4 text-gray-400" title="Private" />
+                      <span title="Private"><Lock className="w-4 h-4 text-gray-400" /></span>
                     )}
                   </div>
                 </div>

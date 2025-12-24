@@ -6,14 +6,12 @@ import {
   Edit,
   Trash2,
   X,
-  ChevronRight,
   Users,
   Shield,
   UserPlus,
   UserMinus,
 } from 'lucide-react';
 import { rbacApi } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface GroupFormData {

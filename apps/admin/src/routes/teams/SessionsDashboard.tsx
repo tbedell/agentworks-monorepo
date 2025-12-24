@@ -12,7 +12,6 @@ import {
   Zap,
   Edit,
   X,
-  MapPin,
 } from 'lucide-react';
 import { teamsApi, type BosTeamRoom } from '@/lib/api';
 import { cn } from '@/lib/utils';

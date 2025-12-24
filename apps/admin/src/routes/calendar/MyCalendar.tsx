@@ -52,7 +52,7 @@ export default function MyCalendar() {
     return date;
   }, [currentDate]);
 
-  const { data: eventsData, isLoading } = useQuery({
+  const { data: eventsData } = useQuery({
     queryKey: ['calendar', 'events', currentDate.getFullYear(), currentDate.getMonth()],
     queryFn: () =>
       calendarApi.listEvents({

@@ -932,15 +932,15 @@ export const rbacApi = {
     api.post<{ success: boolean }>(`/rbac/groups/${groupId}/members`, { adminId, isPrimary }),
   removeGroupMember: (groupId: string, adminId: string) =>
     api.delete<{ success: boolean }>(`/rbac/groups/${groupId}/members/${adminId}`),
-  assignGroupRole: (groupId: string, roleId: string) =>
-    api.post<{ success: boolean }>(`/rbac/groups/${groupId}/roles`, { roleId }),
+  assignGroupRole: (groupId: string, roleIds: string | string[]) =>
+    api.post<{ success: boolean }>(`/rbac/groups/${groupId}/roles`, { roleIds: Array.isArray(roleIds) ? roleIds : [roleIds] }),
   removeGroupRole: (groupId: string, roleId: string) =>
     api.delete<{ success: boolean }>(`/rbac/groups/${groupId}/roles/${roleId}`),
 
   // User roles
   getUserRoles: (adminId: string) => api.get<{ roles: AdminRole[] }>(`/rbac/users/${adminId}/roles`),
-  assignUserRole: (adminId: string, roleId: string, expiresAt?: string) =>
-    api.post<{ success: boolean }>(`/rbac/users/${adminId}/roles`, { roleId, expiresAt }),
+  assignUserRole: (adminId: string, roleIds: string | string[], expiresAt?: string) =>
+    api.post<{ success: boolean }>(`/rbac/users/${adminId}/roles`, { roleIds: Array.isArray(roleIds) ? roleIds : [roleIds], expiresAt }),
   removeUserRole: (adminId: string, roleId: string) =>
     api.delete<{ success: boolean }>(`/rbac/users/${adminId}/roles/${roleId}`),
   checkPermission: (adminId: string, permissionCode: string) =>

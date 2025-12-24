@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { X, Send, MessageSquare, Clock, User, Tag, AlertCircle } from 'lucide-react';
-import { ticketsApi, type SupportTicket, type TicketComment } from '@/lib/api';
+import { ticketsApi } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
 interface TicketDetailModalProps {
