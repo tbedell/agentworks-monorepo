@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="autoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#06B6D4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Outer gear -->
+  <path d="M 128 32 L 140 50 L 160 46 L 170 64 L 190 68 L 192 88 L 210 98 L 204 118 L 218 132 L 204 146 L 210 166 L 192 176 L 190 196 L 170 200 L 160 218 L 140 214 L 128 232 L 116 214 L 96 218 L 86 200 L 66 196 L 64 176 L 46 166 L 52 146 L 38 132 L 52 118 L 46 98 L 64 88 L 66 68 L 86 64 L 96 46 L 116 50 Z" 
+        fill="url(#autoGrad)" opacity="0.2"/>
+  
+  <!-- Inner gear circle -->
+  <circle cx="128" cy="128" r="40" fill="url(#autoGrad)"/>
+  
+  <!-- Circuit traces -->
+  <path d="M 128 88 L 128 68 M 168 128 L 188 128 M 128 168 L 128 188 M 88 128 L 68 128" 
+        stroke="#2563EB" stroke-width="4" stroke-linecap="round" opacity="0.8"/>
+  
+  <!-- Circuit nodes -->
+  <circle cx="128" cy="68" r="6" fill="#06B6D4"/>
+  <circle cx="188" cy="128" r="6" fill="#06B6D4"/>
+  <circle cx="128" cy="188" r="6" fill="#06B6D4"/>
+  <circle cx="68" cy="128" r="6" fill="#06B6D4"/>
+  
+  <!-- Center detail -->
+  <circle cx="128" cy="128" r="20" fill="none" stroke="#F1F5F9" stroke-width="3"/>
+  <circle cx="128" cy="128" r="10" fill="#F1F5F9"/>
+</svg>
