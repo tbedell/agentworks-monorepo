@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- River - Engineering Agent -->
+  <defs>
+    <linearGradient id="riverGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E5C8A;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#riverGrad)"/>
+  
+  <!-- Code Symbol -->
+  <path d="M 35 50 L 25 64 L 35 78" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 93 50 L 103 64 L 93 78" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="55" y1="45" x2="73" y2="83" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Circuit nodes -->
+  <circle cx="48" cy="95" r="3" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="64" cy="95" r="3" fill="#FFFFFF" opacity="0.7"/>
+  <circle cx="80" cy="95" r="3" fill="#FFFFFF" opacity="0.7"/>
+  <line x1="48" y1="95" x2="64" y2="95" stroke="#FFFFFF" stroke-width="1.5" opacity="0.7"/>
+  <line x1="64" y1="95" x2="80" y2="95" stroke="#FFFFFF" stroke-width="1.5" opacity="0.7"/>
+</svg>

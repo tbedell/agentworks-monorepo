@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- Structured Workflows Icon - Kanban Board -->
+  <defs>
+    <linearGradient id="workflowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4A90E2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E5C8A;stop-opacity:1" />
+    </linearGradient>
+    <filter id="cardShadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="118" fill="url(#workflowGrad)" opacity="0.1"/>
+  
+  <!-- Kanban board frame -->
+  <rect x="40" y="50" width="176" height="156" rx="8" fill="none" stroke="url(#workflowGrad)" stroke-width="3"/>
+  
+  <!-- Column dividers -->
+  <line x1="98" y1="50" x2="98" y2="206" stroke="url(#workflowGrad)" stroke-width="2" opacity="0.5"/>
+  <line x1="158" y1="50" x2="158" y2="206" stroke="url(#workflowGrad)" stroke-width="2" opacity="0.5"/>
+  
+  <!-- Column 1 - Todo (3 cards) -->
+  <g filter="url(#cardShadow)">
+    <rect x="48" y="68" width="42" height="28" rx="4" fill="url(#workflowGrad)" opacity="0.8"/>
+    <rect x="48" y="104" width="42" height="28" rx="4" fill="url(#workflowGrad)" opacity="0.6"/>
+    <rect x="48" y="140" width="42" height="28" rx="4" fill="url(#workflowGrad)" opacity="0.4"/>
+  </g>
+  
+  <!-- Column 2 - In Progress (2 cards) -->
+  <g filter="url(#cardShadow)">
+    <rect x="106" y="68" width="44" height="36" rx="4" fill="url(#workflowGrad)" opacity="0.9"/>
+    <rect x="106" y="112" width="44" height="36" rx="4" fill="url(#workflowGrad)" opacity="0.7"/>
+  </g>
+  
+  <!-- Column 3 - Done (4 cards - stacked) -->
+  <g filter="url(#cardShadow)">
+    <rect x="166" y="68" width="42" height="24" rx="4" fill="url(#workflowGrad)" opacity="0.5"/>
+    <rect x="166" y="98" width="42" height="24" rx="4" fill="url(#workflowGrad)" opacity="0.5"/>
+    <rect x="166" y="128" width="42" height="24" rx="4" fill="url(#workflowGrad)" opacity="0.5"/>
+    <rect x="166" y="158" width="42" height="24" rx="4" fill="url(#workflowGrad)" opacity="0.5"/>
+  </g>
+  
+  <!-- Movement arrows -->
+  <g stroke="url(#workflowGrad)" stroke-width="2.5" fill="url(#workflowGrad)" opacity="0.6">
+    <path d="M 95 82 L 100 82" stroke-linecap="round"/>
+    <path d="M 100 82 L 98 80 M 100 82 L 98 84" stroke-linecap="round"/>
+    
+    <path d="M 155 86 L 160 86" stroke-linecap="round"/>
+    <path d="M 160 86 L 158 84 M 160 86 L 158 88" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Card details (lines representing text) -->
+  <g stroke="#FFFFFF" stroke-width="1.5" opacity="0.6" stroke-linecap="round">
+    <line x1="52" y1="76" x2="82" y2="76"/>
+    <line x1="52" y1="82" x2="75" y2="82"/>
+    <line x1="52" y1="88" x2="86" y2="88"/>
+    
+    <line x1="110" y1="76" x2="140" y2="76"/>
+    <line x1="110" y1="84" x2="145" y2="84"/>
+    <line x1="110" y1="92" x2="135" y2="92"/>
+  </g>
+</svg>

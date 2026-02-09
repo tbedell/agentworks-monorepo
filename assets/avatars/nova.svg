@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Nova - Marketing Agent -->
+  <defs>
+    <linearGradient id="novaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B9D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C44569;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#novaGrad)"/>
+  
+  <!-- Sparkle/Star Symbol -->
+  <g filter="url(#glow)">
+    <path d="M 64 35 L 68 56 L 89 60 L 68 64 L 64 85 L 60 64 L 39 60 L 60 56 Z" fill="#FFFFFF"/>
+    <circle cx="82" cy="45" r="2.5" fill="#FFFFFF"/>
+    <circle cx="46" cy="45" r="2.5" fill="#FFFFFF"/>
+    <circle cx="82" cy="75" r="2.5" fill="#FFFFFF"/>
+    <circle cx="46" cy="75" r="2.5" fill="#FFFFFF"/>
+  </g>
+  
+  <!-- Accent lines -->
+  <path d="M 30 90 Q 64 95 98 90" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.6" stroke-linecap="round"/>
+</svg>

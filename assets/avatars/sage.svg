@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Sage - Analytics Agent -->
+  <defs>
+    <linearGradient id="sageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#27AE60;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E8449;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Circle -->
+  <circle cx="64" cy="64" r="60" fill="url(#sageGrad)"/>
+  
+  <!-- Growth Arrow -->
+  <path d="M 30 85 Q 45 70 55 60 T 75 45 L 95 35" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M 95 35 L 85 38 L 92 45 Z" fill="#FFFFFF"/>
+  
+  <!-- Data points on growth line -->
+  <circle cx="30" cy="85" r="4" fill="#FFFFFF"/>
+  <circle cx="55" cy="60" r="4" fill="#FFFFFF"/>
+  <circle cx="75" cy="45" r="4" fill="#FFFFFF"/>
+  <circle cx="95" cy="35" r="4" fill="#FFFFFF"/>
+  
+  <!-- Percentage symbol -->
+  <text x="64" y="100" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF" text-anchor="middle" opacity="0.8">%</text>
+  
+  <!-- Rising bars background -->
+  <rect x="35" y="75" width="3" height="15" fill="#FFFFFF" opacity="0.3" rx="1"/>
+  <rect x="42" y="68" width="3" height="22" fill="#FFFFFF" opacity="0.3" rx="1"/>
+  <rect x="49" y="62" width="3" height="28" fill="#FFFFFF" opacity="0.3" rx="1"/>
+</svg>

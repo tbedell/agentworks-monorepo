@@ -1,0 +1,98 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Gradient definitions -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0066cc;stop-opacity:0.3" />
+      <stop offset="50%" style="stop-color:#4040B0;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:#6020A0;stop-opacity:0.25" />
+    </linearGradient>
+    
+    <radialGradient id="grad2" cx="30%" cy="40%">
+      <stop offset="0%" style="stop-color:#0066cc;stop-opacity:0.4" />
+      <stop offset="100%" style="stop-color:#0066cc;stop-opacity:0" />
+    </radialGradient>
+    
+    <radialGradient id="grad3" cx="70%" cy="60%">
+      <stop offset="0%" style="stop-color:#5050C0;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#5050C0;stop-opacity:0" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Base background -->
+  <rect width="1920" height="1080" fill="#f8f9fa"/>
+  
+  <!-- Gradient overlays -->
+  <rect width="1920" height="1080" fill="url(#grad1)"/>
+  <circle cx="600" cy="400" r="600" fill="url(#grad2)"/>
+  <circle cx="1350" cy="650" r="550" fill="url(#grad3)"/>
+  
+  <!-- Neural network pattern -->
+  <!-- Layer 1 nodes -->
+  <circle cx="200" cy="200" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="200" cy="400" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="200" cy="600" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="200" cy="800" r="8" fill="#0066cc" opacity="0.15"/>
+  
+  <!-- Layer 2 nodes -->
+  <circle cx="500" cy="150" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="500" cy="300" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="500" cy="450" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="500" cy="600" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="500" cy="750" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="500" cy="900" r="8" fill="#0066cc" opacity="0.15"/>
+  
+  <!-- Layer 3 nodes -->
+  <circle cx="850" cy="200" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="850" cy="400" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="850" cy="600" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="850" cy="800" r="8" fill="#0066cc" opacity="0.15"/>
+  
+  <!-- Layer 4 nodes -->
+  <circle cx="1200" cy="300" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="1200" cy="500" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="1200" cy="700" r="8" fill="#0066cc" opacity="0.15"/>
+  
+  <!-- Layer 5 nodes -->
+  <circle cx="1550" cy="250" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="1550" cy="450" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="1550" cy="650" r="8" fill="#0066cc" opacity="0.15"/>
+  <circle cx="1550" cy="850" r="8" fill="#0066cc" opacity="0.15"/>
+  
+  <!-- Connection lines (sample connections for visual effect) -->
+  <line x1="200" y1="200" x2="500" y2="150" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="200" y1="200" x2="500" y2="300" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="200" y1="400" x2="500" y2="300" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="200" y1="400" x2="500" y2="450" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="200" y1="600" x2="500" y2="600" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="200" y1="800" x2="500" y2="750" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  
+  <line x1="500" y1="150" x2="850" y2="200" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="500" y1="300" x2="850" y2="200" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="500" y1="300" x2="850" y2="400" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="500" y1="450" x2="850" y2="400" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="500" y1="600" x2="850" y2="600" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="500" y1="750" x2="850" y2="800" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  
+  <line x1="850" y1="200" x2="1200" y2="300" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="850" y1="400" x2="1200" y2="300" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="850" y1="400" x2="1200" y2="500" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="850" y1="600" x2="1200" y2="500" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="850" y1="800" x2="1200" y2="700" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  
+  <line x1="1200" y1="300" x2="1550" y2="250" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="1200" y1="300" x2="1550" y2="450" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="1200" y1="500" x2="1550" y2="450" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="1200" y1="500" x2="1550" y2="650" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="1200" y1="700" x2="1550" y2="650" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  <line x1="1200" y1="700" x2="1550" y2="850" stroke="#0066cc" stroke-width="1.5" opacity="0.08"/>
+  
+  <!-- Subtle data flow particles -->
+  <circle cx="350" cy="250" r="4" fill="#0066cc" opacity="0.1"/>
+  <circle cx="675" cy="450" r="4" fill="#0066cc" opacity="0.1"/>
+  <circle cx="1025" cy="350" r="4" fill="#0066cc" opacity="0.1"/>
+  <circle cx="1375" cy="550" r="4" fill="#0066cc" opacity="0.1"/>
+  
+  <!-- Larger subtle accent circles -->
+  <circle cx="1700" cy="300" r="120" fill="#0066cc" opacity="0.03"/>
+  <circle cx="300" cy="900" r="150" fill="#5050C0" opacity="0.03"/>
+</svg>
