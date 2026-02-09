@@ -41,6 +41,14 @@ export const TOOL_CATEGORIES = {
     'wp_check_standards',
     'wp_deploy',
   ],
+  // Document storage tools for cross-agent collaboration
+  document: [
+    'publish_brief',
+    'read_agent_briefs',
+    'list_agent_documents',
+    'share_document',
+    'get_peer_registry',
+  ],
 } as const;
 
 // Helper to get all tools from specified categories
@@ -61,6 +69,7 @@ const ALL_TOOLS = [
   ...TOOL_CATEGORIES.builder,
   ...TOOL_CATEGORIES.summary,
   ...TOOL_CATEGORIES.wordpress,
+  ...TOOL_CATEGORIES.document,
 ];
 
 // Partial tool sets for specific use cases
@@ -88,6 +97,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -98,6 +108,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -109,6 +120,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...TOOL_CATEGORIES.docs,
     'update_ui_builder_state',
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
   ],
 
   // === Lane 1: PRD / MVP Definition ===
@@ -119,6 +131,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -129,6 +142,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -140,6 +154,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -156,6 +171,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     'update_workflow_builder_state', // Workflow design capability
     'update_ui_builder_state', // All agents can generate mockups
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
   ],
 
   planner: [
@@ -165,6 +181,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -176,6 +193,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...SEARCH_ALL,
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -190,6 +208,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     'update_db_builder_state',
     'update_ui_builder_state', // All agents can generate mockups
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
   ],
 
   dev_frontend: [
@@ -200,6 +219,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,
     'update_ui_builder_state',
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
   ],
 
   devops: [
@@ -213,6 +233,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     'update_workflow_builder_state',
     'update_ui_builder_state', // All agents can generate mockups
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
   ],
 
   // === Lane 7: Test & QA ===
@@ -224,6 +245,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...SEARCH_ALL,
     ...KANBAN_ALL,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -234,6 +256,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...SEARCH_ALL,
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -246,6 +269,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.docs,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -258,6 +282,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...SEARCH_ALL,
     ...KANBAN_UPDATE,
     ...TOOL_CATEGORIES.summary,
+    ...TOOL_CATEGORIES.document,
     'update_ui_builder_state', // All agents can generate mockups
   ],
 
@@ -277,6 +302,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     ...KANBAN_ALL,                 // Kanban management
     ...TOOL_CATEGORIES.docs,       // Documentation
     ...TOOL_CATEGORIES.summary,    // Summary logging
+    ...TOOL_CATEGORIES.document,   // Cross-agent document collaboration
     'update_ui_builder_state',     // All agents can generate mockups
   ],
 
@@ -291,6 +317,7 @@ export const AGENT_TOOL_ASSIGNMENTS: Record<AgentName, string[]> = {
     'update_ui_builder_state',       // Primary: UI mockups
     ...TOOL_CATEGORIES.docs,       // Documentation
     ...TOOL_CATEGORIES.summary,    // Summary logging
+    ...TOOL_CATEGORIES.document,   // Cross-agent document collaboration
   ],
 };
 

@@ -72,6 +72,16 @@ export {
   wpDeployTool,
 } from './tools/wordpress-tools.js';
 
+// Document tools
+export {
+  documentTools,
+  publishBriefTool,
+  readAgentBriefsTool,
+  listAgentDocumentsTool,
+  shareDocumentTool,
+  getPeerRegistryTool,
+} from './tools/document-tools.js';
+
 // Register all default tools
 import { toolRegistry } from './registry.js';
 import { fileTools } from './tools/file-tools.js';
@@ -81,9 +91,10 @@ import { styleTools } from './tools/style-tools.js';
 import { searchTools } from './tools/search-tools.js';
 import { claudeCodeTools } from './tools/claude-code/index.js';
 import { wordpressTools } from './tools/wordpress-tools.js';
+import { documentTools } from './tools/document-tools.js';
 
 export function registerAllTools(): void {
-  [...fileTools, ...gitTools, ...codeTools, ...styleTools, ...searchTools, ...wordpressTools].forEach((tool) => {
+  [...fileTools, ...gitTools, ...codeTools, ...styleTools, ...searchTools, ...wordpressTools, ...documentTools].forEach((tool) => {
     toolRegistry.registerTool(tool);
   });
 }
@@ -114,4 +125,8 @@ export function registerClaudeCodeTools(): void {
 
 export function registerWordPressTools(): void {
   wordpressTools.forEach((tool) => toolRegistry.registerTool(tool));
+}
+
+export function registerDocumentTools(): void {
+  documentTools.forEach((tool) => toolRegistry.registerTool(tool));
 }
