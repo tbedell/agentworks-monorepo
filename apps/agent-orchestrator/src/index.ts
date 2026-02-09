@@ -7,6 +7,7 @@ import { agentRoutes } from './routes/agents.js';
 import { executionRoutes } from './routes/execution.js';
 import { runRoutes } from './routes/runs.js';
 import { terminalCommandRoutes } from './routes/terminal-commands.js';
+import { onboardingRoutes } from './routes/onboarding.js';
 import { initializeRedis } from './lib/redis.js';
 import { initializeAgentRegistry } from './lib/agent-registry.js';
 import { initializeExecutor } from './lib/executor.js';
@@ -115,6 +116,10 @@ logger.info('Run routes registered');
 
 logger.info('Registering terminal command routes...');
 await app.register(terminalCommandRoutes, { prefix: '/terminal-commands' });
+logger.info('Terminal command routes registered');
+
+logger.info('Registering onboarding routes...');
+await app.register(onboardingRoutes, { prefix: '/onboarding' });
 logger.info('All routes registered');
 
 // Global error handler

@@ -15,6 +15,21 @@ export const CARD_PRIORITIES = ['Low', 'Medium', 'High', 'Critical'] as const;
 
 export const CARD_STATUSES = ['Draft', 'Ready', 'InProgress', 'Blocked', 'Done'] as const;
 
+/**
+ * Built-in agent names. This is the compile-time set.
+ *
+ * For runtime extension (e.g., dynamically onboarded agents),
+ * use the AgentOnboarding system which maintains its own registry
+ * and validates agent names independently of this array.
+ *
+ * To add a new built-in agent:
+ * 1. Add the name here
+ * 2. Add definitions in packages/agents/src/definitions.ts
+ * 3. Add tool assignments in apps/agent-orchestrator/src/lib/agent-tools.ts
+ * 4. Add system prompt in apps/agent-orchestrator/src/lib/agent-prompts.ts
+ *
+ * @see @agentworks/agent-onboarding for dynamic agent creation
+ */
 export const AGENT_NAMES = [
   'ceo_copilot',
   'strategy',
